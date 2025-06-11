@@ -398,17 +398,17 @@
                     while (walker.nextNode()) {
                         const node = walker.currentNode;
                         if (!node.parentElement.closest('.remove-mini-block')) {
-                            textNodes.push(node.nodeValue.trim());
+                            textNodes.push(node.nodeValue);
                         }
                     }
-                    content = textNodes.join('').trim();
+                    content = textNodes.join('');
 
                     const slot = block.querySelector('.slot');
                     if (slot && slot.classList.contains('filled')) {
                         const miniBlock = slot.querySelector('.mini-block');
                         if (miniBlock) {
                             const slotName = slot.dataset.slot;
-                            const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue.trim() : '';
+                            const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue : '';
                             content = content.replace(`§${slotName}§`, miniBlockText);
                         } else {
                             content = content.replace(/§\w+§/, '');

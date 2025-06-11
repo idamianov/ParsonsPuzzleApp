@@ -4,6 +4,7 @@ using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Models;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Controllers
 {
@@ -26,13 +27,15 @@ namespace ParsonsPuzzleApp.Controllers
                 return BadRequest("Invalid request data.");
             }
 
-            var puzzle = _context.Puzzles.Find(model.PuzzleId);
+            var puzzle = _context.Puzzles
+                .Include(p => p.MiniBlocks)
+                .FirstOrDefault(p => p.Id == model.PuzzleId);
             if (puzzle == null)
             {
                 return NotFound("Пъзелът не е намерен.");
             }
 
-            bool isCorrect = string.Equals(model.Arrangement.Trim(), puzzle.SourceCode.Trim(), StringComparison.OrdinalIgnoreCase);
+            bool isCorrect = IsSolutionCorrect(model.Arrangement, puzzle);
             return Ok(new { isCorrect });
         }
 
@@ -44,7 +47,9 @@ namespace ParsonsPuzzleApp.Controllers
                 return BadRequest("Invalid request data.");
             }
 
-            var puzzle = _context.Puzzles.Find(model.PuzzleId);
+            var puzzle = _context.Puzzles
+                .Include(p => p.MiniBlocks)
+                .FirstOrDefault(p => p.Id == model.PuzzleId);
             if (puzzle == null)
             {
                 return NotFound("Пъзелът не е намерен.");
@@ -58,7 +63,7 @@ namespace ParsonsPuzzleApp.Controllers
                 return NotFound("Бънделът не е намерен.");
             }
 
-            bool isCorrect = string.Equals(model.Arrangement.Trim(), puzzle.SourceCode.Trim(), StringComparison.OrdinalIgnoreCase);
+            bool isCorrect = IsSolutionCorrect(model.Arrangement, puzzle);
 
             var attempt = new StudentAttempt
             {
@@ -107,6 +112,55 @@ namespace ParsonsPuzzleApp.Controllers
                 var nextUrl = $"/SolvePuzzle?bundleId={model.BundleId}&studentId={model.StudentIdentifier}&puzzleIndex={model.PuzzleIndex + 1}&bundleAttemptId={model.BundleAttemptId}";
                 return Ok(new { isLast = false, isCorrect, nextUrl });
             }
+        }
+
+        private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
+        {
+            // Step 1: Replace slots with correct mini-blocks
+            string processedArrangement = arrangement;
+            string processedSourceCode = puzzle.SourceCode;
+
+            foreach (var miniBlock in puzzle.MiniBlocks.Where(mb => mb.IsCorrect))
+            {
+                string slotPattern = $"§{miniBlock.SlotName}§";
+                processedArrangement = processedArrangement.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
+                processedSourceCode = processedSourceCode.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // Check if any slots remain unprocessed
+            if (Regex.IsMatch(processedArrangement, @"§\w+§"))
+            {
+                return false; // Unreplaced slots indicate incorrect solution
+            }
+
+            // Step 2: Normalize based on language
+            if (puzzle.Language.ToString().ToLower() == "python")
+            {
+                // Preserve indentation, trim leading/trailing empty lines
+                processedArrangement = string.Join("\n", processedArrangement.Split('\n')
+                    .Select(l => l.TrimEnd())
+                    .Where(l => !string.IsNullOrWhiteSpace(l)));
+                processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
+                    .Select(l => l.TrimEnd())
+                    .Where(l => !string.IsNullOrWhiteSpace(l)));
+            }
+            else
+            {
+                // Remove leading whitespace/tabs, keep braces, remove empty lines
+                processedArrangement = string.Join("\n", processedArrangement.Split('\n')
+                    .Select(l => l.TrimStart())
+                    .Where(l => !string.IsNullOrWhiteSpace(l)));
+                processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
+                    .Select(l => l.TrimStart())
+                    .Where(l => !string.IsNullOrWhiteSpace(l)));
+            }
+
+            // Normalize new lines
+            processedArrangement = processedArrangement.Replace("\r\n", "\n").Trim();
+            processedSourceCode = processedSourceCode.Replace("\r\n", "\n").Trim();
+
+            // Step 3: Compare normalized codes
+            return string.Equals(processedArrangement, processedSourceCode, StringComparison.OrdinalIgnoreCase);
         }
 
         public class CheckRequestModel
