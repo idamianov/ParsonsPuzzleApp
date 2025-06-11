@@ -1,0 +1,163 @@
+﻿@page
+@model CreatePuzzleModel
+
+<h1>Създай пъзел</h1>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form method="post" id="puzzleForm">
+    <div class="form-group">
+        <label asp-for="Puzzle.Title">Заглавие</label>
+        <input asp-for="Puzzle.Title" class="form-control" required />
+        <span asp-validation-for="Puzzle.Title" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Puzzle.Task">Задача</label>
+        <textarea asp-for="Puzzle.Task" class="form-control" required></textarea>
+        <span asp-validation-for="Puzzle.Task" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Puzzle.Language">Език</label>
+        <select asp-for="Puzzle.Language" asp-items="Model.LanguageOptions" class="form-control" id="languageSelect" required>
+            <option value="">Избери език</option>
+        </select>
+        <span asp-validation-for="Puzzle.Language" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Puzzle.SourceCode">Изходен код</label>
+        <button type="button" class="btn btn-secondary mb-2" id="insertSlotButton">Вмъкни слот</button>
+        <textarea asp-for="Puzzle.SourceCode" class="form-control" id="sourceCode" required></textarea>
+        <span asp-validation-for="Puzzle.SourceCode" class="text-danger"></span>
+    </div>
+    <div id="miniBlocksPanel" class="form-group">
+        <h4>Мини-блокове за слотове</h4>
+        <div id="miniBlocksContainer"></div>
+    </div>
+    <div class="form-group">
+        <label asp-for="Puzzle.Distractors">Отвличащи елементи</label>
+        <textarea asp-for="Puzzle.Distractors" class="form-control" id="distractors"></textarea>
+        <span asp-validation-for="Puzzle.Distractors" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Създай</button>
+    <a asp-page="/Instructor/Puzzles" class="btn btn-secondary">Отказ</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            var sourceCodeEditor = CodeMirror.fromTextArea(document.getElementById("sourceCode"), {
+                lineNumbers: true,
+                theme: "monokai",
+                mode: window.getCodeMirrorMode()
+            });
+
+            var distractorsEditor = CodeMirror.fromTextArea(document.getElementById("distractors"), {
+                lineNumbers: true,
+                theme: "monokai",
+                mode: window.getCodeMirrorMode()
+            });
+
+            $("#languageSelect").change(function() {
+                var mode = window.getCodeMirrorMode();
+                sourceCodeEditor.setOption("mode", mode);
+                distractorsEditor.setOption("mode", mode);
+            });
+
+            $("#insertSlotButton").click(function() {
+                window.insertSlot(sourceCodeEditor);
+            });
+
+            sourceCodeEditor.on("change", function() {
+                window.updateMiniBlocksPanel(sourceCodeEditor);
+            });
+
+            $("#puzzleForm").submit(function(e) {
+                sourceCodeEditor.save();
+                distractorsEditor.save();
+            });
+
+            window.updateMiniBlocksPanel(sourceCodeEditor);
+        });
+
+        window.getCodeMirrorMode = function() {
+            var language = $("#languageSelect").val();
+            switch (parseInt(language)) {
+                case 1: case 2: case 3: case 4: return "clike";
+                case 5: return "javascript";
+                case 6: return "python";
+                case 7: case 8: case 9: case 10: return "sql";
+                default: return "text/plain";
+            }
+        };
+
+        window.insertSlot = function(editor) {
+            var slotName = prompt("Въведете име на слота:");
+            if (slotName) {
+                var slotText = "§" + slotName + "§";
+                editor.replaceSelection(slotText);
+                window.updateMiniBlocksPanel(editor);
+            }
+        };
+
+        window.updateMiniBlocksPanel = function(editor) {
+            var sourceCode = editor.getValue();
+            var slotRegex = /§([^§]+)§/g;
+            var slots = [];
+            var match;
+            while ((match = slotRegex.exec(sourceCode)) !== null) {
+                slots.push(match[1]);
+            }
+
+            var container = $("#miniBlocksContainer");
+            var existingSlots = container.find("h5").map(function() {
+                return $(this).text().replace("Слот: ", "");
+            }).get();
+
+            slots.forEach(function(slot, index) {
+                if (!existingSlots.includes(slot)) {
+                    var slotDiv = $("<div>").addClass("mb-3");
+                    slotDiv.append($("<h5>").text("Слот: " + slot));
+                    var blocksContainer = $("<div>").addClass("mini-blocks");
+                    window.addMiniBlockInput(blocksContainer, slot, index);
+                    slotDiv.append(blocksContainer);
+                    slotDiv.append($("<button>")
+                        .addClass("btn btn-sm btn-secondary mt-2")
+                        .text("Добави мини-блок")
+                        .click(function() {
+                            window.addMiniBlockInput(blocksContainer, slot, index);
+                        }));
+                    container.append(slotDiv);
+                }
+            });
+        };
+
+        window.addMiniBlockInput = function(container, slot, slotIndex) {
+            var container = $(container).hasClass("mini-blocks") ? $(container) : $(container).prev(".mini-blocks");
+            var index = container.children().length;
+            var inputGroup = $("<div>").addClass("input-group mb-2");
+            var input = $("<input>")
+                .attr("type", "text")
+                .attr("name", "MiniBlocks[" + slot + "][" + index + "].Content")
+                .addClass("form-control")
+                .prop("required", true);
+            var icon = $("<span>")
+                .addClass("input-group-text")
+                .addClass(index === 0 ? "text-success" : "")
+                .text(index === 0 ? "✅" : "");
+            var removeButton = $("<button>")
+                .attr("type", "button")
+                .addClass("btn btn-danger btn-sm")
+                .text("Премахни")
+                .click(function() {
+                    window.removeMiniBlock(this);
+                });
+            inputGroup.append(input).append(icon).append(removeButton);
+            container.append(inputGroup);
+        };
+
+        window.removeMiniBlock = function(button) {
+            $(button).closest(".input-group").remove();
+        };
+    </script>
+}

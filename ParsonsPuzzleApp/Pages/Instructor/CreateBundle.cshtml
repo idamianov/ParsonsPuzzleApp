@@ -1,0 +1,31 @@
+﻿@page
+@model CreateBundleModel
+
+<h2>Създаване на нов пакет</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="Bundle.Identifier">Идентификатор</label>
+        <input asp-for="Bundle.Identifier" class="form-control" />
+        <span asp-validation-for="Bundle.Identifier" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Bundle.Key">Ключ</label>
+        <input asp-for="Bundle.Key" class="form-control" />
+        <span asp-validation-for="Bundle.Key" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Bundle.Description">Описание</label>
+        <textarea asp-for="Bundle.Description" class="form-control"></textarea>
+        <span asp-validation-for="Bundle.Description" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label>Изберете пъзели</label>
+        <select asp-for="SelectedPuzzleIds" asp-items="Model.PuzzleOptions" multiple class="form-control"></select>
+    </div>
+    <button type="submit" class="btn btn-primary">Създай</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

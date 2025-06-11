@@ -1,0 +1,29 @@
+﻿@page
+@model DeletePuzzleModel
+
+<h2>Изтриване на пъзел</h2>
+
+<div class="alert alert-warning">
+    <p>Сигурни ли сте, че искате да изтриете пъзела "<strong>@Model.Puzzle.Title</strong>"?</p>
+    @if (Model.Puzzle.BundlePuzzles.Any())
+    {
+        <p>Този пъзел е свързан със следните пакети:</p>
+        <ul>
+            @foreach (var bundle in Model.Puzzle.BundlePuzzles)
+            {
+                <li>@bundle.Bundle.Identifier</li>
+            }
+        </ul>
+        <p>Изтриването ще го премахне от тези пакети.</p>
+    }
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="Puzzle.Id" />
+    <button type="submit" class="btn btn-danger">Изтрий</button>
+    <a asp-page="./Puzzles" class="btn btn-secondary">Отказ</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

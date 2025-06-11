@@ -1,0 +1,42 @@
+﻿@page
+@model BundlesModel
+
+<h2>Списък с пакети</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Идентификатор</th>
+            <th>Описание</th>
+            <th>Пъзели</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var bundle in Model.Bundles)
+        {
+            <tr>
+                <td>@bundle.Identifier</td>
+                <td>@bundle.Description</td>
+                <td>
+                    <ul>
+                        @foreach (var puzzle in bundle.BundlePuzzles)
+                        {
+                            <li>@puzzle.Puzzle.Title</li>
+                        }
+                    </ul>
+                </td>
+                <td>
+                    <a asp-page="./EditBundle" asp-route-id="@bundle.Id" class="btn btn-sm btn-primary">Редактирай</a>
+                    <a asp-page="./DeleteBundle" asp-route-id="@bundle.Id" class="btn btn-sm btn-danger">Изтрий</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-page="./CreateBundle" class="btn btn-success">Създай нов пакет</a>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

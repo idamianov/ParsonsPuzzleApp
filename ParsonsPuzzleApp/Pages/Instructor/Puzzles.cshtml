@@ -1,0 +1,61 @@
+﻿@page
+@model PuzzlesModel
+@using System.Web
+
+<h2>Списък с пъзели</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Заглавие</th>
+            <th>Език</th>
+            <th>Задача</th>
+            <th>Свързани пакети</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var puzzle in Model.Puzzles)
+        {
+            var confirmMessage = $"Сигурни ли сте, че искате да изтриете пъзела '{HttpUtility.JavaScriptStringEncode(puzzle.Title)}'?";
+            if (puzzle.BundlePuzzles.Any())
+            {
+                confirmMessage += $" Той е свързан с {puzzle.BundlePuzzles.Count} пакет(а).";
+            }
+            <tr>
+                <td>@puzzle.Title</td>
+                <td>@puzzle.Language</td>
+                <td>@Html.Raw(puzzle.Task)</td>
+                <td>
+                    <ul>
+                        @foreach (var bundle in puzzle.BundlePuzzles)
+                        {
+                            <li>@bundle.Bundle.Identifier</li>
+                        }
+                    </ul>
+                </td>
+                <td>
+                    <a asp-page="./EditPuzzle" asp-route-id="@puzzle.Id" class="btn btn-sm btn-primary">Редактирай</a>
+                    <a asp-page="./DeletePuzzle" asp-route-id="@puzzle.Id" class="btn btn-sm btn-danger"
+                       onclick="return confirm('@confirmMessage')">Изтрий</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-page="./CreatePuzzle" class="btn btn-success">Създай нов пъзел</a>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

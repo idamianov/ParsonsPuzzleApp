@@ -1,0 +1,30 @@
+﻿@page
+@model SelectBundleModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <h2>Избор на бъндел</h2>
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Изберете бъндел:</label>
+            <select asp-for="SelectedBundleId" class="form-select" asp-items="@(new SelectList(Model.Bundles, "Id", "Identifier"))"></select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="BundleCode" class="form-label">Код на бъндела:</label>
+            <input asp-for="BundleCode" class="form-control" required />
+            <span asp-validation-for="BundleCode" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="StudentIdentifier" class="form-label">Вашият идентификатор:</label>
+            <input asp-for="StudentIdentifier" class="form-control" required />
+            <span asp-validation-for="StudentIdentifier" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Започни</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

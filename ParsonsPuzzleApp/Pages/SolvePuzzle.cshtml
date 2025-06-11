@@ -1,0 +1,470 @@
+﻿@page
+@model SolvePuzzleModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container-fluid d-flex flex-column" style="height: 100vh; padding: 0; overflow: hidden;">
+    <div class="header-section d-flex justify-content-between align-items-center p-3 bg-light">
+        <h3>Пъзел @Model.PuzzleIndex от @Model.TotalPuzzles - @Model.Puzzle.Language</h3>
+        <div>
+            <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#taskModal">Условие на заданието</button>
+            <button class="btn btn-primary me-2" onclick="checkSolution()">Провери</button>
+            <button class="btn btn-success me-2" onclick="submitSolution()">Подай</button>
+            <button class="btn btn-danger" onclick="if(confirm('Сигурни ли сте?')) resetPuzzle()">Рестарт</button>
+        </div>
+    </div>
+    <div class="middle-section flex-grow-1 d-flex overflow-hidden">
+        <div class="left-panel p-3 bg-light overflow-auto" style="flex: 1; background-color: #f8f9fa;" id="sourcePanel">
+            @foreach (var block in Model.ShuffledCodeBlocks)
+            {
+                <div class="code-block @(block.IsDistractor ? "distractor" : "")" id="block-@Model.ShuffledCodeBlocks.IndexOf(block)">
+                    @if (!string.IsNullOrEmpty(block.SlotName))
+                    {
+                        <span class="code-content">@Html.Raw(block.Content.Replace($"§{block.SlotName}§", "<span class='slot' data-slot='" + block.SlotName + "'></span>"))</span>
+                    }
+                    else
+                    {
+                        <span class="code-content">@block.Content</span>
+                    }
+                    <span class="indent-btns">
+                        <button onclick="shiftLeft(this)" class="btn btn-sm btn-outline-secondary mx-1">&lt;</button>
+                        <button onclick="shiftRight(this)" class="btn btn-sm btn-outline-secondary">&gt;</button>
+                    </span>
+                </div>
+            }
+        </div>
+        <div class="right-panel p-3 bg-white overflow-auto" style="flex: 1;" id="targetPanel"></div>
+    </div>
+    <div class="mini-blocks-panel p-3 bg-light" id="miniBlocksPanel">
+        @foreach (var mb in Model.MiniBlocks)
+        {
+            <div class="mini-block" id="mini-@Model.MiniBlocks.IndexOf(mb)">@mb.Content</div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">Условие на заданието</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @Html.Raw(Model.Puzzle.Task)
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        .code-block, .brace-block {
+            position: relative;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: move;
+            transition: background-color 0.2s;
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 30px;
+            white-space: nowrap;
+        }
+        .code-block:hover {
+            background-color: #e9ecef;
+        }
+        .source-panel .code-block {
+            background-color: #e2f0fd;
+        }
+        .target-panel .code-block {
+            background-color: #f0f9e8;
+        }
+        /* .distractor стила е премахнат, за да са всички блокове в sourcePanel с един цвят */
+        .brace-block {
+            background-color: #f2f2f2;
+            color: #666;
+            border-left: 2px solid #007bff;
+            padding: 2px 8px;
+            margin: 2px 0;
+            font-size: 0.85rem;
+            user-select: none;
+        }
+        .code-content {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .slot {
+            display: inline-block;
+            min-width: 50px;
+            height: 22px; /* Увеличено от 20px, за да побере миниблока */
+            background-color: #e9ecef;
+            border: 1px dashed #adb5bd;
+            vertical-align: middle;
+            white-space: nowrap;
+            position: relative;
+        }
+        .slot.filled {
+            min-width: auto;
+            padding: 0; /* Премахнат padding за по-добро подравняване */
+        }
+        .mini-block {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 2px;
+            background-color: #d1e7dd;
+            border: 1px solid #adb5bd;
+            cursor: move;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            line-height: 14px; /* Намалено от 16px за компактност */
+        }
+        .remove-mini-block {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            display: none;
+        }
+        .slot:hover .remove-mini-block {
+            display: block;
+        }
+        .indent-0 { margin-left: 0; }
+        .indent-1 { margin-left: 20px; }
+        .indent-2 { margin-left: 40px; }
+        .indent-3 { margin-left: 60px; }
+        .indent-4 { margin-left: 80px; }
+        .indent-5 { margin-left: 100px; }
+        .header-section {
+            width: 100%;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .middle-section {
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .left-panel, .right-panel {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .mini-blocks-panel {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        .sortable-ghost {
+            background-color: #cce5ff;
+            border: 2px dashed #007bff;
+            opacity: 0.7;
+        }
+        .indent-btns {
+            display: none;
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .code-block:hover .indent-btns {
+            display: inline;
+        }
+        .drop-target-indicator {
+            height: 2px;
+            background-color: #1890ff;
+            position: absolute;
+            z-index: 1000;
+            transition: all 0.1s ease;
+            display: none;
+        }
+    </style>
+    <script>
+        let startTime = Date.now();
+        const dropIndicator = document.createElement('div');
+        dropIndicator.className = 'drop-target-indicator';
+        document.body.appendChild(dropIndicator);
+
+        function initializePuzzle() {
+            const sourcePanel = document.getElementById('sourcePanel');
+            const targetPanel = document.getElementById('targetPanel');
+            const miniBlocksPanel = document.getElementById('miniBlocksPanel');
+
+            new Sortable(sourcePanel, {
+                group: 'code-blocks',
+                animation: 150,
+                onAdd: function(evt) {
+                    const block = evt.item;
+                    block.style.marginLeft = '0px';
+                    block.classList.remove('distractor');
+                }
+            });
+
+            new Sortable(targetPanel, {
+                group: 'code-blocks',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onAdd: function(evt) {
+                    addIndentButtons(evt.item);
+                    updateBraces();
+                },
+                onSort: function() {
+                    updateBraces();
+                },
+                onStart: function(evt) {
+                    dropIndicator.style.display = 'block';
+                },
+                onEnd: function(evt) {
+                    dropIndicator.style.display = 'none';
+                },
+                onMove: function(evt) {
+                    const related = evt.related;
+                    if (related) {
+                        const rect = related.getBoundingClientRect();
+                        const y = evt.originalEvent.clientY;
+                        const indent = parseInt(related.style.marginLeft || 0) / 20;
+                        dropIndicator.style.top = (y < rect.top + rect.height / 2 ? rect.top : rect.bottom) + 'px';
+                        dropIndicator.style.left = (rect.left + indent * 20) + 'px';
+                        dropIndicator.style.width = (rect.width - indent * 20) + 'px';
+                    }
+                }
+            });
+
+            new Sortable(miniBlocksPanel, {
+                group: { name: 'mini-blocks', pull: true, put: false },
+                animation: 150
+            });
+
+            document.querySelectorAll('.code-block').forEach(block => {
+                const slot = block.querySelector('.slot');
+                if (slot) {
+                    new Sortable(slot, {
+                        group: 'mini-blocks',
+                        animation: 150,
+                        onAdd: function(evt) {
+                            const miniBlock = evt.item;
+                            slot.classList.add('filled');
+                            const removeBtn = document.createElement('span');
+                            removeBtn.className = 'remove-mini-block';
+                            removeBtn.textContent = 'X';
+                            removeBtn.onclick = () => {
+                                miniBlocksPanel.appendChild(miniBlock);
+                                removeBtn.remove();
+                                slot.classList.remove('filled');
+                            };
+                            slot.appendChild(removeBtn);
+                        }
+                    });
+                }
+            });
+        }
+
+        function addIndentButtons(block) {
+            if (!block.querySelector('.indent-btns')) {
+                const buttons = document.createElement('span');
+                buttons.className = 'indent-btns';
+                buttons.innerHTML = '<button onclick="shiftLeft(this)" class="btn btn-sm btn-outline-secondary mx-1"><</button><button onclick="shiftRight(this)" class="btn btn-sm btn-outline-secondary">></button>';
+                block.appendChild(buttons);
+            }
+        }
+
+        function shiftLeft(btn) {
+            const block = btn.closest('.code-block');
+            let indent = parseInt(block.style.marginLeft || 0);
+            if (indent > 0) {
+                block.style.marginLeft = `${indent - 20}px`;
+                updateBraces();
+            }
+        }
+
+        function shiftRight(btn) {
+            const block = btn.closest('.code-block');
+            let indent = parseInt(block.style.marginLeft || 0);
+            block.style.marginLeft = `${indent + 20}px`;
+            updateBraces();
+        }
+
+        function updateBraces() {
+            if (!['C', 'Cpp', 'CSharp', 'Java', 'JavaScript'].includes('@Model.Puzzle.Language.ToString()')) return;
+
+            document.querySelectorAll('.brace-block').forEach(b => b.remove());
+            const blocks = Array.from(document.querySelectorAll('#targetPanel .code-block'));
+            let braceStack = [];
+
+            blocks.forEach((block, i) => {
+                const indent = parseInt(block.style.marginLeft || 0) / 20;
+                if (indent === 0) {
+                    while (braceStack.length) {
+                        const closed = braceStack.pop();
+                        const closeBrace = document.createElement('div');
+                        closeBrace.className = `brace-block indent-${closed.braceLevel}`;
+                        closeBrace.textContent = '}';
+                        block.before(closeBrace);
+                    }
+                } else if (i > 0) {
+                    const prevBlock = blocks[i - 1];
+                    const prevIndent = parseInt(prevBlock.style.marginLeft || 0) / 20;
+                    while (braceStack.length && braceStack[braceStack.length - 1].indent > indent) {
+                        const closed = braceStack.pop();
+                        const closeBrace = document.createElement('div');
+                        closeBrace.className = `brace-block indent-${closed.braceLevel}`;
+                        closeBrace.textContent = '}';
+                        block.before(closeBrace);
+                    }
+                    if (indent > prevIndent) {
+                        const braceLevel = prevIndent;
+                        const openBrace = document.createElement('div');
+                        openBrace.className = `brace-block indent-${braceLevel}`;
+                        openBrace.textContent = '{';
+                        block.before(openBrace);
+                        braceStack.push({ indent, braceLevel });
+                    }
+                }
+            });
+
+            while (braceStack.length) {
+                const closed = braceStack.pop();
+                const closeBrace = document.createElement('div');
+                closeBrace.className = `brace-block indent-${closed.braceLevel}`;
+                closeBrace.textContent = '}';
+                document.getElementById('targetPanel').appendChild(closeBrace);
+            }
+        }
+
+        function getArrangement() {
+            const targetPanel = document.getElementById('targetPanel');
+            const blocks = Array.from(targetPanel.children);
+            if (blocks.length === 0) {
+                return '';
+            }
+
+            return blocks.map(block => {
+                let indent = 0;
+                let content = '';
+
+                if (block.classList.contains('code-block')) {
+                    indent = parseInt(block.style.marginLeft || 0) / 20;
+                    const codeContent = block.querySelector('.code-content');
+                    if (!codeContent) return '';
+
+                    const textNodes = [];
+                    const walker = document.createTreeWalker(codeContent, NodeFilter.SHOW_TEXT, null, false);
+                    while (walker.nextNode()) {
+                        const node = walker.currentNode;
+                        if (!node.parentElement.closest('.remove-mini-block')) {
+                            textNodes.push(node.nodeValue.trim());
+                        }
+                    }
+                    content = textNodes.join('').trim();
+
+                    const slot = block.querySelector('.slot');
+                    if (slot && slot.classList.contains('filled')) {
+                        const miniBlock = slot.querySelector('.mini-block');
+                        if (miniBlock) {
+                            const slotName = slot.dataset.slot;
+                            const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue.trim() : '';
+                            content = content.replace(`§${slotName}§`, miniBlockText);
+                        } else {
+                            content = content.replace(/§\w+§/, '');
+                        }
+                    }
+                } else if (block.classList.contains('brace-block')) {
+                    const indentLevel = Array.from(block.classList).find(cls => cls.startsWith('indent-'));
+                    indent = indentLevel ? parseInt(indentLevel.replace('indent-', '')) : 0;
+                    content = block.textContent.trim();
+                } else {
+                    return '';
+                }
+
+                return '  '.repeat(indent) + content;
+            }).filter(line => line).join('\n');
+        }
+
+        async function checkSolution() {
+            try {
+                const arrangement = getArrangement();
+                if (!arrangement) {
+                    alert('Моля, добавете кодови блокове в целевия панел.');
+                    return;
+                }
+                console.log('Sending check request with arrangement:', arrangement);
+                const response = await fetch('/api/PuzzleApi/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        puzzleId: @Model.Puzzle.Id, 
+                        arrangement 
+                    })
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+                const result = await response.json();
+                alert(result.isCorrect ? 'Решението е вярно!' : 'Решението е грешно.');
+            } catch (error) {
+                console.error('Error checking solution:', error);
+                alert('Грешка при проверка на решението. Моля, опитайте отново.');
+            }
+        }
+
+        async function submitSolution() {
+            try {
+                const arrangement = getArrangement();
+                if (!arrangement) {
+                    alert('Моля, добавете кодови блокове в целевия панел.');
+                    return;
+                }
+                const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                console.log('Sending submit request with arrangement:', arrangement, 'timeTaken:', timeTaken);
+                const response = await fetch('/api/PuzzleApi/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        bundleId: @Model.Bundle.Id, 
+                        puzzleId: @Model.Puzzle.Id, 
+                        puzzleIndex: @Model.PuzzleIndex, 
+                        studentIdentifier: '@Model.StudentIdentifier', 
+                        arrangement, 
+                        timeTaken 
+                    })
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+                const result = await response.json();
+                if (result.isCorrect) {
+                    if (result.isLast) {
+                        alert('Бънделът е завършен! Скоро ще видите статистиката.');
+                    } else {
+                        window.location.href = result.nextUrl;
+                    }
+                } else {
+                    alert('Решението е грешно. Моля, опитайте отново.');
+                }
+            } catch (error) {
+                console.error('Error submitting solution:', error);
+                alert('Грешка при подаване на решението. Моля, опитайте отново.');
+            }
+        }
+
+        function resetPuzzle() {
+            window.location.reload();
+        }
+
+        initializePuzzle();
+    </script>
+}
