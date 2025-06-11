@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ParsonsPuzzleApp.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -246,7 +246,8 @@ namespace ParsonsPuzzleApp.Migrations
                     IsCorrect = table.Column<bool>(type: "INTEGER", nullable: false),
                     StudentArrangement = table.Column<string>(type: "TEXT", nullable: false),
                     TimeTakenSeconds = table.Column<int>(type: "INTEGER", nullable: false),
-                    AttemptDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    AttemptDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    BundleAttemptId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

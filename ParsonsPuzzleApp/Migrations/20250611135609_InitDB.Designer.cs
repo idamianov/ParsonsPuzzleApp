@@ -11,8 +11,8 @@ using ParsonsPuzzleApp.Data;
 namespace ParsonsPuzzleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250611073048_AddBundleAttemptId")]
-    partial class AddBundleAttemptId
+    [Migration("20250611135609_InitDB")]
+    partial class InitDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
