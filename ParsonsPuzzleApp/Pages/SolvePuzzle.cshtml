@@ -73,16 +73,19 @@
             min-height: 30px;
             white-space: nowrap;
         }
-        .code-block:hover {
-            background-color: #e9ecef;
-        }
+
+            .code-block:hover {
+                background-color: #e9ecef;
+            }
+
         .source-panel .code-block {
             background-color: #e2f0fd;
         }
+
         .target-panel .code-block {
             background-color: #f0f9e8;
         }
-        /* .distractor стила е премахнат, за да са всички блокове в sourcePanel с един цвят */
+
         .brace-block {
             background-color: #f2f2f2;
             color: #666;
@@ -92,24 +95,28 @@
             font-size: 0.85rem;
             user-select: none;
         }
+
         .code-content {
             display: inline-block;
             vertical-align: middle;
         }
+
         .slot {
             display: inline-block;
             min-width: 50px;
-            height: 22px; /* Увеличено от 20px, за да побере миниблока */
+            height: 22px;
             background-color: #e9ecef;
             border: 1px dashed #adb5bd;
             vertical-align: middle;
             white-space: nowrap;
             position: relative;
         }
-        .slot.filled {
-            min-width: auto;
-            padding: 0; /* Премахнат padding за по-добро подравняване */
-        }
+
+            .slot.filled {
+                min-width: auto;
+                padding: 0;
+            }
+
         .mini-block {
             display: inline-block;
             padding: 2px 6px;
@@ -121,8 +128,9 @@
             font-family: 'Courier New', Courier, monospace;
             white-space: nowrap;
             font-size: 0.85rem;
-            line-height: 14px; /* Намалено от 16px за компактност */
+            line-height: 14px;
         }
+
         .remove-mini-block {
             position: absolute;
             top: -8px;
@@ -137,41 +145,65 @@
             cursor: pointer;
             display: none;
         }
+
         .slot:hover .remove-mini-block {
             display: block;
         }
-        .indent-0 { margin-left: 0; }
-        .indent-1 { margin-left: 20px; }
-        .indent-2 { margin-left: 40px; }
-        .indent-3 { margin-left: 60px; }
-        .indent-4 { margin-left: 80px; }
-        .indent-5 { margin-left: 100px; }
+
+        .indent-0 {
+            margin-left: 0;
+        }
+
+        .indent-1 {
+            margin-left: 20px;
+        }
+
+        .indent-2 {
+            margin-left: 40px;
+        }
+
+        .indent-3 {
+            margin-left: 60px;
+        }
+
+        .indent-4 {
+            margin-left: 80px;
+        }
+
+        .indent-5 {
+            margin-left: 100px;
+        }
+
         .header-section {
             width: 100%;
             position: sticky;
             top: 0;
             z-index: 100;
         }
+
         .middle-section {
             display: flex;
             flex-direction: row;
             flex-grow: 1;
             overflow: hidden;
         }
+
         .left-panel, .right-panel {
             flex: 1;
             overflow-y: auto;
         }
+
         .mini-blocks-panel {
-            padding: 10px;
             background-color: #f8f9fa;
             border-top: 1px solid #dee2e6;
         }
+
         .sortable-ghost {
             background-color: #cce5ff;
             border: 2px dashed #007bff;
             opacity: 0.7;
         }
+
         .indent-btns {
             display: none;
             position: absolute;
@@ -179,9 +211,11 @@
             top: 50%;
             transform: translateY(-50%);
         }
+
         .code-block:hover .indent-btns {
             display: inline;
         }
+
         .drop-target-indicator {
             height: 2px;
             background-color: #1890ff;
@@ -380,12 +414,6 @@
                             content = content.replace(/§\w+§/, '');
                         }
                     }
-                } else if (block.classList.contains('brace-block')) {
-                    const indentLevel = Array.from(block.classList).find(cls => cls.startsWith('indent-'));
-                    indent = indentLevel ? parseInt(indentLevel.replace('indent-', '')) : 0;
-                    content = block.textContent.trim();
-                } else {
-                    return '';
                 }
 
                 return '  '.repeat(indent) + content;
@@ -403,9 +431,9 @@
                 const response = await fetch('/api/PuzzleApi/check', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        puzzleId: @Model.Puzzle.Id, 
-                        arrangement 
+                    body: JSON.stringify({
+                        puzzleId: @Model.Puzzle.Id,
+                        arrangement
                     })
                 });
                 if (!response.ok) {
@@ -432,13 +460,14 @@
                 const response = await fetch('/api/PuzzleApi/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        bundleId: @Model.Bundle.Id, 
-                        puzzleId: @Model.Puzzle.Id, 
-                        puzzleIndex: @Model.PuzzleIndex, 
-                        studentIdentifier: '@Model.StudentIdentifier', 
-                        arrangement, 
-                        timeTaken 
+                    body: JSON.stringify({
+                        bundleId: @Model.Bundle.Id,
+                        puzzleId: @Model.Puzzle.Id,
+                        puzzleIndex: @Model.PuzzleIndex,
+                        studentIdentifier: '@Model.StudentIdentifier',
+                        arrangement,
+                        timeTaken,
+                        bundleAttemptId: '@Model.BundleAttemptId'
                     })
                 });
                 if (!response.ok) {
@@ -446,14 +475,12 @@
                     throw new Error(`Server error: ${response.status} - ${errorText}`);
                 }
                 const result = await response.json();
-                if (result.isCorrect) {
-                    if (result.isLast) {
-                        alert('Бънделът е завършен! Скоро ще видите статистиката.');
-                    } else {
-                        window.location.href = result.nextUrl;
-                    }
+                if (result.isLast) {
+                    const stats = result.statistics;
+                    alert(`Бънделът е завършен!\n\nСтатистика:\n- Общо опити: ${stats.totalAttempts}\n- Верни решения: ${stats.correctAttempts}\n- Грешни решения: ${stats.incorrectAttempts}`);
                 } else {
-                    alert('Решението е грешно. Моля, опитайте отново.');
+                    alert(result.isCorrect ? 'Решението е вярно! Преминавате към следващия пъзел.' : 'Решението е грешно. Преминавате към следващия пъзел.');
+                    window.location.href = result.nextUrl;
                 }
             } catch (error) {
                 console.error('Error submitting solution:', error);

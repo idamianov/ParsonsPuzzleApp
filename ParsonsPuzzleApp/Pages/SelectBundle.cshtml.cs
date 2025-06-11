@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace ParsonsPuzzleApp.Pages
         public string StudentIdentifier { get; set; }
 
         [BindProperty]
-        public string BundleCode { get; set; } // Добавено за проверка на кода
+        public string BundleCode { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -52,7 +53,8 @@ namespace ParsonsPuzzleApp.Pages
                 return Page();
             }
 
-            return RedirectToPage("/SolvePuzzle", new { bundleId = SelectedBundleId, studentId = StudentIdentifier, puzzleIndex = 1 });
+            var bundleAttemptId = Guid.NewGuid();
+            return RedirectToPage("/SolvePuzzle", new { bundleId = SelectedBundleId, studentId = StudentIdentifier, puzzleIndex = 1, bundleAttemptId });
         }
     }
 }

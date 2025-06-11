@@ -29,7 +29,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 .Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = p.Title
+                    Text = $"{p.Title} ({p.Language})"
                 })
                 .ToList();
         }

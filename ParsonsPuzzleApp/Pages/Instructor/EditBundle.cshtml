@@ -24,7 +24,7 @@
     </div>
     <div class="form-group">
         <label>Изберете пъзели</label>
-        <select asp-for="SelectedPuzzleIds" asp-items="Model.PuzzleOptions" multiple class="form-control" id="puzzleSelect" required>
+        <select asp-for="SelectedPuzzleIds" asp-items="Model.PuzzleOptions" multiple size="10" class="form-control" id="puzzleSelect" required>
             <option value="">Изберете пъзели</option>
         </select>
         <span asp-validation-for="SelectedPuzzleIds" class="text-danger"></span>

@@ -50,7 +50,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 .Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = p.Title
+                    Text = $"{p.Title} ({p.Language})"
                 })
                 .ToListAsync();
 
@@ -67,7 +67,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = p.Title
+                        Text = $"{p.Title} ({p.Language})"
                     })
                     .ToListAsync();
                 return Page();
@@ -81,7 +81,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = p.Title
+                        Text = $"{p.Title} ({p.Language})"
                     })
                     .ToListAsync();
                 return Page();
@@ -127,7 +127,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = p.Title
+                        Text = $"{p.Title} ({p.Language})"
                     })
                     .ToListAsync();
                 return Page();

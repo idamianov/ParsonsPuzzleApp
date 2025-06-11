@@ -1,7 +1,7 @@
 namespace ParsonsPuzzleApp.Pages
 {
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Mvc.RazorPages;
+        using Microsoft.AspNetCore.Mvc.RazorPages;
     using Microsoft.EntityFrameworkCore;
     using ParsonsPuzzleApp.Data;
     using ParsonsPuzzleApp.Models;
@@ -25,17 +25,25 @@ namespace ParsonsPuzzleApp.Pages
         public int PuzzleIndex { get; set; }
         public int TotalPuzzles { get; set; }
         public string StudentIdentifier { get; set; }
+        public Guid BundleAttemptId { get; set; }
         public List<CodeBlock> ShuffledCodeBlocks { get; set; }
         public List<MiniBlockConfig> MiniBlocks { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int bundleId, string studentId, int puzzleIndex)
+        public async Task<IActionResult> OnGetAsync(int bundleId, string studentId, int puzzleIndex, Guid? bundleAttemptId)
         {
             if (string.IsNullOrWhiteSpace(studentId))
             {
                 return RedirectToPage("SelectBundle");
             }
 
+            if (!bundleAttemptId.HasValue || bundleAttemptId == Guid.Empty)
+            {
+                return BadRequest("Липсва валиден BundleAttemptId.");
+            }
+
             StudentIdentifier = studentId;
+            BundleAttemptId = bundleAttemptId.Value;
+
             Bundle = await _context.Bundles
                 .Include(b => b.BundlePuzzles)
                 .ThenInclude(bp => bp.Puzzle)
