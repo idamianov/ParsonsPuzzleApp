@@ -52,7 +52,7 @@ namespace ParsonsPuzzleApp.Pages
 
             if (Bundle == null)
             {
-                return NotFound("Бънделът не е намерен.");
+                return NotFound("Колекцията не е намерена.");
             }
 
             TotalPuzzles = Bundle.BundlePuzzles.Count;

@@ -48,7 +48,7 @@ namespace ParsonsPuzzleApp.Pages
             var bundle = await _context.Bundles.FirstOrDefaultAsync(b => b.Id == SelectedBundleId);
             if (bundle == null || bundle.Key != BundleCode)
             {
-                ModelState.AddModelError("BundleCode", "Невалиден код за бъндела.");
+                ModelState.AddModelError("BundleCode", "Невалиден код за колекцията.");
                 Bundles = await _context.Bundles.ToListAsync();
                 return Page();
             }

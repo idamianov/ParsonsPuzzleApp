@@ -4,6 +4,10 @@
     Layout = "_Layout";
 }
 
+@{
+    ViewData["Title"] = "Решаване на пъзели";
+}
+
 <div class="container-fluid d-flex flex-column" style="height: 100vh; padding: 0; overflow: hidden;">
     <div class="header-section d-flex justify-content-between align-items-center p-3 bg-light">
         <h3>Пъзел @Model.PuzzleIndex от @Model.TotalPuzzles - @Model.Puzzle.Language</h3>
@@ -477,7 +481,8 @@
                 const result = await response.json();
                 if (result.isLast) {
                     const stats = result.statistics;
-                    alert(`Бънделът е завършен!\n\nСтатистика:\n- Общо опити: ${stats.totalAttempts}\n- Верни решения: ${stats.correctAttempts}\n- Грешни решения: ${stats.incorrectAttempts}`);
+                    alert(`Колекцията с пъзели е завършена!\n\nСтатистика:\n- Общо опити: ${stats.totalAttempts}\n- Верни решения: ${stats.correctAttempts}\n- Грешни решения: ${stats.incorrectAttempts}`);
+                    window.location.href = result.nextUrl;
                 } else {
                     alert(result.isCorrect ? 'Решението е вярно! Преминавате към следващия пъзел.' : 'Решението е грешно. Преминавате към следващия пъзел.');
                     window.location.href = result.nextUrl;

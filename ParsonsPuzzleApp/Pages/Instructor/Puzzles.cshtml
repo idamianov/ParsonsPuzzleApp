@@ -2,6 +2,10 @@
 @model PuzzlesModel
 @using System.Web
 
+@{
+    ViewData["Title"] = "Пъзели";
+}
+
 <h2>Списък с пъзели</h2>
 
 @if (TempData["SuccessMessage"] != null)
@@ -20,7 +24,7 @@
             <th>Заглавие</th>
             <th>Език</th>
             <th>Задача</th>
-            <th>Свързани пакети</th>
+            <th>Колекции</th>
             <th>Действия</th>
         </tr>
     </thead>

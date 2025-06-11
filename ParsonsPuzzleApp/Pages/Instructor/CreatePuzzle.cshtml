@@ -1,7 +1,10 @@
 ﻿@page
 @model CreatePuzzleModel
+@{
+    ViewData["Title"] = "Създаване на пъзел";
+}
 
-<h1>Създай пъзел</h1>
+<h1>Създаване на пъзел</h1>
 
 <div asp-validation-summary="All" class="text-danger"></div>
 
@@ -34,7 +37,7 @@
         <div id="miniBlocksContainer"></div>
     </div>
     <div class="form-group">
-        <label asp-for="Puzzle.Distractors">Отвличащи елементи</label>
+        <label asp-for="Puzzle.Distractors">Дистрактори</label>
         <textarea asp-for="Puzzle.Distractors" class="form-control" id="distractors"></textarea>
         <span asp-validation-for="Puzzle.Distractors" class="text-danger"></span>
     </div>

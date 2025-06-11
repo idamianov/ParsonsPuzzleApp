@@ -4,20 +4,24 @@
     Layout = "_Layout";
 }
 
+@{
+    ViewData["Title"] = "Избор на колекция";
+}
+
 <div class="container mt-4">
-    <h2>Избор на бъндел</h2>
+    <h2>Избор на колекция с пъзели</h2>
     <form method="post">
         <div class="mb-3">
-            <label class="form-label">Изберете бъндел:</label>
+            <label class="form-label">Изберете колекция с пъзели:</label>
             <select asp-for="SelectedBundleId" class="form-select" asp-items="@(new SelectList(Model.Bundles, "Id", "Identifier"))"></select>
         </div>
         <div class="mb-3">
-            <label asp-for="BundleCode" class="form-label">Код на бъндела:</label>
+            <label asp-for="BundleCode" class="form-label">Въведете код за отключване на колекцията:</label>
             <input asp-for="BundleCode" class="form-control" required />
             <span asp-validation-for="BundleCode" class="text-danger"></span>
         </div>
         <div class="mb-3">
-            <label asp-for="StudentIdentifier" class="form-label">Вашият идентификатор:</label>
+            <label asp-for="StudentIdentifier" class="form-label">Въведете вашия студентски идентификатор:</label>
             <input asp-for="StudentIdentifier" class="form-control" required />
             <span asp-validation-for="StudentIdentifier" class="text-danger"></span>
         </div>

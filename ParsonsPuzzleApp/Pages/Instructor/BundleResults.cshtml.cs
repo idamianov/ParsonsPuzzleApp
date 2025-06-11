@@ -30,7 +30,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             var bundle = await _context.Bundles.FindAsync(bundleId);
             if (bundle == null)
             {
-                return NotFound("Бънделът не е намерен.");
+                return NotFound("Колекцията не е намерена.");
             }
             BundleIdentifier = bundle.Identifier;
 

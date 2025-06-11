@@ -60,7 +60,7 @@ namespace ParsonsPuzzleApp.Controllers
                 .FirstOrDefault(b => b.Id == model.BundleId);
             if (bundle == null)
             {
-                return NotFound("Бънделът не е намерен.");
+                return NotFound("Колекцията не е намерена.");
             }
 
             bool isCorrect = IsSolutionCorrect(model.Arrangement, puzzle);
@@ -95,6 +95,8 @@ namespace ParsonsPuzzleApp.Controllers
                     })
                     .FirstOrDefault() ?? new { TotalAttempts = 0, CorrectAttempts = 0, IncorrectAttempts = 0 };
 
+                var nextUrl = $"/SelectBundle";
+
                 return Ok(new
                 {
                     isLast = true,
@@ -104,7 +106,8 @@ namespace ParsonsPuzzleApp.Controllers
                         stats.TotalAttempts,
                         stats.CorrectAttempts,
                         stats.IncorrectAttempts
-                    }
+                    },
+                    nextUrl
                 });
             }
             else

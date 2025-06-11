@@ -1,12 +1,15 @@
 ﻿@page
 @model BundleResultsModel
+@{
+    ViewData["Title"] = "Резултати";
+}
 
-<h2>Резултати за бъндел: @Model.BundleIdentifier</h2>
+<h2>Резултати: @Model.BundleIdentifier</h2>
 
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Студент-Идентификатор</th>
+            <th>Студент</th>
             @foreach (var attempt in Model.StudentResults.SelectMany(sr => sr.Attempts).Select(a => a.AttemptDate).Distinct().OrderBy(d => d))
             {
                 <th>@attempt.ToString("dd/MM/yyyy HH:mm")</th>
@@ -35,4 +38,4 @@
     </tbody>
 </table>
 
-<a asp-page="./Bundles" class="btn btn-secondary">Назад към списъка с бънделите</a>
+<a asp-page="./Bundles" class="btn btn-secondary">Назад към списъка с пакети</a>

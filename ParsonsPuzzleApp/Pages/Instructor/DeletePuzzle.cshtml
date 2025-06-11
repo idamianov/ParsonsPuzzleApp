@@ -1,5 +1,8 @@
 ﻿@page
 @model DeletePuzzleModel
+@{
+    ViewData["Title"] = "Изтриване на пъзел";
+}
 
 <h2>Изтриване на пъзел</h2>
 
@@ -7,14 +10,14 @@
     <p>Сигурни ли сте, че искате да изтриете пъзела "<strong>@Model.Puzzle.Title</strong>"?</p>
     @if (Model.Puzzle.BundlePuzzles.Any())
     {
-        <p>Този пъзел е свързан със следните пакети:</p>
+        <p>Този пъзел е свързан със следните колекции:</p>
         <ul>
             @foreach (var bundle in Model.Puzzle.BundlePuzzles)
             {
                 <li>@bundle.Bundle.Identifier</li>
             }
         </ul>
-        <p>Изтриването ще го премахне от тези пакети.</p>
+        <p>Изтриването ще го премахне от тези колекции.</p>
     }
 </div>
 

@@ -19,10 +19,10 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
+            .feature-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
 
         .icon-circle {
             width: 80px;
@@ -53,10 +53,16 @@
             border: 2px solid transparent;
         }
 
-        .code-line:hover {
-            background-color: #282d56;
-            border-color: #007bff;
-            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+            .code-line:hover {
+                background-color: #282d56;
+                border-color: #007bff;
+                box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+            }
+
+        .sortable-ghost {
+            opacity: 0.7;
+            background-color: #9696ff;
+            border: 2px dashed #007bff;
         }
 
         .step-number {
@@ -95,14 +101,15 @@
                     </a>
                 </div>
             </div>
-            <div class="col-lg-6 text-center">
+            <div class="col-lg-6">
                 <div class="puzzle-example">
+                    <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;factorial = factorial * i</div>
                     <div class="code-line">for i in range(1, n + 1):</div>
                     <div class="code-line">print(f"Факториел на {n} е: {factorial}")</div>
-                    <div class="code-line">n = 5</div>
-                    <div class="code-line">factorial = factorial * i</div>
                     <div class="code-line">factorial = 1</div>
+                    <div class="code-line">n = 5</div>
                 </div>
+                <p class="text-white mt-2 text-center">Опитай да подредиш кода!</p>
             </div>
         </div>
     </div>
@@ -208,9 +215,9 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start mb-3">
                                     <div>
-                                        <h5 class="mb-2">Уникални кодове</h5>
+                                        <h5 class="mb-2">Достъп до пакет по код</h5>
                                         <p class="text-muted mb-0">
-                                            Всеки пъзел има <strong>уникално име и код</strong>, който позволява лесно споделяне и достъп до конкретни задачи.
+                                            Всеки пакет от пъзели има <strong>уникално име и код</strong>, който позволява лесно споделяне и достъп до конкретни задачи.
                                         </p>
                                     </div>
                                 </div>
@@ -224,7 +231,7 @@
                                     <div>
                                         <h5 class="mb-2">Множество езици</h5>
                                         <p class="text-muted mb-0">
-                                            Поддръжка на различни програмни езици включително <strong>Python, SQL, JavaScript</strong> и други.
+                                            Поддръжка на различни програмни езици с различен синтаксис включително <strong>Python, SQL, JavaScript</strong> и други.
                                         </p>
                                     </div>
                                 </div>
@@ -236,9 +243,9 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start mb-3">
                                     <div>
-                                        <h5 class="mb-2">Drag & Drop</h5>
+                                        <h5 class="mb-2">Управление на вложени конструкции</h5>
                                         <p class="text-muted mb-0">
-                                            Интуитивен интерфейс за подреждане на редовете код чрез <strong>плъзгане и пускане</strong>.
+                                            Интуитивен интерфейс за подреждане на редовете код чрез <strong>плъзгане и пускане</strong> и добавяне на отстъпи.
                                         </p>
                                     </div>
                                 </div>
@@ -249,51 +256,64 @@
                         <div class="card feature-card h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center mb-3">
-                                    <h5 class="mb-0">Моментална обратна връзка</h5>
+                                    <div>
+                                        <h5 class="mb-0">Моментална обратна връзка</h5>
+                                        <p class="text-muted mb-0">
+                                            Получавай <strong>незабавна обратна връзка</strong> за правилността на решението си.
+                                        </p>
+                                    </div>
                                 </div>
-                                <p class="text-muted">
-                                    Получавай <strong>незабавна обратна връзка</strong> за правилността на решението си.
-                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </section>
 
     <!-- Call to Action -->
-    <section class="text-center mb-5">
-        <div class="row">
-            <div class="col-lg-6 mx-auto">
-                <div class="card border-primary">
-                    <div class="card-body p-4">
-                        <h3 class="card-title text-primary mb-3">
-                            <i class="fas fa-rocket me-2"></i>
-                            Готов ли си да започнеш?
-                        </h3>
-                        <p class="card-text mb-4">
-                            Избери как искаш да използваш платформата:
-                        </p>
-                        <div class="d-flex justify-content-center gap-3 flex-wrap">
-                            <a asp-page="/SelectBundle" class="btn btn-primary btn-lg">
-                                <i class="fas fa-play me-2"></i>
-                                Решавай пъзели
-                            </a>
-                            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-primary btn-lg">
-                                <i class="fas fa-plus me-2"></i>
-                                Създавай пъзели
-                            </a>
+    <section class="call-to-action">
+        <div class="text-center mb-5">
+            <div class="row">
+                <div class="col-lg-6 mx-auto">
+                    <div class="card border-primary">
+                        <div class="card-body p-4">
+                            <h3 class="card-title text-primary mb-3">
+                                <i class="fas fa-rocket me-2"></i>
+                                Готов ли си да започнеш?
+                            </h3>
+                            <p class="card-text mb-4">
+                                Избери как искаш да използваш платформата:
+                            </p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <a asp-page="/SelectBundle" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-play me-2"></i>
+                                    Решавай пъзели
+                                </a>
+                                <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-primary btn-lg">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Създавай пъзели
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </section>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
+        // Initialize Sortable for puzzle example
+        const puzzleExample = document.querySelector('.puzzle-example');
+        if (puzzleExample) {
+            new Sortable(puzzleExample, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                handle: '.code-line',
+            });
+        }
+
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {

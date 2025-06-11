@@ -1,7 +1,10 @@
 ﻿@page
 @model BundlesModel
+@{
+    ViewData["Title"] = "Управление на колекции";
+}
 
-<h2>Списък с пакети</h2>
+<h2>Колекции от пъзели</h2>
 
 <table class="table table-striped">
     <thead>
@@ -36,7 +39,7 @@
     </tbody>
 </table>
 
-<a asp-page="./CreateBundle" class="btn btn-success">Създай нов пакет</a>
+<a asp-page="./CreateBundle" class="btn btn-success">Създай нова колекция от пъзели</a>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
