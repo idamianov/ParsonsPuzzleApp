@@ -392,7 +392,12 @@
                 let indent = 0;
                 let content = '';
 
-                if (block.classList.contains('code-block')) {
+                if (block.classList.contains('code-block') || block.classList.contains('brace-block')) {
+
+                    if (block.classList.contains('brace-block')) {
+                        return block.textContent.trim();
+                    }
+
                     indent = parseInt(block.style.marginLeft || 0) / 20;
                     const codeContent = block.querySelector('.code-content');
                     if (!codeContent) return '';

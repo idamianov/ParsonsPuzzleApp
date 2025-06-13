@@ -151,10 +151,10 @@ namespace ParsonsPuzzleApp.Controllers
             {
                 // Remove leading whitespace/tabs, keep braces, remove empty lines
                 processedArrangement = string.Join("\n", processedArrangement.Split('\n')
-                    .Select(l => l.TrimStart())
+                    .Select(l => l.Trim())
                     .Where(l => !string.IsNullOrWhiteSpace(l)));
                 processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
-                    .Select(l => l.TrimStart())
+                    .Select(l => l.Trim())
                     .Where(l => !string.IsNullOrWhiteSpace(l)));
             }
 
