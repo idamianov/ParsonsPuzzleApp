@@ -16,6 +16,9 @@ namespace ParsonsPuzzleApp.Pages.Instructor
     {
         private readonly ApplicationDbContext _context;
 
+        [BindProperty]
+        public List<PuzzleBlockViewModel> PuzzleBlocks { get; set; } = new List<PuzzleBlockViewModel>();
+
         public CreatePuzzleModel(ApplicationDbContext context)
         {
             _context = context;
@@ -85,6 +88,51 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             _context.Puzzles.Add(Puzzle);
             _context.SaveChanges();
 
+            // Обработка на PuzzleBlocks ако има такива
+            if (PuzzleBlocks != null && PuzzleBlocks.Any())
+            {
+                for (int i = 0; i < PuzzleBlocks.Count; i++)
+                {
+                    var blockVm = PuzzleBlocks[i];
+                    if (blockVm == null) continue;
+
+                    var puzzleBlock = new PuzzleBlock
+                    {
+                        PuzzleId = Puzzle.Id,
+                        Content = blockVm.Content ?? string.Empty,
+                        GroupId = blockVm.GroupId,
+                        BlockType = blockVm.BlockType,
+                        IsMultiline = blockVm.IsMultiline,
+                        IsOrderIndependent = blockVm.OrderIndependent,
+                        OrderIndex = i,
+                        IsDistractor = false
+                    };
+
+                    _context.PuzzleBlocks.Add(puzzleBlock);
+                    _context.SaveChanges();
+
+                    // Ако е многоредов, добавяме редовете
+                    if (blockVm.IsMultiline && blockVm.Lines != null)
+                    {
+                        for (int j = 0; j < blockVm.Lines.Count; j++)
+                        {
+                            var line = blockVm.Lines[j];
+                            if (!string.IsNullOrWhiteSpace(line))
+                            {
+                                _context.PuzzleBlockLines.Add(new PuzzleBlockLine
+                                {
+                                    PuzzleBlockId = puzzleBlock.Id,
+                                    Content = line,
+                                    LineOrder = j,
+                                    IsOptional = false
+                                });
+                            }
+                        }
+                        _context.SaveChanges();
+                    }
+                }
+            }
+
             // Добавяне на MiniBlocks
             foreach (var slot in MiniBlocks)
             {
@@ -101,12 +149,23 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             }
 
             _context.SaveChanges();
+
             return RedirectToPage("/Instructor/Puzzles");
         }
 
         public class MiniBlockInput
         {
             public string Content { get; set; }
+        }
+
+        public class PuzzleBlockViewModel
+        {
+            public string Content { get; set; }
+            public string GroupId { get; set; }
+            public string BlockType { get; set; }
+            public bool IsMultiline { get; set; }
+            public bool OrderIndependent { get; set; }
+            public List<string> Lines { get; set; } = new List<string>();
         }
     }
 }

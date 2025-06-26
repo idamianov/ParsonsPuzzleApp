@@ -228,6 +228,76 @@
             transition: all 0.1s ease;
             display: none;
         }
+
+        .multiline-block {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .multiline-container {
+            padding: 0.5rem;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            margin: 0.125rem 0;
+            background: white;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+            .code-line:hover {
+                background: #e9ecef;
+            }
+
+        .line-content {
+            flex: 1;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+        }
+
+        .drag-handle {
+            cursor: move;
+            padding: 0 0.5rem;
+            color: #adb5bd;
+            user-select: none;
+        }
+
+        .multiline-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: #e9ecef;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+            .toggle-btn:hover {
+                background: #dee2e6;
+            }
+
+        .block-type-indicator {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+
     </style>
     <script>
         let startTime = Date.now();
@@ -235,10 +305,166 @@
         dropIndicator.className = 'drop-target-indicator';
         document.body.appendChild(dropIndicator);
 
+        class PuzzleBlockManager {
+            constructor() {
+                this.blocks = new Map();
+                this.groupDefinitions = new Map();
+            }
+
+            initializePuzzleBlocks(blockConfigs) {
+                blockConfigs.forEach(config => {
+                    if (config.blockType === 'multiline') {
+                        this.createMultilineBlock(config);
+                    }
+                });
+            }
+
+            createMultilineBlock(config) {
+                const blockId = `puzzle-block-${config.groupId}`;
+                const blockElement = document.createElement('div');
+                blockElement.className = 'code-block multiline-block';
+                blockElement.id = blockId;
+                blockElement.dataset.groupId = config.groupId;
+                blockElement.dataset.orderIndependent = config.orderMatters ? 'false' : 'true';
+
+                const linesContainer = document.createElement('div');
+                linesContainer.className = 'multiline-container';
+
+                config.lines.forEach((line, index) => {
+                    const lineElement = this.createLineElement(line, index, config);
+                    linesContainer.appendChild(lineElement);
+                });
+
+                blockElement.appendChild(linesContainer);
+
+                const controls = this.createMultilineControls(config);
+                blockElement.appendChild(controls);
+
+                return blockElement;
+            }
+
+            createLineElement(line, index, config) {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'code-line';
+                lineDiv.dataset.lineIndex = index;
+                lineDiv.dataset.optional = line.optional || false;
+
+                const content = document.createElement('span');
+                content.className = 'line-content';
+                content.textContent = line.content;
+                lineDiv.appendChild(content);
+
+                if (config.orderMatters === false) {
+                    const handle = document.createElement('span');
+                    handle.className = 'drag-handle';
+                    handle.innerHTML = '⋮⋮';
+                    lineDiv.appendChild(handle);
+                }
+
+                return lineDiv;
+            }
+
+            createMultilineControls(config) {
+                const controls = document.createElement('div');
+                controls.className = 'multiline-controls';
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'toggle-btn';
+                toggleBtn.innerHTML = '▼';
+                toggleBtn.onclick = () => this.toggleBlockView(config.groupId);
+                controls.appendChild(toggleBtn);
+
+                const typeIndicator = document.createElement('span');
+                typeIndicator.className = 'block-type-indicator';
+                typeIndicator.textContent = config.blockType;
+                controls.appendChild(typeIndicator);
+
+                return controls;
+            }
+
+            toggleBlockView(groupId) {
+                const block = document.getElementById(`puzzle-block-${groupId}`);
+                const container = block.querySelector('.multiline-container');
+                const toggleBtn = block.querySelector('.toggle-btn');
+                const isCollapsed = block.classList.contains('collapsed');
+
+                if (isCollapsed) {
+                    block.classList.remove('collapsed');
+                    container.style.display = 'block';
+                    toggleBtn.innerHTML = '▼';
+                } else {
+                    block.classList.add('collapsed');
+                    container.style.display = 'none';
+                    toggleBtn.innerHTML = '▶';
+                }
+            }
+
+            exportSolution(targetPanel) {
+                const blocks = targetPanel.querySelectorAll('.code-block');
+                let solution = [];
+
+                blocks.forEach(block => {
+                    if (block.classList.contains('multiline-block')) {
+                        const lines = Array.from(block.querySelectorAll('.code-line'));
+                        lines.forEach(line => {
+                            const content = line.querySelector('.line-content').textContent;
+                            const indent = parseInt(block.style.marginLeft || 0) / 20;
+                            solution.push('  '.repeat(indent) + content);
+                        });
+                    } else {
+                        const content = block.querySelector('.code-content')?.textContent || block.textContent;
+                        const indent = parseInt(block.style.marginLeft || 0) / 20;
+                        solution.push('  '.repeat(indent) + content);
+                    }
+                });
+
+                return solution.join('\n');
+            }
+        }
+
+        const blockManager = new PuzzleBlockManager();
+
         function initializePuzzle() {
             const sourcePanel = document.getElementById('sourcePanel');
             const targetPanel = document.getElementById('targetPanel');
             const miniBlocksPanel = document.getElementById('miniBlocksPanel');
+
+
+            @if (Model.PuzzleBlocks != null && Model.PuzzleBlocks.Any())
+            {
+                    <text>
+                    const puzzleBlocks = @Html.Raw(Json.Serialize(Model.PuzzleBlocks));
+                            puzzleBlocks.forEach(block => {
+                                let blockElement;
+
+                                if (block.isMultiline && block.lines && block.lines.length > 0) {
+                                    // Създаване на многоредов блок
+                                    blockElement = blockManager.createMultilineBlock({
+                                        groupId: block.groupId,
+                                        blockType: block.blockType,
+                                        orderMatters: !block.isOrderIndependent,
+                                        lines: block.lines.map(line => ({
+                                            content: line.content,
+                                            optional: line.isOptional
+                                        }))
+                                    });
+                                } else {
+                                    // Създаване на обикновен блок
+                                    blockElement = document.createElement('div');
+                                    blockElement.className = 'code-block';
+                                    blockElement.innerHTML = `<span class="code-content">${block.content}</span>`;
+                                }
+
+                                // Добавяне към source панела
+                                if (!block.isDistractor) {
+                                    document.getElementById('sourcePanel').appendChild(blockElement);
+                                }
+                            });
+                    blockManager.initializePuzzleBlocks(puzzleBlocks);
+                    </text>
+            }
+
+
 
             new Sortable(sourcePanel, {
                 group: 'code-blocks',
@@ -383,51 +609,69 @@
 
         function getArrangement() {
             const targetPanel = document.getElementById('targetPanel');
-            const blocks = Array.from(targetPanel.children);
-            if (blocks.length === 0) {
-                return '';
+
+            @if (Model.PuzzleBlocks != null && Model.PuzzleBlocks.Any())
+            {
+                <text>
+                return blockManager.exportSolution(targetPanel);
+                </text>
             }
-
-            return blocks.map(block => {
-                let indent = 0;
-                let content = '';
-
-                if (block.classList.contains('code-block') || block.classList.contains('brace-block')) {
-
-                    if (block.classList.contains('brace-block')) {
-                        return block.textContent.trim();
-                    }
-
-                    indent = parseInt(block.style.marginLeft || 0) / 20;
-                    const codeContent = block.querySelector('.code-content');
-                    if (!codeContent) return '';
-
-                    const textNodes = [];
-                    const walker = document.createTreeWalker(codeContent, NodeFilter.SHOW_TEXT, null, false);
-                    while (walker.nextNode()) {
-                        const node = walker.currentNode;
-                        if (!node.parentElement.closest('.remove-mini-block')) {
-                            textNodes.push(node.nodeValue);
-                        }
-                    }
-                    content = textNodes.join('');
-
-                    const slot = block.querySelector('.slot');
-                    if (slot && slot.classList.contains('filled')) {
-                        const miniBlock = slot.querySelector('.mini-block');
-                        if (miniBlock) {
-                            const slotName = slot.dataset.slot;
-                            const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue : '';
-                            content = content.replace(`§${slotName}§`, miniBlockText);
-                        } else {
-                            content = content.replace(/§\w+§/, '');
-                        }
-                    }
+            else
+            {
+                <text>
+                // Използваме съществуващата логика
+                const blocks = Array.from(targetPanel.children);
+                if (blocks.length === 0) {
+                    return '';
                 }
 
-                return '  '.repeat(indent) + content;
-            }).filter(line => line).join('\n');
-        }
+                const blocks = Array.from(targetPanel.children);
+                if (blocks.length === 0) {
+                    return '';
+                }
+
+                return blocks.map(block => {
+                    let indent = 0;
+                    let content = '';
+
+                    if (block.classList.contains('code-block') || block.classList.contains('brace-block')) {
+
+                        if (block.classList.contains('brace-block')) {
+                            return block.textContent.trim();
+                        }
+
+                        indent = parseInt(block.style.marginLeft || 0) / 20;
+                        const codeContent = block.querySelector('.code-content');
+                        if (!codeContent) return '';
+
+                        const textNodes = [];
+                        const walker = document.createTreeWalker(codeContent, NodeFilter.SHOW_TEXT, null, false);
+                        while (walker.nextNode()) {
+                            const node = walker.currentNode;
+                            if (!node.parentElement.closest('.remove-mini-block')) {
+                                textNodes.push(node.nodeValue);
+                            }
+                        }
+                        content = textNodes.join('');
+
+                        const slot = block.querySelector('.slot');
+                        if (slot && slot.classList.contains('filled')) {
+                            const miniBlock = slot.querySelector('.mini-block');
+                            if (miniBlock) {
+                                const slotName = slot.dataset.slot;
+                                const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue : '';
+                                content = content.replace(`§${slotName}§`, miniBlockText);
+                            } else {
+                                content = content.replace(/§\w+§/, '');
+                            }
+                        }
+                    }
+
+                    return '  '.repeat(indent) + content;
+                }).filter(line => line).join('\n');
+                    </text>
+            }
+        }  
 
         async function checkSolution() {
             try {

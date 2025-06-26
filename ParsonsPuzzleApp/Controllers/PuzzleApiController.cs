@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Models;
+using ParsonsPuzzleApp.Services;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -13,10 +14,12 @@ namespace ParsonsPuzzleApp.Controllers
     public class PuzzleApiController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILanguageIndentationService _indentationService;
 
-        public PuzzleApiController(ApplicationDbContext context)
+        public PuzzleApiController(ApplicationDbContext context, ILanguageIndentationService indentationService)
         {
             _context = context;
+            _indentationService = indentationService;
         }
 
         [HttpPost("check")]
@@ -136,35 +139,61 @@ namespace ParsonsPuzzleApp.Controllers
                 return false; // Unreplaced slots indicate incorrect solution
             }
 
-            // Step 2: Normalize based on language
-            if (puzzle.Language.ToString().ToLower() == "python")
-            {
-                // Preserve indentation, trim leading/trailing empty lines
-                processedArrangement = string.Join("\n", processedArrangement.Split('\n')
-                    .Select(l => l.TrimEnd())
-                    .Where(l => !string.IsNullOrWhiteSpace(l)));
-                processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
-                    .Select(l => l.TrimEnd())
-                    .Where(l => !string.IsNullOrWhiteSpace(l)));
-            }
-            else
-            {
-                // Remove leading whitespace/tabs, keep braces, remove empty lines
-                processedArrangement = string.Join("\n", processedArrangement.Split('\n')
-                    .Select(l => l.Trim())
-                    .Where(l => !string.IsNullOrWhiteSpace(l)));
-                processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
-                    .Select(l => l.Trim())
-                    .Where(l => !string.IsNullOrWhiteSpace(l)));
-            }
+            return _indentationService.ValidateIndentation(
+                processedArrangement,
+                processedSourceCode,
+                puzzle.Language
+            );
 
-            // Normalize new lines
-            processedArrangement = processedArrangement.Replace("\r\n", "\n").Trim();
-            processedSourceCode = processedSourceCode.Replace("\r\n", "\n").Trim();
+            //// Step 2: Normalize based on language
+            //if (puzzle.Language.ToString().ToLower() == "python")
+            //{
+            //    // Preserve indentation, trim leading/trailing empty lines
+            //    processedArrangement = string.Join("\n", processedArrangement.Split('\n')
+            //        .Select(l => l.TrimEnd())
+            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
+            //    processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
+            //        .Select(l => l.TrimEnd())
+            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
+            //}
+            //else
+            //{
+            //    // Remove leading whitespace/tabs, keep braces, remove empty lines
+            //    processedArrangement = string.Join("\n", processedArrangement.Split('\n')
+            //        .Select(l => l.Trim())
+            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
+            //    processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
+            //        .Select(l => l.Trim())
+            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
+            //}
 
-            // Step 3: Compare normalized codes
-            return string.Equals(processedArrangement, processedSourceCode, StringComparison.OrdinalIgnoreCase);
+            //// Normalize new lines
+            //processedArrangement = processedArrangement.Replace("\r\n", "\n").Trim();
+            //processedSourceCode = processedSourceCode.Replace("\r\n", "\n").Trim();
+
+            //// Step 3: Compare normalized codes
+            //return string.Equals(processedArrangement, processedSourceCode, StringComparison.OrdinalIgnoreCase);
         }
+
+        //private async Task<bool> ValidatePuzzleBlocksSolution(string arrangement, int puzzleId)
+        //{
+        //    var puzzleBlocks = await _context.PuzzleBlocks
+        //        .Where(pb => pb.PuzzleId == puzzleId)
+        //        .Include(pb => pb.Lines)
+        //        .ToListAsync();
+
+        //    if (!puzzleBlocks.Any())
+        //        return false;
+
+        //    // Генериране на очакван код от PuzzleBlocks
+        //    var expectedCode = GenerateCodeFromBlocks(puzzleBlocks);
+
+        //    return _indentationService.ValidateIndentation(
+        //        arrangement,
+        //        expectedCode,
+        //        _context.Puzzles.Find(puzzleId).Language
+        //    );
+        //}
 
         public class CheckRequestModel
         {

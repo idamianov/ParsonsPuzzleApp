@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Services;
 
 namespace ParsonsPuzzleApp
 {
@@ -38,6 +39,9 @@ namespace ParsonsPuzzleApp
 
             builder.Services.AddRazorPages();
             builder.Services.AddControllers();
+
+            builder.Services.AddScoped<IPuzzleBlockService, PuzzleBlockService>();
+            builder.Services.AddScoped<ILanguageIndentationService, LanguageIndentationService>();
 
             var app = builder.Build();
 

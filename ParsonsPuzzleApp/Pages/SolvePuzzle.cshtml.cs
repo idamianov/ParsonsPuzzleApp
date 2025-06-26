@@ -5,6 +5,7 @@ namespace ParsonsPuzzleApp.Pages
     using Microsoft.EntityFrameworkCore;
     using ParsonsPuzzleApp.Data;
     using ParsonsPuzzleApp.Models;
+    using ParsonsPuzzleApp.Services;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -14,10 +15,12 @@ namespace ParsonsPuzzleApp.Pages
     public class SolvePuzzleModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPuzzleBlockService _puzzleBlockService;
 
-        public SolvePuzzleModel(ApplicationDbContext context)
+        public SolvePuzzleModel(ApplicationDbContext context, IPuzzleBlockService puzzleBlockService)
         {
             _context = context;
+            _puzzleBlockService = puzzleBlockService;
         }
 
         public Bundle Bundle { get; set; }
@@ -29,6 +32,7 @@ namespace ParsonsPuzzleApp.Pages
         public List<CodeBlock> ShuffledCodeBlocks { get; set; }
         public List<MiniBlockConfig> MiniBlocks { get; set; }
 
+        public List<PuzzleBlock> PuzzleBlocks { get; set; }
         public async Task<IActionResult> OnGetAsync(int bundleId, string studentId, int puzzleIndex, Guid? bundleAttemptId)
         {
             if (string.IsNullOrWhiteSpace(studentId))
@@ -83,6 +87,19 @@ namespace ParsonsPuzzleApp.Pages
                 SlotName = mb.SlotName,
                 IsCorrect = mb.IsCorrect
             }).ToList();
+
+            if (Puzzle != null)
+            {
+                PuzzleBlocks = await _puzzleBlockService.GetPuzzleBlocksAsync(Puzzle.Id);
+
+                // Ако няма PuzzleBlocks, използвайте стария метод
+                if (!PuzzleBlocks.Any())
+                {
+                    ShuffledCodeBlocks = ParseSourceCode(Puzzle)
+                        .OrderBy(x => Random.Shared.Next())
+                        .ToList();
+                }
+            }
 
             return Page();
         }

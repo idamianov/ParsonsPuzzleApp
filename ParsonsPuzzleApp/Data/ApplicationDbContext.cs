@@ -19,6 +19,9 @@ namespace ParsonsPuzzleApp.Data
 
         public DbSet<StudentAttempt> StudentAttempts { get; set; }
 
+        public DbSet<PuzzleBlock> PuzzleBlocks { get; set; }
+        public DbSet<PuzzleBlockLine> PuzzleBlockLines { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -52,6 +55,16 @@ namespace ParsonsPuzzleApp.Data
                 .WithMany()
                 .HasForeignKey(sa => sa.PuzzleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PuzzleBlock>()
+                .HasOne(pb => pb.Puzzle)
+                .WithMany(p => p.PuzzleBlocks)
+                .HasForeignKey(pb => pb.PuzzleId);
+
+            modelBuilder.Entity<PuzzleBlockLine>()
+                .HasOne(pbl => pbl.PuzzleBlock)
+                .WithMany(pb => pb.Lines)
+                .HasForeignKey(pbl => pbl.PuzzleBlockId);
         }
     }
 }
