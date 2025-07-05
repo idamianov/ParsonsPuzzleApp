@@ -9,7 +9,7 @@
 }
 
 <div class="container-fluid d-flex flex-column" style="height: 100vh; padding: 0; overflow: hidden;">
-    <div class="header-section d-flex justify-content-between align-items-center p-3 bg-light">
+    <div class="header-section d-flex justify-content-between align-items-center p-3 bg-light" style="flex-shrink: 0;">
         <h3>Пъзел @Model.PuzzleIndex от @Model.TotalPuzzles - @Model.Puzzle.Language</h3>
         <div>
             <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#taskModal">Условие на заданието</button>
@@ -18,18 +18,30 @@
             <button class="btn btn-danger" onclick="if(confirm('Сигурни ли сте?')) resetPuzzle()">Рестарт</button>
         </div>
     </div>
-    <div class="middle-section flex-grow-1 d-flex overflow-hidden">
+    <div class="middle-section d-flex" style="flex: 0 1 70vh; min-height: 350px; overflow: hidden;">
         <div class="left-panel p-3 bg-light overflow-auto" style="flex: 1; background-color: #f8f9fa;" id="sourcePanel">
             @* Code blocks will be added via JavaScript *@
         </div>
         <div class="right-panel p-3 bg-white overflow-auto" style="flex: 1;" id="targetPanel"></div>
     </div>
-    <div class="mini-blocks-panel p-3 bg-light" id="miniBlocksPanel">
-        @foreach (var mb in Model.MiniBlocks)
-        {
-            <div class="mini-block" id="mini-@Model.MiniBlocks.IndexOf(mb)">@mb.Content</div>
-        }
-    </div>
+    @if (Model.MiniBlocks != null && Model.MiniBlocks.Any())
+    {
+        <div class="mini-blocks-panel p-3 bg-light" style="flex: 1; min-height: 100px; max-height: 25vh; overflow-y: auto; border-top: 2px solid #007bff;" id="miniBlocksPanel">
+            <div class="mb-2">
+                <strong><i class="fas fa-puzzle-piece"></i> Мини-блокове за слотове:</strong>
+                <small class="text-muted">(Плъзнете в слотовете marked with [____])</small>
+            </div>
+            @foreach (var mb in Model.MiniBlocks)
+            {
+                <div class="mini-block" id="mini-@Model.MiniBlocks.IndexOf(mb)">@mb.Content</div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Hidden mini-blocks panel for JavaScript to find -->
+        <div class="mini-blocks-panel p-3 bg-light" style="display: none;" id="miniBlocksPanel"></div>
+    }
 </div>
 
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
@@ -394,7 +406,10 @@
                             removeBtn.className = 'remove-mini-block';
                             removeBtn.textContent = 'X';
                             removeBtn.onclick = () => {
-                                miniBlocksPanel.appendChild(miniBlock);
+                                // Only try to append to miniBlocksPanel if it's visible
+                                if (miniBlocksPanel && miniBlocksPanel.style.display !== 'none') {
+                                    miniBlocksPanel.appendChild(miniBlock);
+                                }
                                 removeBtn.remove();
                                 slot.classList.remove('filled');
                             };
