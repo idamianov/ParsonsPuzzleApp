@@ -327,7 +327,7 @@
                 } else {
                     // Create single-line block
                     blockElement = document.createElement('div');
-                    blockElement.className = 'code-block' + (block.isDistractor ? ' distractor' : '');
+                    blockElement.className = 'code-block'; // Removed distractor class hint
 
                     if (block.slotName) {
                         // Handle slots - escape HTML properly
@@ -357,7 +357,7 @@
                 onAdd: function(evt) {
                     const block = evt.item;
                     block.style.marginLeft = '0px'; // Reset any indentation when returning to source
-                    block.classList.remove('distractor');
+                    // Removed distractor class removal - no longer needed
                 }
             });
 
