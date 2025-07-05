@@ -14,28 +14,29 @@ namespace ParsonsPuzzleApp.Services
 
     public class MultilineBlockParser : IMultilineBlockParser
     {
-        private readonly Dictionary<Languages, CommentSyntax> _commentSyntax = new()
+        private readonly Dictionary<Languages, string> _commentSyntax = new()
         {
-            { Languages.C, new CommentSyntax { Single = "//", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.Cpp, new CommentSyntax { Single = "//", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.CSharp, new CommentSyntax { Single = "//", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.Java, new CommentSyntax { Single = "//", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.JavaScript, new CommentSyntax { Single = "//", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.Python, new CommentSyntax { Single = "#" } },
-            { Languages.TSQL, new CommentSyntax { Single = "--", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.MySQL, new CommentSyntax { Single = "--", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.PostgreSQL, new CommentSyntax { Single = "--", MultiStart = "/*", MultiEnd = "*/" } },
-            { Languages.plSQL, new CommentSyntax { Single = "--", MultiStart = "/*", MultiEnd = "*/" } }
+            { Languages.C, "//" },
+            { Languages.Cpp, "//" },
+            { Languages.CSharp, "//" },
+            { Languages.Java, "//" },
+            { Languages.JavaScript, "//" },
+            { Languages.Python, "#" },
+            { Languages.TSQL, "--" },
+            { Languages.MySQL, "--" },
+            { Languages.PostgreSQL, "--" },
+            { Languages.plSQL, "--" }
         };
 
         public List<PuzzleBlock> ParseSourceCode(string sourceCode, int puzzleId, Languages language)
         {
             var blocks = new List<PuzzleBlock>();
             var lines = sourceCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
-            var syntax = _commentSyntax[language];
+            var commentSyntax = _commentSyntax[language];
 
-            var startPattern = $@"^{Regex.Escape(syntax.Single)}-->\[(\w+):(ordered|unordered)\]";
-            var endPattern = $@"^{Regex.Escape(syntax.Single)}<--";
+            // Simple patterns: just start and end markers
+            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
+            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--\s*$";
 
             int orderIndex = 0;
             int i = 0;
@@ -43,18 +44,15 @@ namespace ParsonsPuzzleApp.Services
             while (i < lines.Length)
             {
                 var line = lines[i];
-                var startMatch = Regex.Match(line.Trim(), startPattern);
+                var trimmedLine = line.Trim();
 
-                if (startMatch.Success)
+                if (Regex.IsMatch(trimmedLine, startPattern))
                 {
-                    // Намерили сме начало на многоредов блок
-                    var blockName = startMatch.Groups[1].Value;
-                    var ordering = startMatch.Groups[2].Value;
+                    // Found start of multiline block
                     var blockLines = new List<string>();
+                    i++; // Skip the start marker
 
-                    i++; // Прескачаме началния маркер
-
-                    // Събираме редовете до края на блока
+                    // Collect lines until end marker
                     while (i < lines.Length && !Regex.IsMatch(lines[i].Trim(), endPattern))
                     {
                         blockLines.Add(lines[i]);
@@ -63,31 +61,31 @@ namespace ParsonsPuzzleApp.Services
 
                     if (blockLines.Any())
                     {
-                        // Проверяваме дали блокът съдържа слотове
+                        // Check if block contains slots
                         var blockContent = string.Join("\n", blockLines);
                         var slotName = ExtractSlotName(blockContent);
 
-                        // Създаваме многоредов блок
+                        // Create multiline block
                         var block = new PuzzleBlock
                         {
                             PuzzleId = puzzleId,
-                            GroupId = blockName,
-                            BlockType = blockName.ToLower(),
+                            GroupId = $"multiline_{orderIndex}", // Simple group ID
+                            BlockType = "multiline",
                             IsMultiline = true,
-                            IsOrderIndependent = ordering == "unordered",
+                            IsOrderIndependent = false, // Lines always stay in order
                             OrderIndex = orderIndex++,
                             IsDistractor = false,
                             Content = blockContent,
                             SlotName = slotName
                         };
 
-                        // НЕ добавяме Lines тук - ще ги добавим в CreatePuzzle.cshtml.cs
                         blocks.Add(block);
                     }
                 }
-                else if (!string.IsNullOrWhiteSpace(line) && !Regex.IsMatch(line.Trim(), endPattern))
+                else if (!string.IsNullOrWhiteSpace(trimmedLine) &&
+                         !Regex.IsMatch(trimmedLine, endPattern))
                 {
-                    // Обикновен единичен блок
+                    // Regular single line block
                     blocks.Add(new PuzzleBlock
                     {
                         PuzzleId = puzzleId,
@@ -107,14 +105,6 @@ namespace ParsonsPuzzleApp.Services
             return blocks;
         }
 
-        // Нов метод за получаване на линиите за блок
-        public List<string> GetBlockLines(string blockContent)
-        {
-            return blockContent.Split('\n')
-                .Select(l => l.TrimEnd('\r'))
-                .ToList();
-        }
-
         private string? ExtractSlotName(string content)
         {
             var match = Regex.Match(content, @"§(\w+)§");
@@ -125,26 +115,18 @@ namespace ParsonsPuzzleApp.Services
         {
             var syntax = _commentSyntax[language];
             return $@"За {language} използвайте:
-{syntax.Single}-->[име:ordered] за подреден блок
-{syntax.Single}-->[име:unordered] за неподреден блок
-{syntax.Single}<-- за край на блок
+{syntax}--> за начало на многоредов блок
+{syntax}<-- за край на многоредов блок
 
 Пример:
-{syntax.Single}-->[variables:unordered]
+{syntax}-->
 int x = 10;
 int y = 20;
-{syntax.Single}<--";
-        }
-
-        private class CommentSyntax
-        {
-            public string Single { get; set; }
-            public string MultiStart { get; set; }
-            public string MultiEnd { get; set; }
+{syntax}<--";
         }
     }
 
-    // Статичен помощен клас за валидация
+    // Simplified validator
     public static class MultilineBlockValidator
     {
         private static readonly Dictionary<Languages, string> _commentSyntaxMap = new()
@@ -164,10 +146,10 @@ int y = 20;
         public static bool ValidateBlockSyntax(string sourceCode, Languages language)
         {
             if (!_commentSyntaxMap.TryGetValue(language, out var commentSyntax))
-                return true; // Ако не познаваме езика, приемаме че е валиден
+                return true;
 
-            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\[(\w+):(ordered|unordered)\]";
-            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--";
+            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
+            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--\s*$";
 
             var lines = sourceCode.Split('\n');
             int openBlocks = 0;
@@ -181,10 +163,10 @@ int y = 20;
                     openBlocks--;
 
                 if (openBlocks < 0)
-                    return false; // Затварящ таг без отварящ
+                    return false; // Closing tag without opening
             }
 
-            return openBlocks == 0; // Всички блокове са затворени
+            return openBlocks == 0; // All blocks are closed
         }
     }
 }

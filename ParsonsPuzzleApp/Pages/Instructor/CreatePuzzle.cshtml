@@ -9,32 +9,39 @@
 <div asp-validation-summary="All" class="text-danger"></div>
 
 <form method="post" id="puzzleForm">
-    <div class="form-group">
-        <label asp-for="Puzzle.Title">Заглавие</label>
+    <div class="form-group mb-3">
+        <label asp-for="Puzzle.Title" class="form-label">Заглавие</label>
         <input asp-for="Puzzle.Title" class="form-control" required />
         <span asp-validation-for="Puzzle.Title" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="Puzzle.Task">Задача</label>
-        <textarea asp-for="Puzzle.Task" class="form-control" required></textarea>
+
+    <div class="form-group mb-3">
+        <label asp-for="Puzzle.Task" class="form-label">Задача</label>
+        <textarea asp-for="Puzzle.Task" class="form-control" rows="3" required></textarea>
         <span asp-validation-for="Puzzle.Task" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="Puzzle.Language">Език</label>
+
+    <div class="form-group mb-3">
+        <label asp-for="Puzzle.Language" class="form-label">Език</label>
         <select asp-for="Puzzle.Language" asp-items="Model.LanguageOptions" class="form-control" id="languageSelect" required>
             <option value="">Избери език</option>
         </select>
         <span asp-validation-for="Puzzle.Language" class="text-danger"></span>
     </div>
 
-    <!-- Помощен панел за многоредови блокове -->
+    <!-- Simplified help panel -->
     <div class="alert alert-info" id="multilineHelp" style="display: none;">
         <h5><i class="fas fa-info-circle"></i> Синтаксис за многоредови блокове</h5>
         <div id="syntaxExample"></div>
+        <div class="mt-2">
+            <small class="text-muted">
+                <strong>Важно:</strong> Многоредовите блокове запазват редовете си в точния ред, в който са написани.
+            </small>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Puzzle.SourceCode">Изходен код</label>
+    <div class="form-group mb-3">
+        <label asp-for="Puzzle.SourceCode" class="form-label">Изходен код</label>
         <div class="d-flex gap-2 mb-2">
             <button type="button" class="btn btn-secondary btn-sm" id="insertSlotButton">
                 <i class="fas fa-plus-square"></i> Вмъкни слот
@@ -43,24 +50,29 @@
                 <i class="fas fa-layer-group"></i> Вмъкни многоредов блок
             </button>
         </div>
-        <textarea asp-for="Puzzle.SourceCode" class="form-control" id="sourceCode" required></textarea>
+        <textarea asp-for="Puzzle.SourceCode" class="form-control" id="sourceCode" rows="10" required></textarea>
         <span asp-validation-for="Puzzle.SourceCode" class="text-danger"></span>
+        <div class="form-text">
+            За езици с къдрави скоби (C, C++, C#, Java, JavaScript): Блоковете { и } се игнорират автоматично и се добавят динамично при индентация.
+        </div>
     </div>
 
-    <div id="miniBlocksPanel" class="form-group">
+    <div id="miniBlocksPanel" class="form-group mb-3">
         <h4>Мини-блокове за слотове</h4>
         <div id="miniBlocksContainer"></div>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Puzzle.Distractors">Дистрактори</label>
+    <div class="form-group mb-3">
+        <label asp-for="Puzzle.Distractors" class="form-label">Дистрактори</label>
         <small class="form-text text-muted">Можете да използвате същия синтаксис за многоредови блокове и тук</small>
-        <textarea asp-for="Puzzle.Distractors" class="form-control" id="distractors"></textarea>
+        <textarea asp-for="Puzzle.Distractors" class="form-control" id="distractors" rows="5"></textarea>
         <span asp-validation-for="Puzzle.Distractors" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Създай</button>
-    <a asp-page="/Instructor/Puzzles" class="btn btn-secondary">Отказ</a>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Създай</button>
+        <a asp-page="/Instructor/Puzzles" class="btn btn-secondary">Отказ</a>
+    </div>
 </form>
 
 @section Scripts {
@@ -84,7 +96,7 @@
                 sourceCodeEditor.setOption("mode", mode);
                 distractorsEditor.setOption("mode", mode);
 
-                // Показване на синтаксис помощ
+                // Show syntax help
                 var language = $(this).find("option:selected").text();
                 updateMultilineHelp(language);
             });
@@ -97,7 +109,7 @@
                 window.updateMiniBlocksPanel(sourceCodeEditor);
             });
 
-            // Показване на синтаксис помощ при зареждане ако е избран език
+            // Show syntax help on load if language is selected
             if ($("#languageSelect").val()) {
                 var language = $("#languageSelect").find("option:selected").text();
                 updateMultilineHelp(language);
@@ -109,19 +121,10 @@
                     $("#multilineHelp").show();
                     $("#syntaxExample").html(`
                         <pre class="mb-2"><code>${syntax.example}</code></pre>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <small class="text-muted">
-                                    <strong>ordered</strong> - редът на редовете е важен<br>
-                                    Използвайте за: функции, класове, основна логика
-                                </small>
-                            </div>
-                            <div class="col-md-6">
-                                <small class="text-muted">
-                                    <strong>unordered</strong> - редът не е важен<br>
-                                    Използвайте за: променливи, imports, декларации
-                                </small>
-                            </div>
+                        <div class="text-muted">
+                            <small>
+                                <strong>Съвет:</strong> Просто поставете кода между маркерите. Редовете се запазват в същия ред.
+                            </small>
                         </div>
                     `);
                 } else {
@@ -133,49 +136,49 @@
                 const syntaxMap = {
                     'C': {
                         comment: '//',
-                        example: '//-->[variables:unordered]\nint a = 10;\nfloat b = 20.5;\nchar c = \'A\';\n//<--\n\n//-->[main:ordered]\nint main() {\n    printf("Hello World");\n    return 0;\n}\n//<--'
+                        example: '//-->\nint a = 10;\nfloat b = 20.5;\nchar c = \'A\';\n//<--\n\nint main() {\n    printf("Hello");\n    return 0;\n}'
                     },
                     'Cpp': {
                         comment: '//',
-                        example: '//-->[includes:unordered]\n#include &lt;iostream&gt;\n#include &lt;vector&gt;\n//<--\n\n//-->[variables:unordered]\nint count = 0;\nstd::string name = "Test";\n//<--'
+                        example: '//-->\n#include &lt;iostream&gt;\n#include &lt;vector&gt;\n//<--\n\nusing namespace §nspc§;\nint main() {\n    cout << "Hello" << endl;\n    return 0;\n}'
                     },
                     'CSharp': {
                         comment: '//',
-                        example: '//-->[usings:unordered]\nusing System;\nusing System.Collections.Generic;\n//<--\n\n//-->[properties:unordered]\npublic int Id { get; set; }\npublic string Name { get; set; }\n//<--'
+                        example: '//-->\nusing System;\nusing System.Collections.Generic;\n//<--\n\npublic class Program {\n    public static void Main() {\n        Console.WriteLine("Hello");\n    }\n}'
                     },
                     'Java': {
                         comment: '//',
-                        example: '//-->[imports:unordered]\nimport java.util.List;\nimport java.util.ArrayList;\n//<--\n\n//-->[fields:unordered]\nprivate int count;\nprivate String name;\n//<--'
+                        example: '//-->\nimport java.util.List;\nimport java.util.ArrayList;\n//<--\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello");\n    }\n}'
                     },
                     'JavaScript': {
                         comment: '//',
-                        example: '//-->[imports:unordered]\nimport React from "react";\nimport { useState } from "react";\n//<--\n\n//-->[variables:unordered]\nconst API_URL = "http://localhost";\nlet counter = 0;\n//<--'
+                        example: '//-->\nimport React from "react";\nimport { useState } from "react";\n//<--\n\nfunction App() {\n    return <div>Hello</div>;\n}'
                     },
                     'Python': {
                         comment: '#',
-                        example: '#-->[imports:unordered]\nimport math\nimport random\nfrom datetime import datetime\n#<--\n\n#-->[function:ordered]\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n#<--'
+                        example: '#-->\nimport math\nimport random\nfrom datetime import datetime\n#<--\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2'
                     },
                     'TSQL': {
                         comment: '--',
-                        example: '-->[variables:unordered]\nDECLARE @@UserId INT;\nDECLARE @@UserName NVARCHAR(100);\nDECLARE @@CreatedDate DATETIME;\n--<\n\n-->[query:ordered]\nSELECT * FROM Users\nWHERE IsActive = 1\nORDER BY CreatedDate;\n--<'
+                        example: '-->\nDECLARE @@UserId INT;\nDECLARE @@UserName NVARCHAR(100);\n--<\n\nSELECT * FROM Users WHERE IsActive = 1;'
                     },
                     'MySQL': {
                         comment: '--',
-                        example: '-->[variables:unordered]\nDECLARE userId INT;\nDECLARE userName VARCHAR(100);\n--<\n\n-->[procedure:ordered]\nCREATE PROCEDURE GetUser(IN id INT)\nBEGIN\n    SELECT * FROM users WHERE user_id = id;\nEND;\n--<'
+                        example: '-->\nDECLARE userId INT;\nDECLARE userName VARCHAR(100);\n--<\n\nSELECT * FROM users WHERE active = 1;'
                     },
                     'PostgreSQL': {
                         comment: '--',
-                        example: '-->[variables:unordered]\nDECLARE user_id INTEGER;\nDECLARE user_name VARCHAR(100);\n--<\n\n-->[function:ordered]\nCREATE FUNCTION get_user_count() RETURNS INTEGER AS $$\nBEGIN\n    RETURN COUNT(*) FROM users;\nEND;\n$$ LANGUAGE plpgsql;\n--<'
+                        example: '-->\nDECLARE user_id INTEGER;\nDECLARE user_name VARCHAR(100);\n--<\n\nSELECT * FROM users WHERE active = true;'
                     },
                     'plSQL': {
                         comment: '--',
-                        example: '-->[declarations:unordered]\nv_employee_id NUMBER;\nv_employee_name VARCHAR2(100);\nv_salary NUMBER(10,2);\n--<\n\n-->[logic:ordered]\nBEGIN\n    SELECT salary INTO v_salary\n    FROM employees\n    WHERE employee_id = v_employee_id;\nEND;\n--<'
+                        example: '-->\nv_employee_id NUMBER;\nv_employee_name VARCHAR2(100);\n--<\n\nBEGIN\n    SELECT salary INTO v_salary FROM employees;\nEND;'
                     }
                 };
                 return syntaxMap[language];
             }
 
-            // Вмъкване на многоредов блок
+            // Insert multiline block - completely simplified
             $("#insertMultilineButton").click(function() {
                 var language = $("#languageSelect").find("option:selected").text();
                 var syntax = getCommentSyntax(language);
@@ -185,31 +188,24 @@
                     return;
                 }
 
-                var blockName = prompt("Име на блока (напр. variables, imports, main):");
-                if (!blockName) return;
+                // Simple template - no complex naming or ordering
+                var template = `${syntax.comment}-->\n\n${syntax.comment}<--`;
 
-                blockName = blockName.toLowerCase().replace(/\s+/g, '_');
-
-                var isOrdered = confirm("Редът на редовете важен ли е?\n\nOK = Да (ordered)\nCancel = Не (unordered)");
-                var orderType = isOrdered ? "ordered" : "unordered";
-
-                var template = `${syntax.comment}-->[${blockName}:${orderType}]\n\n${syntax.comment}<--`;
-
-                // Вмъкване в CodeMirror
+                // Insert in CodeMirror
                 sourceCodeEditor.replaceSelection(template);
 
-                // Позициониране на курсора между маркерите
+                // Position cursor between markers
                 var cursor = sourceCodeEditor.getCursor();
                 sourceCodeEditor.setCursor({line: cursor.line - 1, ch: 0});
                 sourceCodeEditor.focus();
             });
 
-            // Валидация при submit
+            // Simplified form validation
             $("#puzzleForm").submit(function(e) {
                 sourceCodeEditor.save();
                 distractorsEditor.save();
 
-                // Валидиране на блокове
+                // Validate blocks
                 var sourceCode = $("#sourceCode").val();
                 var distractors = $("#distractors").val();
                 var language = $("#languageSelect").find("option:selected").text();
@@ -234,34 +230,23 @@
 
                 var lines = code.split('\n');
                 var openBlocks = 0;
-                var blockStack = [];
 
                 lines.forEach((line, index) => {
                     var trimmed = line.trim();
-                    // Проверка за отварящ блок
-                    if (trimmed.match(new RegExp(`^${escapeRegex(syntax.comment)}-->\\[\\w+:(ordered|unordered)\\]$`))) {
+                    // Simple check for start marker
+                    if (trimmed === `${syntax.comment}-->`) {
                         openBlocks++;
-                        blockStack.push(index + 1);
                     }
-                    // Проверка за затварящ блок
+                    // Simple check for end marker
                     else if (trimmed === `${syntax.comment}<--`) {
                         openBlocks--;
                         if (openBlocks < 0) {
                             console.error(`Затварящ таг без отварящ на ред ${index + 1}`);
                         }
-                        blockStack.pop();
                     }
                 });
 
-                if (openBlocks !== 0) {
-                    console.error(`Незатворени блокове на редове: ${blockStack.join(', ')}`);
-                }
-
                 return openBlocks === 0;
-            }
-
-            function escapeRegex(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             }
 
             window.updateMiniBlocksPanel(sourceCodeEditor);
@@ -355,17 +340,17 @@
             border-left: 4px solid #17a2b8;
         }
 
-        #multilineHelp pre {
-            background-color: #f8f9fa;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            overflow-x: auto;
-        }
+            #multilineHelp pre {
+                background-color: #f8f9fa;
+                padding: 1rem;
+                border-radius: 0.25rem;
+                overflow-x: auto;
+            }
 
-        #multilineHelp code {
-            color: #e83e8c;
-            font-size: 0.9rem;
-        }
+            #multilineHelp code {
+                color: #e83e8c;
+                font-size: 0.9rem;
+            }
 
         .gap-2 {
             gap: 0.5rem;
