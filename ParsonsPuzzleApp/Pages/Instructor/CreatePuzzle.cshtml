@@ -26,33 +26,37 @@
         </select>
         <span asp-validation-for="Puzzle.Language" class="text-danger"></span>
     </div>
+
+    <!-- Помощен панел за многоредови блокове -->
+    <div class="alert alert-info" id="multilineHelp" style="display: none;">
+        <h5><i class="fas fa-info-circle"></i> Синтаксис за многоредови блокове</h5>
+        <div id="syntaxExample"></div>
+    </div>
+
     <div class="form-group">
         <label asp-for="Puzzle.SourceCode">Изходен код</label>
-        <button type="button" class="btn btn-secondary mb-2" id="insertSlotButton">Вмъкни слот</button>
+        <div class="d-flex gap-2 mb-2">
+            <button type="button" class="btn btn-secondary btn-sm" id="insertSlotButton">
+                <i class="fas fa-plus-square"></i> Вмъкни слот
+            </button>
+            <button type="button" class="btn btn-info btn-sm" id="insertMultilineButton">
+                <i class="fas fa-layer-group"></i> Вмъкни многоредов блок
+            </button>
+        </div>
         <textarea asp-for="Puzzle.SourceCode" class="form-control" id="sourceCode" required></textarea>
         <span asp-validation-for="Puzzle.SourceCode" class="text-danger"></span>
     </div>
+
     <div id="miniBlocksPanel" class="form-group">
         <h4>Мини-блокове за слотове</h4>
         <div id="miniBlocksContainer"></div>
     </div>
+
     <div class="form-group">
         <label asp-for="Puzzle.Distractors">Дистрактори</label>
+        <small class="form-text text-muted">Можете да използвате същия синтаксис за многоредови блокове и тук</small>
         <textarea asp-for="Puzzle.Distractors" class="form-control" id="distractors"></textarea>
         <span asp-validation-for="Puzzle.Distractors" class="text-danger"></span>
-    </div>
-
-    <div class="form-group mt-4">
-        <h4>Puzzle Blocks (Нова система)</h4>
-        <p class="text-muted">Използвайте тази секция за създаване на многоредови блокове или блокове с независим ред.</p>
-
-        <button type="button" class="btn btn-secondary mb-3" id="addPuzzleBlock">
-            <i class="fas fa-plus"></i> Добави Puzzle Block
-        </button>
-
-        <div id="puzzleBlocksContainer">
-            <!-- Динамично добавени блокове ще се появят тук -->
-        </div>
     </div>
 
     <button type="submit" class="btn btn-primary">Създай</button>
@@ -79,6 +83,10 @@
                 var mode = window.getCodeMirrorMode();
                 sourceCodeEditor.setOption("mode", mode);
                 distractorsEditor.setOption("mode", mode);
+
+                // Показване на синтаксис помощ
+                var language = $(this).find("option:selected").text();
+                updateMultilineHelp(language);
             });
 
             $("#insertSlotButton").click(function() {
@@ -89,170 +97,174 @@
                 window.updateMiniBlocksPanel(sourceCodeEditor);
             });
 
-            $("#puzzleForm").submit(function(e) {
-                sourceCodeEditor.save();
-                distractorsEditor.save();
-            });
-
-            window.updateMiniBlocksPanel(sourceCodeEditor);
-
-            let blockIndex = 0;
-
-            // Функция за добавяне на нов puzzle block
-            $("#addPuzzleBlock").click(function() {
-                addPuzzleBlock();
-            });
-
-            function addPuzzleBlock() {
-                const blockHtml = `
-                    <div class="puzzle-block-item border rounded p-3 mb-3" data-block-index="${blockIndex}">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5>Puzzle Block ${blockIndex + 1}</h5>
-                            <button type="button" class="btn btn-sm btn-danger remove-block" onclick="removePuzzleBlock(${blockIndex})">
-                                <i class="fas fa-trash"></i> Премахни
-                            </button>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label>Тип на блока</label>
-                                <select name="PuzzleBlocks[${blockIndex}].BlockType" class="form-control block-type-select" data-index="${blockIndex}">
-                                    <option value="single">Единичен ред</option>
-                                    <option value="multiline">Многоредов</option>
-                                    <option value="variables">Променливи (независим ред)</option>
-                                    <option value="imports">Imports (независим ред)</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label>Group ID (за групиране)</label>
-                                <input type="text" name="PuzzleBlocks[${blockIndex}].GroupId" class="form-control" placeholder="напр. variables-1" />
-                            </div>
-                        </div>
-
-                        <div class="form-check mt-2">
-                            <input type="checkbox" name="PuzzleBlocks[${blockIndex}].IsMultiline"
-                                   class="form-check-input multiline-check" id="multiline${blockIndex}" data-index="${blockIndex}">
-                            <label class="form-check-label" for="multiline${blockIndex}">
-                                Многоредов блок
-                            </label>
-                        </div>
-
-                        <div class="form-check">
-                            <input type="checkbox" name="PuzzleBlocks[${blockIndex}].OrderIndependent"
-                                   class="form-check-input" id="orderIndependent${blockIndex}">
-                            <label class="form-check-label" for="orderIndependent${blockIndex}">
-                                Редът на редовете не е важен
-                            </label>
-                        </div>
-
-                        <div class="content-section mt-3">
-                            <label>Съдържание</label>
-                            <div class="single-line-content" id="singleContent${blockIndex}">
-                                <textarea name="PuzzleBlocks[${blockIndex}].Content"
-                                         class="form-control" rows="2"
-                                         placeholder="Въведете кода за този блок"></textarea>
-                            </div>
-                            <div class="multiline-content" id="multilineContent${blockIndex}" style="display: none;">
-                                <button type="button" class="btn btn-sm btn-secondary mb-2"
-                                        onclick="addLineToBlock(${blockIndex})">
-                                    <i class="fas fa-plus"></i> Добави ред
-                                </button>
-                                <div class="lines-container" id="linesContainer${blockIndex}">
-                                    <!-- Редове ще се добавят тук -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                $("#puzzleBlocksContainer").append(blockHtml);
-
-                // Обработка на промяна на тип блок
-                $(`select[data-index="${blockIndex}"]`).change(function() {
-                    const selectedType = $(this).val();
-                    const index = $(this).data('index');
-
-                    if (selectedType === 'variables' || selectedType === 'imports') {
-                        $(`#orderIndependent${index}`).prop('checked', true);
-                        $(`#multiline${index}`).prop('checked', true).trigger('change');
-                    }
-                });
-
-                // Обработка на multiline checkbox
-                $(`#multiline${blockIndex}`).change(function() {
-                    const index = $(this).data('index');
-                    if ($(this).is(':checked')) {
-                        $(`#singleContent${index}`).hide();
-                        $(`#multilineContent${index}`).show();
-                        // Добави поне един ред
-                        if ($(`#linesContainer${index}`).children().length === 0) {
-                            addLineToBlock(index);
-                        }
-                    } else {
-                        $(`#singleContent${index}`).show();
-                        $(`#multilineContent${index}`).hide();
-                    }
-                });
-
-                blockIndex++;
+            // Показване на синтаксис помощ при зареждане ако е избран език
+            if ($("#languageSelect").val()) {
+                var language = $("#languageSelect").find("option:selected").text();
+                updateMultilineHelp(language);
             }
 
-            // Функция за добавяне на ред към многоредов блок
-            window.addLineToBlock = function(blockIndex) {
-                const lineIndex = $(`#linesContainer${blockIndex}`).children().length;
-                const lineHtml = `
-                    <div class="input-group mb-2">
-                        <input type="text" name="PuzzleBlocks[${blockIndex}].Lines[${lineIndex}]"
-                               class="form-control" placeholder="Код за ред ${lineIndex + 1}" />
-                        <button type="button" class="btn btn-outline-danger"
-                                onclick="$(this).parent().remove()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-                $(`#linesContainer${blockIndex}`).append(lineHtml);
-            };
+            function updateMultilineHelp(language) {
+                var syntax = getCommentSyntax(language);
+                if (syntax) {
+                    $("#multilineHelp").show();
+                    $("#syntaxExample").html(`
+                        <pre class="mb-2"><code>${syntax.example}</code></pre>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <strong>ordered</strong> - редът на редовете е важен<br>
+                                    Използвайте за: функции, класове, основна логика
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <strong>unordered</strong> - редът не е важен<br>
+                                    Използвайте за: променливи, imports, декларации
+                                </small>
+                            </div>
+                        </div>
+                    `);
+                } else {
+                    $("#multilineHelp").hide();
+                }
+            }
 
-            // Функция за премахване на puzzle block
-            window.removePuzzleBlock = function(index) {
-                $(`[data-block-index="${index}"]`).remove();
-                // Преномериране на индексите би било сложно, така че просто ги оставяме
-                // ASP.NET Core model binding ще се справи с пропуснатите индекси
-            };
+            function getCommentSyntax(language) {
+                const syntaxMap = {
+                    'C': {
+                        comment: '//',
+                        example: '//-->[variables:unordered]\nint a = 10;\nfloat b = 20.5;\nchar c = \'A\';\n//<--\n\n//-->[main:ordered]\nint main() {\n    printf("Hello World");\n    return 0;\n}\n//<--'
+                    },
+                    'Cpp': {
+                        comment: '//',
+                        example: '//-->[includes:unordered]\n#include &lt;iostream&gt;\n#include &lt;vector&gt;\n//<--\n\n//-->[variables:unordered]\nint count = 0;\nstd::string name = "Test";\n//<--'
+                    },
+                    'CSharp': {
+                        comment: '//',
+                        example: '//-->[usings:unordered]\nusing System;\nusing System.Collections.Generic;\n//<--\n\n//-->[properties:unordered]\npublic int Id { get; set; }\npublic string Name { get; set; }\n//<--'
+                    },
+                    'Java': {
+                        comment: '//',
+                        example: '//-->[imports:unordered]\nimport java.util.List;\nimport java.util.ArrayList;\n//<--\n\n//-->[fields:unordered]\nprivate int count;\nprivate String name;\n//<--'
+                    },
+                    'JavaScript': {
+                        comment: '//',
+                        example: '//-->[imports:unordered]\nimport React from "react";\nimport { useState } from "react";\n//<--\n\n//-->[variables:unordered]\nconst API_URL = "http://localhost";\nlet counter = 0;\n//<--'
+                    },
+                    'Python': {
+                        comment: '#',
+                        example: '#-->[imports:unordered]\nimport math\nimport random\nfrom datetime import datetime\n#<--\n\n#-->[function:ordered]\ndef calculate_area(radius):\n    return math.pi * radius ** 2\n#<--'
+                    },
+                    'TSQL': {
+                        comment: '--',
+                        example: '-->[variables:unordered]\nDECLARE @@UserId INT;\nDECLARE @@UserName NVARCHAR(100);\nDECLARE @@CreatedDate DATETIME;\n--<\n\n-->[query:ordered]\nSELECT * FROM Users\nWHERE IsActive = 1\nORDER BY CreatedDate;\n--<'
+                    },
+                    'MySQL': {
+                        comment: '--',
+                        example: '-->[variables:unordered]\nDECLARE userId INT;\nDECLARE userName VARCHAR(100);\n--<\n\n-->[procedure:ordered]\nCREATE PROCEDURE GetUser(IN id INT)\nBEGIN\n    SELECT * FROM users WHERE user_id = id;\nEND;\n--<'
+                    },
+                    'PostgreSQL': {
+                        comment: '--',
+                        example: '-->[variables:unordered]\nDECLARE user_id INTEGER;\nDECLARE user_name VARCHAR(100);\n--<\n\n-->[function:ordered]\nCREATE FUNCTION get_user_count() RETURNS INTEGER AS $$\nBEGIN\n    RETURN COUNT(*) FROM users;\nEND;\n$$ LANGUAGE plpgsql;\n--<'
+                    },
+                    'plSQL': {
+                        comment: '--',
+                        example: '-->[declarations:unordered]\nv_employee_id NUMBER;\nv_employee_name VARCHAR2(100);\nv_salary NUMBER(10,2);\n--<\n\n-->[logic:ordered]\nBEGIN\n    SELECT salary INTO v_salary\n    FROM employees\n    WHERE employee_id = v_employee_id;\nEND;\n--<'
+                    }
+                };
+                return syntaxMap[language];
+            }
 
-            // Съществуващ код за submit
+            // Вмъкване на многоредов блок
+            $("#insertMultilineButton").click(function() {
+                var language = $("#languageSelect").find("option:selected").text();
+                var syntax = getCommentSyntax(language);
+
+                if (!syntax) {
+                    alert("Моля, изберете език първо!");
+                    return;
+                }
+
+                var blockName = prompt("Име на блока (напр. variables, imports, main):");
+                if (!blockName) return;
+
+                blockName = blockName.toLowerCase().replace(/\s+/g, '_');
+
+                var isOrdered = confirm("Редът на редовете важен ли е?\n\nOK = Да (ordered)\nCancel = Не (unordered)");
+                var orderType = isOrdered ? "ordered" : "unordered";
+
+                var template = `${syntax.comment}-->[${blockName}:${orderType}]\n\n${syntax.comment}<--`;
+
+                // Вмъкване в CodeMirror
+                sourceCodeEditor.replaceSelection(template);
+
+                // Позициониране на курсора между маркерите
+                var cursor = sourceCodeEditor.getCursor();
+                sourceCodeEditor.setCursor({line: cursor.line - 1, ch: 0});
+                sourceCodeEditor.focus();
+            });
+
+            // Валидация при submit
             $("#puzzleForm").submit(function(e) {
                 sourceCodeEditor.save();
                 distractorsEditor.save();
 
-                // Валидация на puzzle blocks
-                let hasError = false;
-                $(".puzzle-block-item").each(function() {
-                    const index = $(this).data('block-index');
-                    const isMultiline = $(`#multiline${index}`).is(':checked');
+                // Валидиране на блокове
+                var sourceCode = $("#sourceCode").val();
+                var distractors = $("#distractors").val();
+                var language = $("#languageSelect").find("option:selected").text();
 
-                    if (isMultiline) {
-                        const linesCount = $(`#linesContainer${index} input`).length;
-                        if (linesCount === 0) {
-                            alert(`Puzzle Block ${index + 1} трябва да има поне един ред!`);
-                            hasError = true;
-                            return false;
-                        }
-                    } else {
-                        const content = $(`textarea[name="PuzzleBlocks[${index}].Content"]`).val();
-                        if (!content || content.trim() === '') {
-                            alert(`Puzzle Block ${index + 1} трябва да има съдържание!`);
-                            hasError = true;
-                            return false;
-                        }
-                    }
-                });
-
-                if (hasError) {
+                if (sourceCode && !validateBlockSyntax(sourceCode, language)) {
+                    alert("Грешка: Има незатворени многоредови блокове в изходния код!");
                     e.preventDefault();
                     return false;
                 }
+
+                if (distractors && !validateBlockSyntax(distractors, language)) {
+                    if (!confirm("Внимание: Има незатворени многоредови блокове в дистракторите. Те ще бъдат третирани като обикновени редове.\n\nЖелаете ли да продължите?")) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
             });
+
+            function validateBlockSyntax(code, language) {
+                var syntax = getCommentSyntax(language);
+                if (!syntax) return true;
+
+                var lines = code.split('\n');
+                var openBlocks = 0;
+                var blockStack = [];
+
+                lines.forEach((line, index) => {
+                    var trimmed = line.trim();
+                    // Проверка за отварящ блок
+                    if (trimmed.match(new RegExp(`^${escapeRegex(syntax.comment)}-->\\[\\w+:(ordered|unordered)\\]$`))) {
+                        openBlocks++;
+                        blockStack.push(index + 1);
+                    }
+                    // Проверка за затварящ блок
+                    else if (trimmed === `${syntax.comment}<--`) {
+                        openBlocks--;
+                        if (openBlocks < 0) {
+                            console.error(`Затварящ таг без отварящ на ред ${index + 1}`);
+                        }
+                        blockStack.pop();
+                    }
+                });
+
+                if (openBlocks !== 0) {
+                    console.error(`Незатворени блокове на редове: ${blockStack.join(', ')}`);
+                }
+
+                return openBlocks === 0;
+            }
+
+            function escapeRegex(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            window.updateMiniBlocksPanel(sourceCodeEditor);
         });
 
         window.getCodeMirrorMode = function() {
@@ -339,28 +351,31 @@
 
 @section Styles {
     <style>
-        .puzzle-block-item {
+        #multilineHelp {
+            border-left: 4px solid #17a2b8;
+        }
+
+        #multilineHelp pre {
             background-color: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-            .puzzle-block-item:hover {
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-
-        .lines-container {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .content-section {
-            background-color: white;
             padding: 1rem;
             border-radius: 0.25rem;
+            overflow-x: auto;
         }
 
-        .block-type-select {
-            font-weight: 500;
+        #multilineHelp code {
+            color: #e83e8c;
+            font-size: 0.9rem;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .mini-blocks {
+            background-color: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
         }
     </style>
 }

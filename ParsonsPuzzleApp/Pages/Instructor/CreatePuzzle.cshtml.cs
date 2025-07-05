@@ -6,22 +6,23 @@ namespace ParsonsPuzzleApp.Pages.Instructor
     using Microsoft.AspNetCore.Mvc.Rendering;
     using ParsonsPuzzleApp.Data;
     using ParsonsPuzzleApp.Models;
+    using ParsonsPuzzleApp.Services;
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
 
     [Authorize]
     public class CreatePuzzleModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMultilineBlockParser _blockParser;
 
-        [BindProperty]
-        public List<PuzzleBlockViewModel> PuzzleBlocks { get; set; } = new List<PuzzleBlockViewModel>();
-
-        public CreatePuzzleModel(ApplicationDbContext context)
+        public CreatePuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser)
         {
             _context = context;
+            _blockParser = blockParser;
         }
 
         [BindProperty]
@@ -44,10 +45,25 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 .ToList();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
+                LanguageOptions = Enum.GetValues(typeof(Languages))
+                    .Cast<Languages>()
+                    .Select(l => new SelectListItem
+                    {
+                        Value = ((int)l).ToString(),
+                        Text = l.ToString()
+                    })
+                    .ToList();
+                return Page();
+            }
+
+            // Валидация на блокове в кода
+            if (!MultilineBlockValidator.ValidateBlockSyntax(Puzzle.SourceCode, Puzzle.Language))
+            {
+                ModelState.AddModelError("Puzzle.SourceCode", "Има незатворени многоредови блокове в кода!");
                 LanguageOptions = Enum.GetValues(typeof(Languages))
                     .Cast<Languages>()
                     .Select(l => new SelectListItem
@@ -85,52 +101,89 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 }
             }
 
+            // Запазване на пъзела
             _context.Puzzles.Add(Puzzle);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            // Обработка на PuzzleBlocks ако има такива
-            if (PuzzleBlocks != null && PuzzleBlocks.Any())
+            // Парсване и създаване на PuzzleBlocks от SourceCode
+            var puzzleBlocks = _blockParser.ParseSourceCode(
+                Puzzle.SourceCode,
+                Puzzle.Id,
+                Puzzle.Language
+            );
+
+            foreach (var block in puzzleBlocks)
             {
-                for (int i = 0; i < PuzzleBlocks.Count; i++)
+                _context.PuzzleBlocks.Add(block);
+                await _context.SaveChangesAsync();
+
+                // Ако е многоредов блок, създаваме линиите
+                if (block.IsMultiline && !string.IsNullOrWhiteSpace(block.Content))
                 {
-                    var blockVm = PuzzleBlocks[i];
-                    if (blockVm == null) continue;
+                    var lines = block.Content.Split('\n')
+                        .Select(l => l.TrimEnd('\r'))
+                        .ToList();
 
-                    var puzzleBlock = new PuzzleBlock
+                    for (int lineIndex = 0; lineIndex < lines.Count; lineIndex++)
                     {
-                        PuzzleId = Puzzle.Id,
-                        Content = blockVm.Content ?? string.Empty,
-                        GroupId = blockVm.GroupId,
-                        BlockType = blockVm.BlockType,
-                        IsMultiline = blockVm.IsMultiline,
-                        IsOrderIndependent = blockVm.OrderIndependent,
-                        OrderIndex = i,
-                        IsDistractor = false
-                    };
-
-                    _context.PuzzleBlocks.Add(puzzleBlock);
-                    _context.SaveChanges();
-
-                    // Ако е многоредов, добавяме редовете
-                    if (blockVm.IsMultiline && blockVm.Lines != null)
-                    {
-                        for (int j = 0; j < blockVm.Lines.Count; j++)
+                        var line = lines[lineIndex];
+                        if (!string.IsNullOrWhiteSpace(line))
                         {
-                            var line = blockVm.Lines[j];
-                            if (!string.IsNullOrWhiteSpace(line))
+                            _context.PuzzleBlockLines.Add(new PuzzleBlockLine
                             {
-                                _context.PuzzleBlockLines.Add(new PuzzleBlockLine
-                                {
-                                    PuzzleBlockId = puzzleBlock.Id,
-                                    Content = line,
-                                    LineOrder = j,
-                                    IsOptional = false
-                                });
-                            }
+                                PuzzleBlockId = block.Id,
+                                Content = line,
+                                LineOrder = lineIndex,
+                                IsOptional = false
+                            });
                         }
-                        _context.SaveChanges();
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            // Обработка на дистрактори
+            if (!string.IsNullOrEmpty(Puzzle.Distractors))
+            {
+                // Валидация на блокове в дистракторите
+                if (!MultilineBlockValidator.ValidateBlockSyntax(Puzzle.Distractors, Puzzle.Language))
+                {
+                    // Ако има грешки в дистракторите, третираме ги като обикновени редове
+                    var distractorLines = Puzzle.Distractors.Split('\n')
+                        .Where(l => !string.IsNullOrWhiteSpace(l.Trim()));
+
+                    int orderIndex = puzzleBlocks.Count;
+                    foreach (var line in distractorLines)
+                    {
+                        _context.PuzzleBlocks.Add(new PuzzleBlock
+                        {
+                            PuzzleId = Puzzle.Id,
+                            Content = line.Trim(),
+                            BlockType = "single",
+                            IsMultiline = false,
+                            IsOrderIndependent = false,
+                            OrderIndex = orderIndex++,
+                            IsDistractor = true
+                        });
                     }
                 }
+                else
+                {
+                    // Парсваме дистракторите като блокове
+                    var distractorBlocks = _blockParser.ParseSourceCode(
+                        Puzzle.Distractors,
+                        Puzzle.Id,
+                        Puzzle.Language
+                    );
+
+                    foreach (var distractor in distractorBlocks)
+                    {
+                        distractor.IsDistractor = true;
+                        distractor.OrderIndex += puzzleBlocks.Count;
+                        _context.PuzzleBlocks.Add(distractor);
+                    }
+                }
+                await _context.SaveChangesAsync();
             }
 
             // Добавяне на MiniBlocks
@@ -148,24 +201,13 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 }
             }
 
-            _context.SaveChanges();
-
+            await _context.SaveChangesAsync();
             return RedirectToPage("/Instructor/Puzzles");
         }
 
         public class MiniBlockInput
         {
             public string Content { get; set; }
-        }
-
-        public class PuzzleBlockViewModel
-        {
-            public string Content { get; set; }
-            public string GroupId { get; set; }
-            public string BlockType { get; set; }
-            public bool IsMultiline { get; set; }
-            public bool OrderIndependent { get; set; }
-            public List<string> Lines { get; set; } = new List<string>();
         }
     }
 }

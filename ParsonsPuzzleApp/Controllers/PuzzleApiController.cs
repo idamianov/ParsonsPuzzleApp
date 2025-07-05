@@ -32,7 +32,10 @@ namespace ParsonsPuzzleApp.Controllers
 
             var puzzle = _context.Puzzles
                 .Include(p => p.MiniBlocks)
+                .Include(p => p.PuzzleBlocks)
+                .ThenInclude(pb => pb.Lines)
                 .FirstOrDefault(p => p.Id == model.PuzzleId);
+
             if (puzzle == null)
             {
                 return NotFound("Пъзелът не е намерен.");
@@ -45,14 +48,18 @@ namespace ParsonsPuzzleApp.Controllers
         [HttpPost("submit")]
         public IActionResult SubmitSolution([FromBody] SubmitSolutionModel model)
         {
-            if (model == null || string.IsNullOrEmpty(model.Arrangement) || model.PuzzleId <= 0 || model.BundleId <= 0 || string.IsNullOrEmpty(model.StudentIdentifier) || model.BundleAttemptId == Guid.Empty)
+            if (model == null || string.IsNullOrEmpty(model.Arrangement) || model.PuzzleId <= 0 ||
+                model.BundleId <= 0 || string.IsNullOrEmpty(model.StudentIdentifier) || model.BundleAttemptId == Guid.Empty)
             {
                 return BadRequest("Invalid request data.");
             }
 
             var puzzle = _context.Puzzles
                 .Include(p => p.MiniBlocks)
+                .Include(p => p.PuzzleBlocks)
+                .ThenInclude(pb => pb.Lines)
                 .FirstOrDefault(p => p.Id == model.PuzzleId);
+
             if (puzzle == null)
             {
                 return NotFound("Пъзелът не е намерен.");
@@ -61,6 +68,7 @@ namespace ParsonsPuzzleApp.Controllers
             var bundle = _context.Bundles
                 .Include(b => b.BundlePuzzles)
                 .FirstOrDefault(b => b.Id == model.BundleId);
+
             if (bundle == null)
             {
                 return NotFound("Колекцията не е намерена.");
@@ -79,6 +87,7 @@ namespace ParsonsPuzzleApp.Controllers
                 AttemptDate = DateTime.UtcNow,
                 BundleAttemptId = model.BundleAttemptId
             };
+
             _context.StudentAttempts.Add(attempt);
             _context.SaveChanges();
 
@@ -122,78 +131,91 @@ namespace ParsonsPuzzleApp.Controllers
 
         private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
         {
-            // Step 1: Replace slots with correct mini-blocks
+            // Generate expected solution from either PuzzleBlocks or SourceCode
+            string expectedSolution;
+
+            if (puzzle.PuzzleBlocks != null && puzzle.PuzzleBlocks.Any())
+            {
+                // Use new PuzzleBlocks system
+                expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks, puzzle.Language);
+            }
+            else
+            {
+                // Use legacy SourceCode system
+                expectedSolution = puzzle.SourceCode;
+            }
+
+            // Replace slots with correct mini-blocks in both arrangement and expected solution
             string processedArrangement = arrangement;
-            string processedSourceCode = puzzle.SourceCode;
+            string processedExpectedSolution = expectedSolution;
 
             foreach (var miniBlock in puzzle.MiniBlocks.Where(mb => mb.IsCorrect))
             {
                 string slotPattern = $"§{miniBlock.SlotName}§";
                 processedArrangement = processedArrangement.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
-                processedSourceCode = processedSourceCode.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
+                processedExpectedSolution = processedExpectedSolution.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
             }
 
-            // Check if any slots remain unprocessed
+            // Check if any slots remain unprocessed in student's arrangement
             if (Regex.IsMatch(processedArrangement, @"§\w+§"))
             {
                 return false; // Unreplaced slots indicate incorrect solution
             }
 
+            // Validate using the indentation service
             return _indentationService.ValidateIndentation(
                 processedArrangement,
-                processedSourceCode,
+                processedExpectedSolution,
                 puzzle.Language
             );
-
-            //// Step 2: Normalize based on language
-            //if (puzzle.Language.ToString().ToLower() == "python")
-            //{
-            //    // Preserve indentation, trim leading/trailing empty lines
-            //    processedArrangement = string.Join("\n", processedArrangement.Split('\n')
-            //        .Select(l => l.TrimEnd())
-            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
-            //    processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
-            //        .Select(l => l.TrimEnd())
-            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
-            //}
-            //else
-            //{
-            //    // Remove leading whitespace/tabs, keep braces, remove empty lines
-            //    processedArrangement = string.Join("\n", processedArrangement.Split('\n')
-            //        .Select(l => l.Trim())
-            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
-            //    processedSourceCode = string.Join("\n", processedSourceCode.Split('\n')
-            //        .Select(l => l.Trim())
-            //        .Where(l => !string.IsNullOrWhiteSpace(l)));
-            //}
-
-            //// Normalize new lines
-            //processedArrangement = processedArrangement.Replace("\r\n", "\n").Trim();
-            //processedSourceCode = processedSourceCode.Replace("\r\n", "\n").Trim();
-
-            //// Step 3: Compare normalized codes
-            //return string.Equals(processedArrangement, processedSourceCode, StringComparison.OrdinalIgnoreCase);
         }
 
-        //private async Task<bool> ValidatePuzzleBlocksSolution(string arrangement, int puzzleId)
-        //{
-        //    var puzzleBlocks = await _context.PuzzleBlocks
-        //        .Where(pb => pb.PuzzleId == puzzleId)
-        //        .Include(pb => pb.Lines)
-        //        .ToListAsync();
+        private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Languages language)
+        {
+            // Filter out bracket blocks for C-family languages
+            var isBracketLanguage = IsBracketBasedLanguage(language);
 
-        //    if (!puzzleBlocks.Any())
-        //        return false;
+            var validBlocks = puzzleBlocks
+                .Where(pb => !pb.IsDistractor) // Skip distractors
+                .Where(pb => !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))) // Skip bracket blocks for C-family
+                .OrderBy(pb => pb.OrderIndex)
+                .ToList();
 
-        //    // Генериране на очакван код от PuzzleBlocks
-        //    var expectedCode = GenerateCodeFromBlocks(puzzleBlocks);
+            var lines = new List<string>();
 
-        //    return _indentationService.ValidateIndentation(
-        //        arrangement,
-        //        expectedCode,
-        //        _context.Puzzles.Find(puzzleId).Language
-        //    );
-        //}
+            foreach (var block in validBlocks)
+            {
+                if (block.IsMultiline && block.Lines != null && block.Lines.Any())
+                {
+                    // Handle multiline blocks - lines are always in order regardless of IsOrderIndependent
+                    var blockLines = block.Lines
+                        .OrderBy(l => l.LineOrder)
+                        .Select(l => l.Content)
+                        .ToList();
+
+                    lines.AddRange(blockLines);
+                }
+                else
+                {
+                    // Handle single-line blocks
+                    if (!string.IsNullOrWhiteSpace(block.Content))
+                    {
+                        lines.Add(block.Content);
+                    }
+                }
+            }
+
+            return string.Join("\n", lines);
+        }
+
+        private bool IsBracketBasedLanguage(Languages language)
+        {
+            return language == Languages.C ||
+                   language == Languages.Cpp ||
+                   language == Languages.CSharp ||
+                   language == Languages.Java ||
+                   language == Languages.JavaScript;
+        }
 
         public class CheckRequestModel
         {

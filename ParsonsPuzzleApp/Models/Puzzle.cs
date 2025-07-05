@@ -12,6 +12,6 @@
         public List<MiniBlock> MiniBlocks { get; set; } = new List<MiniBlock>();
 
         public List<PuzzleBlock> PuzzleBlocks { get; set; } = new List<PuzzleBlock>();
-        public string BlockConfiguration { get; set; } // JSON конфигурация за блоковете
+        public string? BlockConfiguration { get; set; }
     }
 }

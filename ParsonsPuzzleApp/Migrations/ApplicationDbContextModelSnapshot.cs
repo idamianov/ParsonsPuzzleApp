@@ -285,7 +285,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("BlockConfiguration")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Distractors")
@@ -327,7 +326,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDistractor")
@@ -346,7 +344,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SlotName")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
