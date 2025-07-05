@@ -61,18 +61,19 @@ namespace ParsonsPuzzleApp.Services
 
                     if (blockLines.Any())
                     {
-                        // Check if block contains slots
-                        var blockContent = string.Join("\n", blockLines);
+                        // CRITICAL: Remove indentation hints by trimming leading whitespace
+                        var normalizedLines = RemoveIndentationHints(blockLines);
+                        var blockContent = string.Join("\n", normalizedLines);
                         var slotName = ExtractSlotName(blockContent);
 
                         // Create multiline block
                         var block = new PuzzleBlock
                         {
                             PuzzleId = puzzleId,
-                            GroupId = $"multiline_{orderIndex}", // Simple group ID
+                            GroupId = $"multiline_{orderIndex}",
                             BlockType = "multiline",
                             IsMultiline = true,
-                            IsOrderIndependent = false, // Lines always stay in order
+                            IsOrderIndependent = false,
                             OrderIndex = orderIndex++,
                             IsDistractor = false,
                             Content = blockContent,
@@ -85,17 +86,19 @@ namespace ParsonsPuzzleApp.Services
                 else if (!string.IsNullOrWhiteSpace(trimmedLine) &&
                          !Regex.IsMatch(trimmedLine, endPattern))
                 {
-                    // Regular single line block
+                    // Regular single line block - also remove indentation hints
+                    var normalizedLine = line.Trim(); // Remove leading/trailing whitespace
+
                     blocks.Add(new PuzzleBlock
                     {
                         PuzzleId = puzzleId,
-                        Content = line,
+                        Content = normalizedLine,
                         BlockType = "single",
                         IsMultiline = false,
                         IsOrderIndependent = false,
                         OrderIndex = orderIndex++,
                         IsDistractor = false,
-                        SlotName = ExtractSlotName(line)
+                        SlotName = ExtractSlotName(normalizedLine)
                     });
                 }
 
@@ -103,6 +106,23 @@ namespace ParsonsPuzzleApp.Services
             }
 
             return blocks;
+        }
+
+        private List<string> RemoveIndentationHints(List<string> lines)
+        {
+            // Remove all leading whitespace to prevent giving away indentation structure
+            var normalizedLines = new List<string>();
+
+            foreach (var line in lines)
+            {
+                var trimmedLine = line.Trim();
+                if (!string.IsNullOrWhiteSpace(trimmedLine))
+                {
+                    normalizedLines.Add(trimmedLine);
+                }
+            }
+
+            return normalizedLines;
         }
 
         private string? ExtractSlotName(string content)
@@ -122,7 +142,9 @@ namespace ParsonsPuzzleApp.Services
 {syntax}-->
 int x = 10;
 int y = 20;
-{syntax}<--";
+{syntax}<--
+
+ВАЖНО: Индентацията от изходния код се премахва автоматично, за да не се дават подсказки на студентите.";
         }
     }
 

@@ -59,8 +59,8 @@
             transition: background-color 0.2s;
             font-family: 'Courier New', Courier, monospace;
             min-height: 30px;
-            white-space: pre-wrap; /* Important: preserves whitespace and allows wrapping */
-            word-break: break-word; /* Prevents text from being cut off */
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
             .code-block:hover {
@@ -88,7 +88,7 @@
         .code-content {
             display: inline-block;
             vertical-align: middle;
-            white-space: pre-wrap; /* Preserve formatting */
+            white-space: pre-wrap;
             word-break: break-word;
         }
 
@@ -145,12 +145,18 @@
             display: none;
             position: absolute;
             right: 5px;
-            top: 5px; /* Changed from 50% to top */
+            top: 5px;
             z-index: 10;
         }
 
-        .code-block:hover .indent-btns {
+        /* IMPORTANT: Only show indent buttons in target panel, not source panel */
+        #targetPanel .code-block:hover .indent-btns {
             display: inline-block;
+        }
+
+        /* Hide indent buttons in source panel */
+        #sourcePanel .indent-btns {
+            display: none !important;
         }
 
         .sortable-ghost {
@@ -159,25 +165,25 @@
             opacity: 0.7;
         }
 
-        /* Simplified multiline block styles - compact and clean */
+        /* Compact multiline block styles */
         .multiline-block {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 4px;
             margin-bottom: 5px;
             overflow: visible;
-            padding: 8px; /* Reduced padding */
+            padding: 8px;
             position: relative;
         }
 
         .multiline-container {
-            padding: 0; /* Removed padding */
+            padding: 0;
         }
 
         .code-line {
             display: block;
-            padding: 2px 0; /* Minimal padding */
-            margin: 1px 0; /* Minimal margin */
+            padding: 2px 0;
+            margin: 1px 0;
             background: transparent;
             border-radius: 0;
             transition: none;
@@ -195,7 +201,6 @@
             word-break: break-word;
         }
 
-        /* Make multiline blocks look more like single blocks */
         .multiline-block .code-content {
             white-space: pre-wrap;
             word-break: break-word;
@@ -216,16 +221,36 @@
                 blockElement.id = blockId;
                 blockElement.dataset.groupId = config.groupId;
 
-                // Create content as single text block instead of separate lines
+                // Create content and process slots properly
                 const content = config.lines.map(line => line.content).join('\n');
 
                 const contentElement = document.createElement('div');
                 contentElement.className = 'code-content';
-                contentElement.textContent = content;
+
+                // Check if content contains slots and process them
+                if (content.includes('§') && content.includes('§')) {
+                    // Process slots in multiline content
+                    let processedContent = escapeHtml(content);
+
+                    // Find all slots in the content
+                    const slotRegex = /§(\w+)§/g;
+                    let match;
+                    while ((match = slotRegex.exec(content)) !== null) {
+                        const slotName = match[1];
+                        const slotPlaceholder = `§${slotName}§`;
+                        const slotHtml = `<span class="slot" data-slot="${escapeHtml(slotName)}"></span>`;
+                        processedContent = processedContent.replace(escapeHtml(slotPlaceholder), slotHtml);
+                    }
+
+                    contentElement.innerHTML = processedContent;
+                } else {
+                    // No slots, use safe text content
+                    contentElement.textContent = content;
+                }
 
                 blockElement.appendChild(contentElement);
 
-                // Add indentation buttons for multiline blocks too
+                // Add indentation buttons (will be hidden in source panel by CSS)
                 const indentBtns = document.createElement('span');
                 indentBtns.className = 'indent-btns';
                 indentBtns.innerHTML = '<button onclick="shiftLeft(this)" class="btn btn-sm btn-outline-secondary mx-1">&lt;</button><button onclick="shiftRight(this)" class="btn btn-sm btn-outline-secondary">&gt;</button>';
@@ -245,20 +270,25 @@
                         solution.push('  '.repeat(indent) + block.textContent.trim());
                     } else {
                         // Handle regular and multiline blocks
-                        const content = block.querySelector('.code-content')?.textContent || block.textContent;
+                        let content = block.querySelector('.code-content')?.textContent ||
+                                     block.querySelector('.code-content')?.innerText ||
+                                     block.textContent;
                         const indent = parseInt(block.style.marginLeft || 0) / 20;
 
-                        // Process slots if any
+                        // Process slots if any (works for both single-line and multiline blocks)
                         let processedContent = content;
-                        const slot = block.querySelector('.slot');
-                        if (slot && slot.classList.contains('filled')) {
-                            const miniBlock = slot.querySelector('.mini-block');
-                            if (miniBlock) {
-                                const slotName = slot.dataset.slot;
-                                const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue : '';
-                                processedContent = processedContent.replace(`§${slotName}§`, miniBlockText);
+                        const slots = block.querySelectorAll('.slot');
+                        slots.forEach(slot => {
+                            if (slot.classList.contains('filled')) {
+                                const miniBlock = slot.querySelector('.mini-block');
+                                if (miniBlock) {
+                                    const slotName = slot.dataset.slot;
+                                    const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue : '';
+                                    // Replace the slot marker with the mini-block content
+                                    processedContent = processedContent.replace(`§${slotName}§`, miniBlockText);
+                                }
                             }
-                        }
+                        });
 
                         // Split content by lines and indent each line
                         const lines = processedContent.split('\n');
@@ -281,17 +311,17 @@
             const targetPanel = document.getElementById('targetPanel');
             const miniBlocksPanel = document.getElementById('miniBlocksPanel');
 
-            // Load puzzle blocks
+            // Load puzzle blocks (indentation already removed by backend)
             const puzzleBlocks = @Html.Raw(Json.Serialize(Model.PuzzleBlocksJson));
             puzzleBlocks.forEach(block => {
                 let blockElement;
 
                 if (block.isMultiline && block.lines && block.lines.length > 0) {
-                    // Create multiline block - now with indentation support
+                    // Create multiline block
                     blockElement = blockManager.createMultilineBlock({
                         groupId: block.groupId,
                         lines: block.lines.map(line => ({
-                            content: line.content
+                            content: line.content // Backend already removed indentation
                         }))
                     });
                 } else {
@@ -310,7 +340,7 @@
                         blockElement.innerHTML = `<span class="code-content">${escapeHtml(block.content)}</span>`;
                     }
 
-                    // Add indentation buttons
+                    // Add indentation buttons (will be hidden in source panel by CSS)
                     const indentBtns = document.createElement('span');
                     indentBtns.className = 'indent-btns';
                     indentBtns.innerHTML = '<button onclick="shiftLeft(this)" class="btn btn-sm btn-outline-secondary mx-1">&lt;</button><button onclick="shiftRight(this)" class="btn btn-sm btn-outline-secondary">&gt;</button>';
@@ -326,7 +356,7 @@
                 animation: 150,
                 onAdd: function(evt) {
                     const block = evt.item;
-                    block.style.marginLeft = '0px';
+                    block.style.marginLeft = '0px'; // Reset any indentation when returning to source
                     block.classList.remove('distractor');
                 }
             });
@@ -349,10 +379,11 @@
                 animation: 150
             });
 
-            // Initialize slots
+            // Initialize slots for all blocks (including multiline blocks)
             document.querySelectorAll('.code-block').forEach(block => {
-                const slot = block.querySelector('.slot');
-                if (slot) {
+                // Find all slots in this block (including multiline blocks)
+                const slots = block.querySelectorAll('.slot');
+                slots.forEach(slot => {
                     new Sortable(slot, {
                         group: 'mini-blocks',
                         animation: 150,
@@ -370,7 +401,7 @@
                             slot.appendChild(removeBtn);
                         }
                     });
-                }
+                });
             });
         }
 
@@ -381,6 +412,7 @@
         }
 
         function addIndentButtons(block) {
+            // Only add indent buttons if not already present
             if (!block.querySelector('.indent-btns')) {
                 const buttons = document.createElement('span');
                 buttons.className = 'indent-btns';
