@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using System.Web;
     using ParsonsPuzzleApp.Models;
 
     public class LanguageIndentationService : ILanguageIndentationService
@@ -56,6 +57,9 @@
             if (string.IsNullOrWhiteSpace(code))
                 return string.Empty;
 
+            // Decode HTML entities that might have been encoded
+            code = HttpUtility.HtmlDecode(code);
+
             // Split into lines and clean each
             var lines = code.Split('\n')
                 .Select(l => l.TrimEnd('\r', '\n', ' ', '\t'))
@@ -73,9 +77,9 @@
 
         private bool IsCommentMarker(string line, string commentSyntax)
         {
-            // Check for multiline block markers like //-->[name:type] or //<--
-            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\[[\w]+:(ordered|unordered)\]";
-            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--";
+            // Check for simplified multiline block markers like //-->, //<--, etc.
+            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
+            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--?\s*$"; // Handle both <-- and <-
 
             return Regex.IsMatch(line, startPattern) || Regex.IsMatch(line, endPattern);
         }
@@ -125,17 +129,19 @@
             var studentLines = studentCode.Split('\n')
                 .Select(l => l.Trim())
                 .Where(l => !string.IsNullOrWhiteSpace(l))
-                .OrderBy(l => l) // Sort for easier comparison when order doesn't matter structurally
                 .ToArray();
 
             var correctLines = correctCode.Split('\n')
                 .Select(l => l.Trim())
                 .Where(l => !string.IsNullOrWhiteSpace(l))
-                .OrderBy(l => l)
                 .ToArray();
 
             if (studentLines.Length != correctLines.Length)
                 return false;
+
+            // Sort both arrays for comparison since order might not matter for some constructs
+            Array.Sort(studentLines);
+            Array.Sort(correctLines);
 
             for (int i = 0; i < studentLines.Length; i++)
             {
