@@ -250,7 +250,7 @@
 
                 // Create content and process slots properly
                 const content = config.lines.map(line => line.content).join('\n');
-                console.log('Creating multiline block with content:', content);
+                console.log('Creating multiline block with content:', JSON.stringify(content));
 
                 const contentElement = document.createElement('div');
                 contentElement.className = 'code-content';
@@ -272,10 +272,11 @@
                         console.log(`Replaced slot ${slotName}`);
                     }
 
-                    contentElement.innerHTML = processedContent;
+                    // IMPORTANT: Preserve line breaks and empty lines when setting innerHTML
+                    contentElement.innerHTML = processedContent.replace(/\n/g, '<br>');
                 } else {
-                    // No slots, use safe text content
-                    contentElement.textContent = content;
+                    // No slots, use safe text content but preserve line breaks
+                    contentElement.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
                 }
 
                 blockElement.appendChild(contentElement);
@@ -291,41 +292,86 @@
             }
 
             exportSolution(targetPanel) {
-                const blocks = targetPanel.querySelectorAll('.code-block');
+                const blocks = targetPanel.querySelectorAll('.code-block, .brace-block');
                 let solution = [];
 
                 blocks.forEach(block => {
                     if (block.classList.contains('brace-block')) {
-                        // Handle brace blocks
+                        // FIXED: Include auto-generated brace blocks
                         const indent = parseInt(block.style.marginLeft || 0) / 20;
                         solution.push('  '.repeat(indent) + block.textContent.trim());
                     } else {
                         // Handle regular and multiline blocks
-                        let content = block.querySelector('.code-content')?.textContent ||
-                                     block.querySelector('.code-content')?.innerText ||
-                                     block.textContent;
+                        let content = '';
+                        const codeContentElement = block.querySelector('.code-content');
+
+                        if (codeContentElement) {
+                            // FIXED: Handle multiline content properly
+                            if (block.classList.contains('multiline-block')) {
+                                // For multiline blocks, preserve line breaks from innerHTML
+                                const innerHTML = codeContentElement.innerHTML;
+                                // Convert <br> tags back to \n and clean up HTML
+                                content = innerHTML
+                                    .replace(/<br\s*\/?>/gi, '\n')
+                                    .replace(/<[^>]*>/g, '') // Remove other HTML tags but keep text
+                                    .replace(/&lt;/g, '<')
+                                    .replace(/&gt;/g, '>')
+                                    .replace(/&amp;/g, '&')
+                                    .replace(/&quot;/g, '"');
+
+                                // Handle slots in multiline content
+                                const slots = block.querySelectorAll('.slot.filled');
+                                slots.forEach(slot => {
+                                    const miniBlock = slot.querySelector('.mini-block');
+                                    if (miniBlock) {
+                                        const slotName = slot.dataset.slot;
+                                        const miniBlockText = miniBlock.textContent.trim();
+                                        content = content.replace(`§${slotName}§`, miniBlockText);
+                                    }
+                                });
+                            } else {
+                                // For single-line blocks, use text walker as before
+                                const walker = document.createTreeWalker(
+                                    codeContentElement,
+                                    NodeFilter.SHOW_TEXT,
+                                    {
+                                        acceptNode: function(node) {
+                                            return node.parentElement.classList.contains('remove-mini-block') ?
+                                                NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                                        }
+                                    }
+                                );
+
+                                let textParts = [];
+                                let node;
+                                while (node = walker.nextNode()) {
+                                    textParts.push(node.textContent);
+                                }
+                                content = textParts.join('');
+
+                                // Process filled slots
+                                const slots = block.querySelectorAll('.slot.filled');
+                                slots.forEach(slot => {
+                                    const miniBlock = slot.querySelector('.mini-block');
+                                    if (miniBlock) {
+                                        const slotName = slot.dataset.slot;
+                                        const miniBlockText = miniBlock.textContent.trim();
+                                        content = content.replace(`§${slotName}§`, miniBlockText);
+                                    }
+                                });
+                            }
+                        } else {
+                            content = block.textContent || '';
+                        }
+
                         const indent = parseInt(block.style.marginLeft || 0) / 20;
 
-                        // Process slots if any (works for both single-line and multiline blocks)
-                        let processedContent = content;
-                        const slots = block.querySelectorAll('.slot');
-                        slots.forEach(slot => {
-                            if (slot.classList.contains('filled')) {
-                                const miniBlock = slot.querySelector('.mini-block');
-                                if (miniBlock) {
-                                    const slotName = slot.dataset.slot;
-                                    const miniBlockText = miniBlock.firstChild ? miniBlock.firstChild.nodeValue : '';
-                                    // Replace the slot marker with the mini-block content
-                                    processedContent = processedContent.replace(`§${slotName}§`, miniBlockText);
-                                }
-                            }
-                        });
-
                         // Split content by lines and indent each line
-                        const lines = processedContent.split('\n');
+                        const lines = content.split('\n');
                         lines.forEach(line => {
-                            if (line.trim()) { // Only add non-empty lines
-                                solution.push('  '.repeat(indent) + line);
+                            const cleanLine = line.trim();
+                            if (cleanLine) { // Only add non-empty lines
+                                solution.push('  '.repeat(indent) + cleanLine);
                             }
                         });
                     }

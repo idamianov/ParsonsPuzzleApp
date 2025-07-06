@@ -107,7 +107,7 @@ namespace ParsonsPuzzleApp.Controllers
                     })
                     .FirstOrDefault() ?? new { TotalAttempts = 0, CorrectAttempts = 0, IncorrectAttempts = 0 };
 
-                var nextUrl = $"/SelectBundle";
+                var nextUrl = "/SelectBundle";
 
                 return Ok(new
                 {
@@ -131,20 +131,34 @@ namespace ParsonsPuzzleApp.Controllers
 
         private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
         {
-            Console.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} ===");
-            Console.WriteLine($"Student arrangement: {arrangement}");
+            // DEBUGGING: Log the comparison
+            Console.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language}) ===");
+            Console.WriteLine($"Student arrangement:\n{arrangement}");
+            Console.WriteLine("--- END Student ---");
 
+            // CRITICAL FIX: For bracket-based languages, always use SourceCode to preserve structure
             string expectedSolution;
-            if (puzzle.PuzzleBlocks != null && puzzle.PuzzleBlocks.Any())
+            var isBracketLanguage = IsBracketBasedLanguage(puzzle.Language);
+
+            if (isBracketLanguage)
             {
+                // For bracket languages, use original SourceCode to preserve indentation structure
+                expectedSolution = puzzle.SourceCode;
+                Console.WriteLine($"Expected from SourceCode (bracket language):\n{expectedSolution}");
+            }
+            else if (puzzle.PuzzleBlocks != null && puzzle.PuzzleBlocks.Any())
+            {
+                // For non-bracket languages, use PuzzleBlocks system
                 expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks, puzzle.Language);
-                Console.WriteLine($"Expected from PuzzleBlocks: {expectedSolution}");
+                Console.WriteLine($"Expected from PuzzleBlocks:\n{expectedSolution}");
             }
             else
             {
+                // Fallback to SourceCode
                 expectedSolution = puzzle.SourceCode;
-                Console.WriteLine($"Expected from SourceCode: {expectedSolution}");
+                Console.WriteLine($"Expected from SourceCode (fallback):\n{expectedSolution}");
             }
+            Console.WriteLine("--- END Expected ---");
 
             // Replace slots with correct mini-blocks in both arrangement and expected solution
             string processedArrangement = arrangement;
@@ -157,24 +171,38 @@ namespace ParsonsPuzzleApp.Controllers
                 processedExpectedSolution = processedExpectedSolution.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
             }
 
+            Console.WriteLine($"After slot replacement:");
+            Console.WriteLine($"Student processed:\n{processedArrangement}");
+            Console.WriteLine($"Expected processed:\n{processedExpectedSolution}");
+            Console.WriteLine("--- END Processed ---");
+
             // Check if any slots remain unprocessed in student's arrangement
             if (Regex.IsMatch(processedArrangement, @"§\w+§"))
             {
+                Console.WriteLine("❌ FAILED: Unreplaced slots found in student arrangement");
                 return false; // Unreplaced slots indicate incorrect solution
             }
 
             // Validate using the indentation service
-            return _indentationService.ValidateIndentation(
+            bool result = _indentationService.ValidateIndentation(
                 processedArrangement,
                 processedExpectedSolution,
                 puzzle.Language
             );
+
+            Console.WriteLine($"Final result: {result}");
+            Console.WriteLine("=== END DEBUGGING ===");
+
+            return result;
         }
 
         private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Languages language)
         {
+            Console.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
+
             // Filter out bracket blocks for C-family languages
             var isBracketLanguage = IsBracketBasedLanguage(language);
+            Console.WriteLine($"🔧 Is bracket language: {isBracketLanguage}");
 
             var validBlocks = puzzleBlocks
                 .Where(pb => !pb.IsDistractor) // Skip distractors
@@ -182,10 +210,14 @@ namespace ParsonsPuzzleApp.Controllers
                 .OrderBy(pb => pb.OrderIndex)
                 .ToList();
 
+            Console.WriteLine($"🔧 Valid blocks count: {validBlocks.Count}");
+
             var lines = new List<string>();
 
             foreach (var block in validBlocks)
             {
+                Console.WriteLine($"🔧 Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
+
                 if (block.IsMultiline && block.Lines != null && block.Lines.Any())
                 {
                     // Handle multiline blocks - lines are always in order regardless of IsOrderIndependent
@@ -194,6 +226,7 @@ namespace ParsonsPuzzleApp.Controllers
                         .Select(l => l.Content)
                         .ToList();
 
+                    Console.WriteLine($"🔧 Adding {blockLines.Count} lines from multiline block");
                     lines.AddRange(blockLines);
                 }
                 else
@@ -201,12 +234,104 @@ namespace ParsonsPuzzleApp.Controllers
                     // Handle single-line blocks
                     if (!string.IsNullOrWhiteSpace(block.Content))
                     {
+                        Console.WriteLine($"🔧 Adding single line: '{block.Content}'");
                         lines.Add(block.Content);
                     }
                 }
             }
 
-            return string.Join("\n", lines);
+            var result = string.Join("\n", lines);
+            Console.WriteLine($"🔧 Before adding braces:\n{result}");
+
+            // CRITICAL FIX: For bracket-based languages, add braces based on indentation structure
+            if (isBracketLanguage)
+            {
+                Console.WriteLine("🔧 Adding braces for bracket-based language...");
+                result = AddBracesBasedOnIndentation(result);
+                Console.WriteLine($"🔧 After adding braces:\n{result}");
+            }
+
+            return result;
+        }
+
+        private string AddBracesBasedOnIndentation(string code)
+        {
+            Console.WriteLine($"🔧 AddBracesBasedOnIndentation input:\n{code}");
+
+            var lines = code.Split('\n').ToList();
+            var result = new List<string>();
+            var braceStack = new Stack<int>();
+
+            Console.WriteLine($"🔧 Processing {lines.Count} lines...");
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i];
+                var currentIndent = GetIndentationLevel(line);
+
+                Console.WriteLine($"🔧 Line {i}: '{line}' -> indent level: {currentIndent}");
+
+                if (i > 0)
+                {
+                    var prevIndent = GetIndentationLevel(lines[i - 1]);
+                    Console.WriteLine($"🔧 Previous indent: {prevIndent}, Current indent: {currentIndent}");
+
+                    // Close braces if indentation decreased
+                    while (braceStack.Count > 0 && braceStack.Peek() >= currentIndent)
+                    {
+                        var braceIndent = braceStack.Pop();
+                        var closeBrace = new string(' ', braceIndent * 2) + "}";
+                        Console.WriteLine($"🔧 Adding closing brace: '{closeBrace}'");
+                        result.Add(closeBrace);
+                    }
+
+                    // Open brace if indentation increased
+                    if (currentIndent > prevIndent)
+                    {
+                        var openBrace = new string(' ', prevIndent * 2) + "{";
+                        Console.WriteLine($"🔧 Adding opening brace: '{openBrace}'");
+                        result.Add(openBrace);
+                        braceStack.Push(currentIndent);
+                    }
+                }
+                else if (currentIndent > 0)
+                {
+                    // First line with indentation
+                    Console.WriteLine($"🔧 First line with indentation, adding opening brace");
+                    result.Add("{");
+                    braceStack.Push(currentIndent);
+                }
+
+                result.Add(line);
+            }
+
+            // Close any remaining open braces
+            while (braceStack.Count > 0)
+            {
+                var braceIndent = braceStack.Pop();
+                var closeBrace = new string(' ', braceIndent * 2) + "}";
+                Console.WriteLine($"🔧 Adding final closing brace: '{closeBrace}'");
+                result.Add(closeBrace);
+            }
+
+            var finalResult = string.Join("\n", result);
+            Console.WriteLine($"🔧 AddBracesBasedOnIndentation output:\n{finalResult}");
+            return finalResult;
+        }
+
+        private int GetIndentationLevel(string line)
+        {
+            int spaces = 0;
+            for (int i = 0; i < line.Length; i++)
+            {
+                if (line[i] == ' ')
+                    spaces++;
+                else if (line[i] == '\t')
+                    spaces += 4; // Assume 4 spaces per tab
+                else
+                    break;
+            }
+            return spaces / 2; // Assuming 2 spaces per indentation level
         }
 
         private bool IsBracketBasedLanguage(Languages language)
