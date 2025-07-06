@@ -250,12 +250,14 @@
 
                 // Create content and process slots properly
                 const content = config.lines.map(line => line.content).join('\n');
+                console.log('Creating multiline block with content:', content);
 
                 const contentElement = document.createElement('div');
                 contentElement.className = 'code-content';
 
                 // Check if content contains slots and process them
-                if (content.includes('§') && content.includes('§')) {
+                if (content.includes('§')) {
+                    console.log('Content contains slots, processing...');
                     // Process slots in multiline content
                     let processedContent = escapeHtml(content);
 
@@ -267,6 +269,7 @@
                         const slotPlaceholder = `§${slotName}§`;
                         const slotHtml = `<span class="slot" data-slot="${escapeHtml(slotName)}"></span>`;
                         processedContent = processedContent.replace(escapeHtml(slotPlaceholder), slotHtml);
+                        console.log(`Replaced slot ${slotName}`);
                     }
 
                     contentElement.innerHTML = processedContent;
@@ -283,6 +286,7 @@
                 indentBtns.innerHTML = '<button onclick="shiftLeft(this)" class="btn btn-sm btn-outline-secondary mx-1">&lt;</button><button onclick="shiftRight(this)" class="btn btn-sm btn-outline-secondary">&gt;</button>';
                 blockElement.appendChild(indentBtns);
 
+                console.log('Created multiline block:', blockElement);
                 return blockElement;
             }
 
@@ -615,5 +619,61 @@
         }
 
         initializePuzzle();
+
+        // DIRECT FIX: Move block to target panel for single-block puzzles
+        const puzzleBlocks = @Html.Raw(Json.Serialize(Model.PuzzleBlocksJson));
+        if (puzzleBlocks.length === 1) {
+            console.log('🔧 DIRECT FIX: Single block puzzle detected');
+
+            // Wait a bit for DOM to be ready, then force move
+            setTimeout(() => {
+                const sourcePanel = document.getElementById('sourcePanel');
+                const targetPanel = document.getElementById('targetPanel');
+
+                if (sourcePanel && targetPanel) {
+                    const block = sourcePanel.querySelector('.code-block');
+                    if (block) {
+                        console.log('📦 Found block in source panel, moving to target...');
+                        targetPanel.appendChild(block);
+                        console.log('✅ SUCCESS: Block moved to target panel');
+
+                        // Re-initialize slots after moving
+                        setTimeout(() => {
+                            const slots = block.querySelectorAll('.slot');
+                            console.log(`🎰 Re-initializing ${slots.length} slots after move`);
+
+                            const miniBlocksPanel = document.getElementById('miniBlocksPanel');
+                            slots.forEach(slot => {
+                                new Sortable(slot, {
+                                    group: 'mini-blocks',
+                                    animation: 150,
+                                    onAdd: function(evt) {
+                                        const miniBlock = evt.item;
+                                        slot.classList.add('filled');
+                                        const removeBtn = document.createElement('span');
+                                        removeBtn.className = 'remove-mini-block';
+                                        removeBtn.textContent = 'X';
+                                        removeBtn.onclick = () => {
+                                            if (miniBlocksPanel && miniBlocksPanel.style.display !== 'none') {
+                                                miniBlocksPanel.appendChild(miniBlock);
+                                            }
+                                            removeBtn.remove();
+                                            slot.classList.remove('filled');
+                                        };
+                                        slot.appendChild(removeBtn);
+                                    }
+                                });
+                            });
+                        }, 10);
+                    } else {
+                        console.log('❌ No block found in source panel');
+                    }
+                } else {
+                    console.log('❌ Panels not found');
+                }
+            }, 50);
+        } else {
+            console.log('📝 Multi-block puzzle - no fix needed');
+        }
     </script>
 }
