@@ -26,7 +26,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         }
 
         [BindProperty]
-        public Puzzle Puzzle { get; set; }
+        public Puzzle Puzzle { get; set; } = new Puzzle();
 
         [BindProperty]
         public Dictionary<string, List<MiniBlockInput>> MiniBlocks { get; set; } = new Dictionary<string, List<MiniBlockInput>>();

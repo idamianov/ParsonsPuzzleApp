@@ -19,10 +19,25 @@
         </div>
     </div>
     <div class="middle-section d-flex" style="flex: 0 1 70vh; min-height: 350px; overflow: hidden;">
-        <div class="left-panel p-3 bg-light overflow-auto" style="flex: 1; background-color: #f8f9fa;" id="sourcePanel">
-            @* Code blocks will be added via JavaScript *@
-        </div>
-        <div class="right-panel p-3 bg-white overflow-auto" style="flex: 1;" id="targetPanel"></div>
+        @if (Model.PuzzleBlocksJson != null && Model.PuzzleBlocksJson.Count == 1)
+        {
+            <!-- Single block mode: Only right panel, full width -->
+            <div class="right-panel p-3 bg-white overflow-auto" style="flex: 1;" id="targetPanel">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i> <strong>Попълнете слотовете</strong> в кодовия блок по-долу с подходящите мини-блокове.
+                </div>
+            </div>
+            <!-- Hidden source panel for JavaScript compatibility -->
+            <div class="left-panel" style="display: none;" id="sourcePanel"></div>
+        }
+        else
+        {
+            <!-- Multi-block mode: Both panels -->
+            <div class="left-panel p-3 bg-light overflow-auto" style="flex: 1; background-color: #f8f9fa;" id="sourcePanel">
+                @* Code blocks will be added via JavaScript *@
+            </div>
+            <div class="right-panel p-3 bg-white overflow-auto" style="flex: 1;" id="targetPanel"></div>
+        }
     </div>
     @if (Model.MiniBlocks != null && Model.MiniBlocks.Any())
     {

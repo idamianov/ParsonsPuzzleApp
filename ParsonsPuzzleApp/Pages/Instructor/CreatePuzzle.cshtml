@@ -63,8 +63,8 @@
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="Puzzle.Distractors" class="form-label">Дистрактори</label>
-        <small class="form-text text-muted">Можете да използвате същия синтаксис за многоредови блокове и тук</small>
+        <label asp-for="Puzzle.Distractors" class="form-label">Дистрактори <small class="text-muted">(незадължително)</small></label>
+        <small class="form-text text-muted">Можете да използвате същия синтаксис за многоредови блокове и тук. Оставете празно, ако не искате дистрактори.</small>
         <textarea asp-for="Puzzle.Distractors" class="form-control" id="distractors" rows="5"></textarea>
         <span asp-validation-for="Puzzle.Distractors" class="text-danger"></span>
     </div>
