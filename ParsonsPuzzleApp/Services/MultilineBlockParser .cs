@@ -31,7 +31,11 @@ namespace ParsonsPuzzleApp.Services
         public List<PuzzleBlock> ParseSourceCode(string sourceCode, int puzzleId, Languages language)
         {
             var blocks = new List<PuzzleBlock>();
-            var lines = sourceCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
+
+            // Step 1: Preprocess the source code for bracket-based languages
+            var preprocessedCode = PreprocessBrackets(sourceCode, language);
+
+            var lines = preprocessedCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
             var commentSyntax = _commentSyntax[language];
 
             // Simple patterns: just start and end markers
@@ -61,12 +65,12 @@ namespace ParsonsPuzzleApp.Services
 
                     if (blockLines.Any())
                     {
-                        // CRITICAL: Remove indentation hints by trimming leading whitespace
-                        var normalizedLines = RemoveIndentationHints(blockLines);
-                        var blockContent = string.Join("\n", normalizedLines);
+                        // For multiline blocks: preserve ALL lines (including empty ones) but remove indentation hints
+                        var cleanedBlockLines = CleanMultilineBlockContent(blockLines);
+                        var blockContent = string.Join("\n", cleanedBlockLines);
                         var slotName = ExtractSlotName(blockContent);
 
-                        // Create multiline block
+                        // Create multiline block (even if it contains empty lines - that's intentional formatting)
                         var block = new PuzzleBlock
                         {
                             PuzzleId = puzzleId,
@@ -86,20 +90,24 @@ namespace ParsonsPuzzleApp.Services
                 else if (!string.IsNullOrWhiteSpace(trimmedLine) &&
                          !Regex.IsMatch(trimmedLine, endPattern))
                 {
-                    // Regular single line block - also remove indentation hints
-                    var normalizedLine = line.Trim(); // Remove leading/trailing whitespace
+                    // Regular single line block - remove indentation hints
+                    var normalizedLine = line.Trim();
 
-                    blocks.Add(new PuzzleBlock
+                    // Skip empty lines outside of multiline blocks
+                    if (!string.IsNullOrWhiteSpace(normalizedLine))
                     {
-                        PuzzleId = puzzleId,
-                        Content = normalizedLine,
-                        BlockType = "single",
-                        IsMultiline = false,
-                        IsOrderIndependent = false,
-                        OrderIndex = orderIndex++,
-                        IsDistractor = false,
-                        SlotName = ExtractSlotName(normalizedLine)
-                    });
+                        blocks.Add(new PuzzleBlock
+                        {
+                            PuzzleId = puzzleId,
+                            Content = normalizedLine,
+                            BlockType = "single",
+                            IsMultiline = false,
+                            IsOrderIndependent = false,
+                            OrderIndex = orderIndex++,
+                            IsDistractor = false,
+                            SlotName = ExtractSlotName(normalizedLine)
+                        });
+                    }
                 }
 
                 i++;
@@ -108,21 +116,129 @@ namespace ParsonsPuzzleApp.Services
             return blocks;
         }
 
-        private List<string> RemoveIndentationHints(List<string> lines)
+        private string PreprocessBrackets(string sourceCode, Languages language)
         {
-            // Remove all leading whitespace to prevent giving away indentation structure
-            var normalizedLines = new List<string>();
+            // Only process bracket-based languages
+            if (!IsBracketBasedLanguage(language))
+                return sourceCode;
+
+            var lines = sourceCode.Split('\n').Select(l => l.TrimEnd('\r')).ToList();
+            var processedLines = new List<string>();
 
             foreach (var line in lines)
             {
                 var trimmedLine = line.Trim();
-                if (!string.IsNullOrWhiteSpace(trimmedLine))
+
+                // Skip comment markers and empty lines
+                if (string.IsNullOrWhiteSpace(trimmedLine) || IsCommentMarker(trimmedLine, language))
                 {
-                    normalizedLines.Add(trimmedLine);
+                    processedLines.Add(line);
+                    continue;
+                }
+
+                // Process lines that contain brackets mixed with other code
+                var processedLine = ProcessBracketsInLine(line);
+                processedLines.AddRange(processedLine);
+            }
+
+            return string.Join("\n", processedLines);
+        }
+
+        private List<string> ProcessBracketsInLine(string line)
+        {
+            var result = new List<string>();
+            var trimmedLine = line.Trim();
+
+            // Get original indentation
+            var indentation = line.Substring(0, line.Length - line.TrimStart().Length);
+
+            // Check if line has opening brace with other content
+            if (trimmedLine.Contains('{') && trimmedLine != "{")
+            {
+                // Split: code before brace, brace alone
+                var openBraceIndex = trimmedLine.IndexOf('{');
+                var beforeBrace = trimmedLine.Substring(0, openBraceIndex).Trim();
+                var afterBrace = trimmedLine.Substring(openBraceIndex + 1).Trim();
+
+                if (!string.IsNullOrWhiteSpace(beforeBrace))
+                {
+                    result.Add(indentation + beforeBrace);
+                }
+                result.Add(indentation + "{");
+                if (!string.IsNullOrWhiteSpace(afterBrace))
+                {
+                    // Recursively process the rest in case there are more brackets
+                    var remainingProcessed = ProcessBracketsInLine(indentation + afterBrace);
+                    result.AddRange(remainingProcessed);
+                }
+            }
+            // Check if line has closing brace with other content  
+            else if (trimmedLine.Contains('}') && trimmedLine != "}")
+            {
+                // Split: code before brace, brace alone
+                var closeBraceIndex = trimmedLine.IndexOf('}');
+                var beforeBrace = trimmedLine.Substring(0, closeBraceIndex).Trim();
+                var afterBrace = trimmedLine.Substring(closeBraceIndex + 1).Trim();
+
+                if (!string.IsNullOrWhiteSpace(beforeBrace))
+                {
+                    result.Add(indentation + beforeBrace);
+                }
+                result.Add(indentation + "}");
+                if (!string.IsNullOrWhiteSpace(afterBrace))
+                {
+                    // Recursively process the rest in case there are more brackets
+                    var remainingProcessed = ProcessBracketsInLine(indentation + afterBrace);
+                    result.AddRange(remainingProcessed);
+                }
+            }
+            else
+            {
+                // No problematic brackets, keep line as is
+                result.Add(line);
+            }
+
+            return result;
+        }
+
+        private bool IsBracketBasedLanguage(Languages language)
+        {
+            return language == Languages.C ||
+                   language == Languages.Cpp ||
+                   language == Languages.CSharp ||
+                   language == Languages.Java ||
+                   language == Languages.JavaScript;
+        }
+
+        private bool IsCommentMarker(string line, Languages language)
+        {
+            var commentSyntax = _commentSyntax[language];
+            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
+            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--\s*$";
+
+            return Regex.IsMatch(line, startPattern) || Regex.IsMatch(line, endPattern);
+        }
+
+        private List<string> CleanMultilineBlockContent(List<string> blockLines)
+        {
+            // For multiline blocks: PRESERVE ALL LINES (including empty ones) but remove indentation hints
+            var cleanedLines = new List<string>();
+
+            foreach (var line in blockLines)
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    // PRESERVE empty lines exactly as they are - important for code formatting!
+                    cleanedLines.Add(line);
+                }
+                else
+                {
+                    // Only remove indentation hints from non-empty lines
+                    cleanedLines.Add(line.Trim());
                 }
             }
 
-            return normalizedLines;
+            return cleanedLines;
         }
 
         private string? ExtractSlotName(string content)

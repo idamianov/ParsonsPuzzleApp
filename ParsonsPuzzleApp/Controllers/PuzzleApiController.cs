@@ -131,18 +131,19 @@ namespace ParsonsPuzzleApp.Controllers
 
         private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
         {
-            // Generate expected solution from either PuzzleBlocks or SourceCode
-            string expectedSolution;
+            Console.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} ===");
+            Console.WriteLine($"Student arrangement: {arrangement}");
 
+            string expectedSolution;
             if (puzzle.PuzzleBlocks != null && puzzle.PuzzleBlocks.Any())
             {
-                // Use new PuzzleBlocks system
                 expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks, puzzle.Language);
+                Console.WriteLine($"Expected from PuzzleBlocks: {expectedSolution}");
             }
             else
             {
-                // Use legacy SourceCode system
                 expectedSolution = puzzle.SourceCode;
+                Console.WriteLine($"Expected from SourceCode: {expectedSolution}");
             }
 
             // Replace slots with correct mini-blocks in both arrangement and expected solution
