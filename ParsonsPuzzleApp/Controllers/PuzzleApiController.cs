@@ -4,6 +4,7 @@ using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Models;
 using ParsonsPuzzleApp.Services;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -132,9 +133,9 @@ namespace ParsonsPuzzleApp.Controllers
         private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
         {
             // DEBUGGING: Log the comparison
-            Console.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language}) ===");
-            Console.WriteLine($"Student arrangement:\n{arrangement}");
-            Console.WriteLine("--- END Student ---");
+            Debug.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language}) ===");
+            Debug.WriteLine($"Student arrangement:\n{arrangement}");
+            Debug.WriteLine("--- END Student ---");
 
             // CRITICAL FIX: For bracket-based languages, always use SourceCode to preserve structure
             string expectedSolution;
@@ -144,21 +145,21 @@ namespace ParsonsPuzzleApp.Controllers
             {
                 // For bracket languages, use original SourceCode to preserve indentation structure
                 expectedSolution = puzzle.SourceCode;
-                Console.WriteLine($"Expected from SourceCode (bracket language):\n{expectedSolution}");
+                Debug.WriteLine($"Expected from SourceCode (bracket language):\n{expectedSolution}");
             }
             else if (puzzle.PuzzleBlocks != null && puzzle.PuzzleBlocks.Any())
             {
                 // For non-bracket languages, use PuzzleBlocks system
                 expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks, puzzle.Language);
-                Console.WriteLine($"Expected from PuzzleBlocks:\n{expectedSolution}");
+                Debug.WriteLine($"Expected from PuzzleBlocks:\n{expectedSolution}");
             }
             else
             {
                 // Fallback to SourceCode
                 expectedSolution = puzzle.SourceCode;
-                Console.WriteLine($"Expected from SourceCode (fallback):\n{expectedSolution}");
+                Debug.WriteLine($"Expected from SourceCode (fallback):\n{expectedSolution}");
             }
-            Console.WriteLine("--- END Expected ---");
+            Debug.WriteLine("--- END Expected ---");
 
             // Replace slots with correct mini-blocks in both arrangement and expected solution
             string processedArrangement = arrangement;
@@ -171,15 +172,15 @@ namespace ParsonsPuzzleApp.Controllers
                 processedExpectedSolution = processedExpectedSolution.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
             }
 
-            Console.WriteLine($"After slot replacement:");
-            Console.WriteLine($"Student processed:\n{processedArrangement}");
-            Console.WriteLine($"Expected processed:\n{processedExpectedSolution}");
-            Console.WriteLine("--- END Processed ---");
+            Debug.WriteLine($"After slot replacement:");
+            Debug.WriteLine($"Student processed:\n{processedArrangement}");
+            Debug.WriteLine($"Expected processed:\n{processedExpectedSolution}");
+            Debug.WriteLine("--- END Processed ---");
 
             // Check if any slots remain unprocessed in student's arrangement
             if (Regex.IsMatch(processedArrangement, @"§\w+§"))
             {
-                Console.WriteLine("❌ FAILED: Unreplaced slots found in student arrangement");
+                Debug.WriteLine("❌ FAILED: Unreplaced slots found in student arrangement");
                 return false; // Unreplaced slots indicate incorrect solution
             }
 
@@ -190,19 +191,19 @@ namespace ParsonsPuzzleApp.Controllers
                 puzzle.Language
             );
 
-            Console.WriteLine($"Final result: {result}");
-            Console.WriteLine("=== END DEBUGGING ===");
+            Debug.WriteLine($"Final result: {result}");
+            Debug.WriteLine("=== END DEBUGGING ===");
 
             return result;
         }
 
         private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Languages language)
         {
-            Console.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
+            Debug.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
 
             // Filter out bracket blocks for C-family languages
             var isBracketLanguage = IsBracketBasedLanguage(language);
-            Console.WriteLine($"🔧 Is bracket language: {isBracketLanguage}");
+            Debug.WriteLine($"🔧 Is bracket language: {isBracketLanguage}");
 
             var validBlocks = puzzleBlocks
                 .Where(pb => !pb.IsDistractor) // Skip distractors
@@ -210,13 +211,13 @@ namespace ParsonsPuzzleApp.Controllers
                 .OrderBy(pb => pb.OrderIndex)
                 .ToList();
 
-            Console.WriteLine($"🔧 Valid blocks count: {validBlocks.Count}");
+            Debug.WriteLine($"🔧 Valid blocks count: {validBlocks.Count}");
 
             var lines = new List<string>();
 
             foreach (var block in validBlocks)
             {
-                Console.WriteLine($"🔧 Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
+                Debug.WriteLine($"🔧 Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
 
                 if (block.IsMultiline && block.Lines != null && block.Lines.Any())
                 {
@@ -226,7 +227,7 @@ namespace ParsonsPuzzleApp.Controllers
                         .Select(l => l.Content)
                         .ToList();
 
-                    Console.WriteLine($"🔧 Adding {blockLines.Count} lines from multiline block");
+                    Debug.WriteLine($"🔧 Adding {blockLines.Count} lines from multiline block");
                     lines.AddRange(blockLines);
                 }
                 else
@@ -234,21 +235,21 @@ namespace ParsonsPuzzleApp.Controllers
                     // Handle single-line blocks
                     if (!string.IsNullOrWhiteSpace(block.Content))
                     {
-                        Console.WriteLine($"🔧 Adding single line: '{block.Content}'");
+                        Debug.WriteLine($"🔧 Adding single line: '{block.Content}'");
                         lines.Add(block.Content);
                     }
                 }
             }
 
             var result = string.Join("\n", lines);
-            Console.WriteLine($"🔧 Before adding braces:\n{result}");
+            Debug.WriteLine($"🔧 Before adding braces:\n{result}");
 
             // CRITICAL FIX: For bracket-based languages, add braces based on indentation structure
             if (isBracketLanguage)
             {
-                Console.WriteLine("🔧 Adding braces for bracket-based language...");
+                Debug.WriteLine("🔧 Adding braces for bracket-based language...");
                 result = AddBracesBasedOnIndentation(result);
-                Console.WriteLine($"🔧 After adding braces:\n{result}");
+                Debug.WriteLine($"🔧 After adding braces:\n{result}");
             }
 
             return result;
@@ -256,32 +257,32 @@ namespace ParsonsPuzzleApp.Controllers
 
         private string AddBracesBasedOnIndentation(string code)
         {
-            Console.WriteLine($"🔧 AddBracesBasedOnIndentation input:\n{code}");
+            Debug.WriteLine($"🔧 AddBracesBasedOnIndentation input:\n{code}");
 
             var lines = code.Split('\n').ToList();
             var result = new List<string>();
             var braceStack = new Stack<int>();
 
-            Console.WriteLine($"🔧 Processing {lines.Count} lines...");
+            Debug.WriteLine($"🔧 Processing {lines.Count} lines...");
 
             for (int i = 0; i < lines.Count; i++)
             {
                 var line = lines[i];
                 var currentIndent = GetIndentationLevel(line);
 
-                Console.WriteLine($"🔧 Line {i}: '{line}' -> indent level: {currentIndent}");
+                Debug.WriteLine($"🔧 Line {i}: '{line}' -> indent level: {currentIndent}");
 
                 if (i > 0)
                 {
                     var prevIndent = GetIndentationLevel(lines[i - 1]);
-                    Console.WriteLine($"🔧 Previous indent: {prevIndent}, Current indent: {currentIndent}");
+                    Debug.WriteLine($"🔧 Previous indent: {prevIndent}, Current indent: {currentIndent}");
 
                     // Close braces if indentation decreased
                     while (braceStack.Count > 0 && braceStack.Peek() >= currentIndent)
                     {
                         var braceIndent = braceStack.Pop();
                         var closeBrace = new string(' ', braceIndent * 2) + "}";
-                        Console.WriteLine($"🔧 Adding closing brace: '{closeBrace}'");
+                        Debug.WriteLine($"🔧 Adding closing brace: '{closeBrace}'");
                         result.Add(closeBrace);
                     }
 
@@ -289,7 +290,7 @@ namespace ParsonsPuzzleApp.Controllers
                     if (currentIndent > prevIndent)
                     {
                         var openBrace = new string(' ', prevIndent * 2) + "{";
-                        Console.WriteLine($"🔧 Adding opening brace: '{openBrace}'");
+                        Debug.WriteLine($"🔧 Adding opening brace: '{openBrace}'");
                         result.Add(openBrace);
                         braceStack.Push(currentIndent);
                     }
@@ -297,7 +298,7 @@ namespace ParsonsPuzzleApp.Controllers
                 else if (currentIndent > 0)
                 {
                     // First line with indentation
-                    Console.WriteLine($"🔧 First line with indentation, adding opening brace");
+                    Debug.WriteLine($"🔧 First line with indentation, adding opening brace");
                     result.Add("{");
                     braceStack.Push(currentIndent);
                 }
@@ -310,12 +311,12 @@ namespace ParsonsPuzzleApp.Controllers
             {
                 var braceIndent = braceStack.Pop();
                 var closeBrace = new string(' ', braceIndent * 2) + "}";
-                Console.WriteLine($"🔧 Adding final closing brace: '{closeBrace}'");
+                Debug.WriteLine($"🔧 Adding final closing brace: '{closeBrace}'");
                 result.Add(closeBrace);
             }
 
             var finalResult = string.Join("\n", result);
-            Console.WriteLine($"🔧 AddBracesBasedOnIndentation output:\n{finalResult}");
+            Debug.WriteLine($"🔧 AddBracesBasedOnIndentation output:\n{finalResult}");
             return finalResult;
         }
 
