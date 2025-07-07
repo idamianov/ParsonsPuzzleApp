@@ -1,6 +1,7 @@
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.RazorPages;
     using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,11 +20,13 @@ namespace ParsonsPuzzleApp.Pages.Instructor
     {
         private readonly ApplicationDbContext _context;
         private readonly IMultilineBlockParser _blockParser;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public EditPuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser)
+        public EditPuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser, UserManager<IdentityUser> userManager)
         {
             _context = context;
             _blockParser = blockParser;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -41,11 +44,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return NotFound();
             }
 
+            var userId = _userManager.GetUserId(User);
             Puzzle = await _context.Puzzles
                 .Include(p => p.MiniBlocks)
                 .Include(p => p.PuzzleBlocks)
                 .ThenInclude(pb => pb.Lines)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.InstructorId == userId);
 
             if (Puzzle == null)
             {
@@ -68,6 +72,9 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // Remove InstructorId from ModelState to prevent validation errors
+            ModelState.Remove("Puzzle.InstructorId");
+
             if (!ModelState.IsValid)
             {
                 LanguageOptions = GetLanguageOptions();
@@ -94,7 +101,20 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 }
             }
 
+            // Verify ownership
+            var userId = _userManager.GetUserId(User);
+            var existingPuzzle = await _context.Puzzles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == Puzzle.Id && p.InstructorId == userId);
+
+            if (existingPuzzle == null)
+            {
+                return NotFound();
+            }
+
             // Update puzzle basic info
+            Puzzle.InstructorId = userId;
+            Puzzle.LastModifiedAt = DateTime.UtcNow;
             _context.Attach(Puzzle).State = EntityState.Modified;
 
             // Remove existing related data

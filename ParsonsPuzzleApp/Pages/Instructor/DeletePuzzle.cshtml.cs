@@ -1,21 +1,24 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Models;
+using System.Threading.Tasks;
+
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Mvc.RazorPages;
-    using Microsoft.EntityFrameworkCore;
-    using ParsonsPuzzleApp.Data;
-    using ParsonsPuzzleApp.Models;
-    using System.Threading.Tasks;
-
     [Authorize]
     public class DeletePuzzleModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public DeletePuzzleModel(ApplicationDbContext context)
+        public DeletePuzzleModel(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -28,11 +31,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return NotFound();
             }
 
+            var userId = _userManager.GetUserId(User);
+
             Puzzle = await _context.Puzzles
                 .Include(p => p.BundlePuzzles)
                 .ThenInclude(bp => bp.Bundle)
-                .Include(p => p.MiniBlocks)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.InstructorId == userId);
 
             if (Puzzle == null)
             {
@@ -42,32 +46,32 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(int? id)
         {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User);
+
             Puzzle = await _context.Puzzles
-                .Include(p => p.BundlePuzzles)
-                .Include(p => p.MiniBlocks)
-                .FirstOrDefaultAsync(p => p.Id == Puzzle.Id);
+                .FirstOrDefaultAsync(p => p.Id == id && p.InstructorId == userId);
 
             if (Puzzle == null)
             {
                 return NotFound();
             }
 
-            // Премахване на свързани записи
-            _context.BundlePuzzles.RemoveRange(Puzzle.BundlePuzzles);
-            _context.MiniBlocks.RemoveRange(Puzzle.MiniBlocks);
-            _context.Puzzles.Remove(Puzzle);
-
             try
             {
+                _context.Puzzles.Remove(Puzzle);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Пъзелът беше успешно изтрит!";
             }
             catch (DbUpdateException)
             {
                 TempData["ErrorMessage"] = "Грешка при изтриване на пъзела. Моля, опитайте отново.";
-                return Page();
             }
 
             return RedirectToPage("./Puzzles");

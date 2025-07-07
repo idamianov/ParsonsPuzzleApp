@@ -22,6 +22,11 @@ namespace ParsonsPuzzleApp.Models
         [Required(ErrorMessage = "Езикът е задължителен")]
         public Languages Language { get; set; }
 
+        // New property for instructor ownership
+        public string InstructorId { get; set; } // Foreign key to AspNetUsers
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? LastModifiedAt { get; set; }
+
         public List<BundlePuzzle> BundlePuzzles { get; set; } = new List<BundlePuzzle>();
         public List<MiniBlock> MiniBlocks { get; set; } = new List<MiniBlock>();
         public List<PuzzleBlock> PuzzleBlocks { get; set; } = new List<PuzzleBlock>();

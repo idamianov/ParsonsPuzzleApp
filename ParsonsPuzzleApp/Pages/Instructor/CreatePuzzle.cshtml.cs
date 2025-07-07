@@ -1,6 +1,7 @@
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.RazorPages;
     using Microsoft.AspNetCore.Mvc.Rendering;
@@ -18,11 +19,13 @@ namespace ParsonsPuzzleApp.Pages.Instructor
     {
         private readonly ApplicationDbContext _context;
         private readonly IMultilineBlockParser _blockParser;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public CreatePuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser)
+        public CreatePuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser, UserManager<IdentityUser> userManager)
         {
             _context = context;
             _blockParser = blockParser;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -47,6 +50,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // Set the InstructorId before validation
+            Puzzle.InstructorId = _userManager.GetUserId(User);
+
+            // Remove InstructorId from ModelState to prevent validation errors
+            ModelState.Remove("Puzzle.InstructorId");
+
             if (!ModelState.IsValid)
             {
                 LanguageOptions = GetLanguageOptions();

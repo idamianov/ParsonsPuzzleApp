@@ -16,11 +16,13 @@ namespace ParsonsPuzzleApp.Pages
     {
         private readonly ApplicationDbContext _context;
         private readonly IPuzzleBlockService _puzzleBlockService;
+        private readonly IBundleAccessService _bundleAccessService;
 
-        public SolvePuzzleModel(ApplicationDbContext context, IPuzzleBlockService puzzleBlockService)
+        public SolvePuzzleModel(ApplicationDbContext context, IPuzzleBlockService puzzleBlockService, IBundleAccessService bundleAccessService)
         {
             _context = context;
             _puzzleBlockService = puzzleBlockService;
+            _bundleAccessService = bundleAccessService;
         }
 
         public Bundle Bundle { get; set; }
@@ -47,6 +49,12 @@ namespace ParsonsPuzzleApp.Pages
                 return BadRequest("Липсва валиден BundleAttemptId.");
             }
 
+            // Check if student has access to this bundle
+            if (!_bundleAccessService.HasAccess(bundleId, studentId))
+            {
+                return RedirectToPage("/AccessDenied", new { message = "Нямате достъп до тази колекция. Моля, използвайте валидна връзка и код за отключване." });
+            }
+
             StudentIdentifier = studentId;
             BundleAttemptId = bundleAttemptId.Value;
 
@@ -59,6 +67,12 @@ namespace ParsonsPuzzleApp.Pages
             if (Bundle == null)
             {
                 return NotFound("Колекцията не е намерена.");
+            }
+
+            // Additional check: ensure bundle is published
+            if (!Bundle.IsPublished)
+            {
+                return RedirectToPage("/AccessDenied", new { message = "Тази колекция не е публикувана." });
             }
 
             TotalPuzzles = Bundle.BundlePuzzles.Count;
