@@ -1,6 +1,7 @@
 ﻿namespace ParsonsPuzzleApp.Services
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Web;
@@ -28,7 +29,7 @@
 
             if (language == Languages.Python)
             {
-                // For Python, indentation matters - compare with preserved indentation
+                // For Python, indentation matters - compare with normalized indentation
                 return CompareWithIndentation(normalizedStudent, normalizedCorrect);
             }
             else if (IsBracketBasedLanguage(language))
@@ -60,28 +61,44 @@
             // Decode HTML entities that might have been encoded
             code = HttpUtility.HtmlDecode(code);
 
-            // Split into lines and clean each
+            // Split into lines
             var lines = code.Split('\n')
-                .Select(l => l.TrimEnd('\r', '\n', ' ', '\t'))
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .ToList();
+                .Select(l => l.TrimEnd('\r', '\n'));
 
             // Remove comment markers for multiline blocks
             var commentSyntax = GetCommentSyntax(language);
-            var cleanedLines = lines
-                .Where(l => !IsCommentMarker(l.Trim(), commentSyntax))
-                .ToList();
+            var cleanedLines = new List<string>();
+
+            foreach (var line in lines)
+            {
+                var trimmedLine = line.Trim();
+
+                // Skip empty lines
+                if (string.IsNullOrWhiteSpace(trimmedLine))
+                    continue;
+
+                // Skip multiline block markers
+                if (IsCommentMarker(trimmedLine, commentSyntax))
+                    continue;
+
+                // Keep the line with its original indentation (for Python)
+                cleanedLines.Add(line.TrimEnd());
+            }
 
             return string.Join("\n", cleanedLines);
         }
 
         private bool IsCommentMarker(string line, string commentSyntax)
         {
-            // Check for simplified multiline block markers like //-->, //<--, etc.
-            var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
-            var endPattern = $@"^{Regex.Escape(commentSyntax)}<--?\s*$"; // Handle both <-- and <-
+            // Check for multiline block markers
+            // Match patterns like //-->, //<--, #-->, #<--, etc.
+            var patterns = new[]
+            {
+                $@"^{Regex.Escape(commentSyntax)}--+>\s*$",  // Start marker with one or more dashes
+                $@"^{Regex.Escape(commentSyntax)}<--+\s*$",  // End marker with one or more dashes
+            };
 
-            return Regex.IsMatch(line, startPattern) || Regex.IsMatch(line, endPattern);
+            return patterns.Any(pattern => Regex.IsMatch(line, pattern));
         }
 
         private string GetCommentSyntax(Languages language)
@@ -97,23 +114,16 @@
 
         private bool CompareWithIndentation(string studentCode, string correctCode)
         {
-            // For Python - preserve indentation and compare line by line
-            var studentLines = studentCode.Split('\n')
-                .Select(l => l.TrimEnd())
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .ToArray();
-
-            var correctLines = correctCode.Split('\n')
-                .Select(l => l.TrimEnd())
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .ToArray();
+            // For Python - normalize tabs to spaces and then compare
+            var studentLines = NormalizeIndentation(studentCode);
+            var correctLines = NormalizeIndentation(correctCode);
 
             if (studentLines.Length != correctLines.Length)
                 return false;
 
             for (int i = 0; i < studentLines.Length; i++)
             {
-                // For Python, both content and indentation must match
+                // Compare both content and relative indentation
                 if (!string.Equals(studentLines[i], correctLines[i], StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
@@ -121,6 +131,49 @@
             }
 
             return true;
+        }
+
+        private string[] NormalizeIndentation(string code)
+        {
+            var lines = code.Split('\n')
+                .Select(l => l.TrimEnd())
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .ToArray();
+
+            // Normalize indentation: convert tabs to spaces and standardize
+            var normalizedLines = new string[lines.Length];
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                // Convert tabs to 4 spaces
+                line = line.Replace("\t", "    ");
+
+                // Calculate indentation level (assuming 2 or 4 spaces per level)
+                int leadingSpaces = 0;
+                for (int j = 0; j < line.Length; j++)
+                {
+                    if (line[j] == ' ')
+                        leadingSpaces++;
+                    else
+                        break;
+                }
+
+                // Normalize to 2 spaces per indentation level
+                int indentLevel = 0;
+                if (leadingSpaces > 0)
+                {
+                    // Handle both 2-space and 4-space indentation
+                    indentLevel = leadingSpaces / 2;
+                    if (leadingSpaces % 4 == 0)
+                        indentLevel = leadingSpaces / 4;
+                }
+
+                var content = line.TrimStart();
+                normalizedLines[i] = new string(' ', indentLevel * 2) + content;
+            }
+
+            return normalizedLines;
         }
 
         private bool CompareIgnoringIndentation(string studentCode, string correctCode)
