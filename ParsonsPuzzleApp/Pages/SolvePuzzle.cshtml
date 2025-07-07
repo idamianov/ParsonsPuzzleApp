@@ -297,7 +297,7 @@
 
                 blocks.forEach(block => {
                     if (block.classList.contains('brace-block')) {
-                        // FIXED: Include auto-generated brace blocks
+                        // Include auto-generated brace blocks
                         const indent = parseInt(block.style.marginLeft || 0) / 20;
                         solution.push('  '.repeat(indent) + block.textContent.trim());
                     } else {
@@ -306,59 +306,55 @@
                         const codeContentElement = block.querySelector('.code-content');
 
                         if (codeContentElement) {
-                            // FIXED: Handle multiline content properly
+                            // Clone the content to avoid modifying the original
+                            const clonedContent = codeContentElement.cloneNode(true);
+
+                            // Remove all remove buttons before processing
+                            clonedContent.querySelectorAll('.remove-mini-block').forEach(btn => btn.remove());
+
+                            // Handle multiline content properly
                             if (block.classList.contains('multiline-block')) {
-                                // For multiline blocks, preserve line breaks from innerHTML
-                                const innerHTML = codeContentElement.innerHTML;
+                                // Process slots in the cloned content
+                                const slots = clonedContent.querySelectorAll('.slot.filled');
+                                slots.forEach(slot => {
+                                    const miniBlock = slot.querySelector('.mini-block');
+                                    if (miniBlock) {
+                                        // Replace the slot with just the mini-block text
+                                        const textNode = document.createTextNode(miniBlock.textContent.trim());
+                                        slot.parentNode.replaceChild(textNode, slot);
+                                    }
+                                });
+
                                 // Convert <br> tags back to \n and clean up HTML
-                                content = innerHTML
+                                content = clonedContent.innerHTML
                                     .replace(/<br\s*\/?>/gi, '\n')
-                                    .replace(/<[^>]*>/g, '') // Remove other HTML tags but keep text
+                                    .replace(/<[^>]*>/g, '') // Remove other HTML tags
                                     .replace(/&lt;/g, '<')
                                     .replace(/&gt;/g, '>')
                                     .replace(/&amp;/g, '&')
                                     .replace(/&quot;/g, '"');
-
-                                // Handle slots in multiline content
-                                const slots = block.querySelectorAll('.slot.filled');
-                                slots.forEach(slot => {
-                                    const miniBlock = slot.querySelector('.mini-block');
-                                    if (miniBlock) {
-                                        const slotName = slot.dataset.slot;
-                                        const miniBlockText = miniBlock.textContent.trim();
-                                        content = content.replace(`§${slotName}§`, miniBlockText);
-                                    }
-                                });
                             } else {
-                                // For single-line blocks, use text walker as before
-                                const walker = document.createTreeWalker(
-                                    codeContentElement,
-                                    NodeFilter.SHOW_TEXT,
-                                    {
-                                        acceptNode: function(node) {
-                                            return node.parentElement.classList.contains('remove-mini-block') ?
-                                                NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
-                                        }
-                                    }
-                                );
-
-                                let textParts = [];
-                                let node;
-                                while (node = walker.nextNode()) {
-                                    textParts.push(node.textContent);
-                                }
-                                content = textParts.join('');
-
-                                // Process filled slots
-                                const slots = block.querySelectorAll('.slot.filled');
+                                // For single-line blocks, process slots
+                                const slots = clonedContent.querySelectorAll('.slot.filled');
                                 slots.forEach(slot => {
                                     const miniBlock = slot.querySelector('.mini-block');
                                     if (miniBlock) {
-                                        const slotName = slot.dataset.slot;
-                                        const miniBlockText = miniBlock.textContent.trim();
-                                        content = content.replace(`§${slotName}§`, miniBlockText);
+                                        // Replace the slot with just the mini-block text
+                                        const textNode = document.createTextNode(miniBlock.textContent.trim());
+                                        slot.parentNode.replaceChild(textNode, slot);
                                     }
                                 });
+
+                                // For unfilled slots, keep the slot marker
+                                const unfilledSlots = clonedContent.querySelectorAll('.slot:not(.filled)');
+                                unfilledSlots.forEach(slot => {
+                                    const slotName = slot.dataset.slot;
+                                    const textNode = document.createTextNode(`§${slotName}§`);
+                                    slot.parentNode.replaceChild(textNode, slot);
+                                });
+
+                                // Get the text content
+                                content = clonedContent.textContent || '';
                             }
                         } else {
                             content = block.textContent || '';
@@ -722,4 +718,5 @@
             console.log('📝 Multi-block puzzle - no fix needed');
         }
     </script>
+}
 }

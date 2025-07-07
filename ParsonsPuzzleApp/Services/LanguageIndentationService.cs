@@ -139,10 +139,7 @@
             if (studentLines.Length != correctLines.Length)
                 return false;
 
-            // Sort both arrays for comparison since order might not matter for some constructs
-            Array.Sort(studentLines);
-            Array.Sort(correctLines);
-
+            // Compare line by line - DO NOT SORT!
             for (int i = 0; i < studentLines.Length; i++)
             {
                 if (!string.Equals(studentLines[i], correctLines[i], StringComparison.OrdinalIgnoreCase))
