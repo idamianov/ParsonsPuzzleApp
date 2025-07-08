@@ -644,7 +644,7 @@
                 const result = await response.json();
                 if (result.isLast) {
                     const stats = result.statistics;
-                    alert(`Колекцията с пъзели е завършена!\n\nСтатистика:\n- Общо опити: ${stats.totalAttempts}\n- Верни решения: ${stats.correctAttempts}\n- Грешни решения: ${stats.incorrectAttempts}`);
+                    alert(`Поздравления! Завършихте колекцията!\n\nВашите резултати ще бъдат показани на следващата страница.`);
                     window.location.href = result.nextUrl;
                 } else {
                     alert(result.isCorrect ? 'Решението е вярно! Преминавате към следващия пъзел.' : 'Решението е грешно. Преминавате към следващия пъзел.');
@@ -718,5 +718,4 @@
             console.log('📝 Multi-block puzzle - no fix needed');
         }
     </script>
-}
 }

@@ -108,7 +108,7 @@ namespace ParsonsPuzzleApp.Controllers
                     })
                     .FirstOrDefault() ?? new { TotalAttempts = 0, CorrectAttempts = 0, IncorrectAttempts = 0 };
 
-                var nextUrl = "/SelectBundle";
+                var nextUrl = $"/BundleComplete/{model.BundleAttemptId}";
 
                 return Ok(new
                 {
