@@ -53,7 +53,7 @@
         <textarea asp-for="Puzzle.SourceCode" class="form-control" id="sourceCode" rows="10" required></textarea>
         <span asp-validation-for="Puzzle.SourceCode" class="text-danger"></span>
         <div class="form-text">
-            За езици с къдрави скоби (C, C++, C#, Java, JavaScript): Блоковете { и } се игнорират автоматично и се добавят динамично при индентация.
+            За езици с къдрави скоби (C, C++, C#, Java, JavaScript): Блоковете { и } се добавят динамично по време на нареждане на пъзела.
         </div>
     </div>
 
@@ -91,6 +91,69 @@
                 mode: window.getCodeMirrorMode()
             });
 
+            // Task editor with HTML validation
+            var taskEditor = null;
+
+            function initializeTaskEditor() {
+                // Convert task textarea to a rich text editor that sanitizes input
+                const taskTextarea = document.getElementById("Puzzle_Task");
+
+                // Create a div for visual feedback
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'alert alert-warning mt-2 d-none';
+                feedbackDiv.id = 'task-security-warning';
+                taskTextarea.parentNode.insertBefore(feedbackDiv, taskTextarea.nextSibling);
+
+                // Monitor task input for dangerous content
+                function validateTaskContent() {
+                    const content = taskTextarea.value;
+                    const dangerousPatterns = [
+                        /<script[\s\S]*?<\/script>/gi,
+                        /<iframe[\s\S]*?>/gi,
+                        /on\w+\s*=/gi, // Event handlers like onclick=
+                        /javascript:/gi,
+                        /<embed[\s\S]*?>/gi,
+                        /<object[\s\S]*?>/gi
+                    ];
+
+                    let hasDangerous = false;
+                    let warnings = [];
+
+                    dangerousPatterns.forEach(pattern => {
+                        if (pattern.test(content)) {
+                            hasDangerous = true;
+                            if (pattern.toString().includes('script')) {
+                                warnings.push('Открити са &lt;script&gt; тагове - те ще бъдат премахнати');
+                            } else if (pattern.toString().includes('iframe')) {
+                                warnings.push('Открити са &lt;iframe&gt; тагове - те ще бъдат премахнати');
+                            } else if (pattern.toString().includes('on\\w+')) {
+                                warnings.push('Открити са event handlers (onclick, onload, etc.) - те ще бъдат премахнати');
+                            } else if (pattern.toString().includes('javascript:')) {
+                                warnings.push('Открити са javascript: връзки - те ще бъдат премахнати');
+                            }
+                        }
+                    });
+
+                    if (hasDangerous) {
+                        feedbackDiv.innerHTML = '<strong>Внимание за сигурност:</strong><br>' + warnings.join('<br>');
+                        feedbackDiv.classList.remove('d-none');
+                    } else {
+                        feedbackDiv.classList.add('d-none');
+                    }
+                }
+
+                // Validate on input
+                taskTextarea.addEventListener('input', validateTaskContent);
+                taskTextarea.addEventListener('paste', function() {
+                    setTimeout(validateTaskContent, 100);
+                });
+
+                // Initial validation
+                validateTaskContent();
+            }
+
+            initializeTaskEditor();
+
             $("#languageSelect").change(function() {
                 var mode = window.getCodeMirrorMode();
                 sourceCodeEditor.setOption("mode", mode);
@@ -105,8 +168,20 @@
                 window.insertSlot(sourceCodeEditor);
             });
 
+            // Improved slot tracking with debouncing
+            let updateTimeout;
             sourceCodeEditor.on("change", function() {
-                window.updateMiniBlocksPanel(sourceCodeEditor);
+                clearTimeout(updateTimeout);
+                updateTimeout = setTimeout(function() {
+                    window.updateMiniBlocksPanel(sourceCodeEditor);
+                }, 300);
+            });
+
+            // Handle paste events to update mini-blocks
+            sourceCodeEditor.on("paste", function() {
+                setTimeout(function() {
+                    window.updateMiniBlocksPanel(sourceCodeEditor);
+                }, 100);
             });
 
             // Show syntax help on load if language is selected
@@ -178,7 +253,7 @@
                 return syntaxMap[language];
             }
 
-            // Insert multiline block - completely simplified
+            // Insert multiline block
             $("#insertMultilineButton").click(function() {
                 var language = $("#languageSelect").find("option:selected").text();
                 var syntax = getCommentSyntax(language);
@@ -188,24 +263,18 @@
                     return;
                 }
 
-                // Simple template - no complex naming or ordering
                 var template = `${syntax.comment}-->\n\n${syntax.comment}<--`;
-
-                // Insert in CodeMirror
                 sourceCodeEditor.replaceSelection(template);
-
-                // Position cursor between markers
                 var cursor = sourceCodeEditor.getCursor();
                 sourceCodeEditor.setCursor({line: cursor.line - 1, ch: 0});
                 sourceCodeEditor.focus();
             });
 
-            // Simplified form validation
+            // Form validation
             $("#puzzleForm").submit(function(e) {
                 sourceCodeEditor.save();
                 distractorsEditor.save();
 
-                // Validate blocks
                 var sourceCode = $("#sourceCode").val();
                 var distractors = $("#distractors").val();
                 var language = $("#languageSelect").find("option:selected").text();
@@ -233,11 +302,9 @@
 
                 lines.forEach((line, index) => {
                     var trimmed = line.trim();
-                    // Simple check for start marker
                     if (trimmed === `${syntax.comment}-->`) {
                         openBlocks++;
                     }
-                    // Simple check for end marker
                     else if (trimmed === `${syntax.comment}<--`) {
                         openBlocks--;
                         if (openBlocks < 0) {
@@ -265,10 +332,12 @@
 
         window.insertSlot = function(editor) {
             var slotName = prompt("Въведете име на слота:");
-            if (slotName) {
+            if (slotName && /^[a-zA-Z0-9_]+$/.test(slotName)) {
                 var slotText = "§" + slotName + "§";
                 editor.replaceSelection(slotText);
                 window.updateMiniBlocksPanel(editor);
+            } else if (slotName) {
+                alert("Името на слота може да съдържа само букви, цифри и долна черта!");
             }
         };
 
@@ -278,17 +347,33 @@
             var slots = [];
             var match;
             while ((match = slotRegex.exec(sourceCode)) !== null) {
-                slots.push(match[1]);
+                if (!slots.includes(match[1])) {
+                    slots.push(match[1]);
+                }
             }
 
             var container = $("#miniBlocksContainer");
+
+            // Remove slots that no longer exist in source code
+            container.children().each(function() {
+                var slotDiv = $(this);
+                var slotName = slotDiv.find("h5").text().replace("Слот: ", "");
+                if (!slots.includes(slotName)) {
+                    slotDiv.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }
+            });
+
+            // Get existing slots in the UI
             var existingSlots = container.find("h5").map(function() {
                 return $(this).text().replace("Слот: ", "");
             }).get();
 
+            // Add new slots
             slots.forEach(function(slot, index) {
                 if (!existingSlots.includes(slot)) {
-                    var slotDiv = $("<div>").addClass("mb-3");
+                    var slotDiv = $("<div>").addClass("mb-3 slot-container").hide();
                     slotDiv.append($("<h5>").text("Слот: " + slot));
                     var blocksContainer = $("<div>").addClass("mini-blocks");
                     window.addMiniBlockInput(blocksContainer, slot, index);
@@ -300,8 +385,16 @@
                             window.addMiniBlockInput(blocksContainer, slot, index);
                         }));
                     container.append(slotDiv);
+                    slotDiv.fadeIn(300);
                 }
             });
+
+            // Show/hide the entire panel based on whether there are slots
+            if (slots.length > 0) {
+                $("#miniBlocksPanel").slideDown();
+            } else {
+                $("#miniBlocksPanel").slideUp();
+            }
         };
 
         window.addMiniBlockInput = function(container, slot, slotIndex) {
@@ -316,7 +409,7 @@
             var icon = $("<span>")
                 .addClass("input-group-text")
                 .addClass(index === 0 ? "text-success" : "")
-                .text(index === 0 ? "✅" : "");
+                .html(index === 0 ? "✅ Вярно" : "❌ Грешно");
             var removeButton = $("<button>")
                 .attr("type", "button")
                 .addClass("btn btn-danger btn-sm")
@@ -329,38 +422,9 @@
         };
 
         window.removeMiniBlock = function(button) {
-            $(button).closest(".input-group").remove();
+            $(button).closest(".input-group").fadeOut(300, function() {
+                $(this).remove();
+            });
         };
     </script>
-}
-
-@section Styles {
-    <style>
-        #multilineHelp {
-            border-left: 4px solid #17a2b8;
-        }
-
-            #multilineHelp pre {
-                background-color: #f8f9fa;
-                padding: 1rem;
-                border-radius: 0.25rem;
-                overflow-x: auto;
-            }
-
-            #multilineHelp code {
-                color: #e83e8c;
-                font-size: 0.9rem;
-            }
-
-        .gap-2 {
-            gap: 0.5rem;
-        }
-
-        .mini-blocks {
-            background-color: #f8f9fa;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            margin-top: 0.5rem;
-        }
-    </style>
 }

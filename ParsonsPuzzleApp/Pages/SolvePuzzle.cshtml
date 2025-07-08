@@ -42,10 +42,6 @@
     @if (Model.MiniBlocks != null && Model.MiniBlocks.Any())
     {
         <div class="mini-blocks-panel p-3 bg-light" style="flex: 1; min-height: 100px; max-height: 25vh; overflow-y: auto; border-top: 2px solid #007bff;" id="miniBlocksPanel">
-            <div class="mb-2">
-                <strong><i class="fas fa-puzzle-piece"></i> Мини-блокове за слотове:</strong>
-                <small class="text-muted">(Плъзнете в слотовете marked with [____])</small>
-            </div>
             @foreach (var mb in Model.MiniBlocks)
             {
                 <div class="mini-block" id="mini-@Model.MiniBlocks.IndexOf(mb)">@mb.Content</div>

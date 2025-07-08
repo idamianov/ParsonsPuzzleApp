@@ -20,12 +20,15 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         private readonly ApplicationDbContext _context;
         private readonly IMultilineBlockParser _blockParser;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IHtmlSanitizerService _htmlSanitizer;
 
-        public CreatePuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser, UserManager<IdentityUser> userManager)
+        public CreatePuzzleModel(ApplicationDbContext context, IMultilineBlockParser blockParser,
+            UserManager<IdentityUser> userManager, IHtmlSanitizerService htmlSanitizer)
         {
             _context = context;
             _blockParser = blockParser;
             _userManager = userManager;
+            _htmlSanitizer = htmlSanitizer;
         }
 
         [BindProperty]
@@ -52,6 +55,19 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         {
             // Set the InstructorId before validation
             Puzzle.InstructorId = _userManager.GetUserId(User);
+
+            // Sanitize HTML in Task field
+            if (!string.IsNullOrWhiteSpace(Puzzle.Task))
+            {
+                if (_htmlSanitizer.ContainsDangerousContent(Puzzle.Task))
+                {
+                    // Log the attempt for security monitoring
+                    var userId = _userManager.GetUserId(User);
+                    Console.WriteLine($"WARNING: User {userId} attempted to submit dangerous HTML content");
+                }
+
+                Puzzle.Task = _htmlSanitizer.SanitizeHtml(Puzzle.Task);
+            }
 
             // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Puzzle.InstructorId");
