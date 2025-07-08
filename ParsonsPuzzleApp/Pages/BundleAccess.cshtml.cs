@@ -35,7 +35,8 @@ namespace ParsonsPuzzleApp.Pages
 
             if (Bundle == null)
             {
-                return NotFound("Колекцията не е намерена или не е публикувана.");
+                // Redirect to a better error page instead of just returning NotFound
+                return RedirectToPage("/BundleNotFound", new { shareableLink });
             }
 
             return Page();
@@ -48,7 +49,7 @@ namespace ParsonsPuzzleApp.Pages
 
             if (Bundle == null)
             {
-                return NotFound("Колекцията не е намерена или не е публикувана.");
+                return RedirectToPage("/BundleNotFound", new { shareableLink });
             }
 
             if (!ModelState.IsValid)
@@ -60,6 +61,8 @@ namespace ParsonsPuzzleApp.Pages
             if (Bundle.Key != BundleCode)
             {
                 ModelState.AddModelError("BundleCode", "Невалиден код за отключване.");
+                // Add a more visible error message
+                TempData["ErrorMessage"] = "Въведеният код за отключване е грешен. Моля, опитайте отново.";
                 return Page();
             }
 
