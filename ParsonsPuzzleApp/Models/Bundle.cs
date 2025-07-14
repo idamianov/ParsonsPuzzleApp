@@ -6,8 +6,6 @@
         public string Identifier { get; set; }
         public string Key { get; set; }
         public string Description { get; set; }
-
-        // New properties for instructor ownership and publishing
         public string InstructorId { get; set; } // Foreign key to AspNetUsers
         public bool IsPublished { get; set; } = false;
         public Guid ShareableLink { get; set; } = Guid.NewGuid();

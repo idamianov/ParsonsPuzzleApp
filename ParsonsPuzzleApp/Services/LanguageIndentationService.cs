@@ -206,8 +206,6 @@
 
         private string AddBracesForIndentation(string code)
         {
-            // This method adds braces based on indentation changes
-            // Used when student adds indentation via UI buttons
             var lines = code.Split('\n').ToList();
             var result = new List<string>();
             var braceStack = new Stack<int>();

@@ -27,7 +27,6 @@ namespace ParsonsPuzzleApp.Pages
 
         public async Task<IActionResult> OnGetAsync(Guid bundleAttemptId)
         {
-            // Get all attempts for this bundle attempt
             var attempts = await _context.StudentAttempts
                 .Where(a => a.BundleAttemptId == bundleAttemptId)
                 .Include(a => a.Bundle)
@@ -45,7 +44,6 @@ namespace ParsonsPuzzleApp.Pages
             StudentIdentifier = firstAttempt.StudentIdentifier;
             CompletedAt = attempts.Max(a => a.AttemptDate);
 
-            // Calculate statistics
             var puzzleGroups = attempts.GroupBy(a => a.PuzzleId);
             var totalPuzzles = puzzleGroups.Count();
             var correctPuzzles = puzzleGroups.Count(g => g.Any(a => a.IsCorrect));
@@ -60,7 +58,6 @@ namespace ParsonsPuzzleApp.Pages
                 SuccessRate = totalPuzzles > 0 ? (int)((double)correctPuzzles / totalPuzzles * 100) : 0
             };
 
-            // Get detailed results for each puzzle
             PuzzleResults = new List<PuzzleResultViewModel>();
             foreach (var puzzleGroup in puzzleGroups)
             {

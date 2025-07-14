@@ -32,7 +32,7 @@ namespace ParsonsPuzzleApp.Services
         {
             var blocks = new List<PuzzleBlock>();
 
-            // Step 1: Preprocess the source code for bracket-based languages
+            // Preprocess the source code for bracket-based languages
             var preprocessedCode = PreprocessBrackets(sourceCode, language);
 
             var lines = preprocessedCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
@@ -301,10 +301,10 @@ int y = 20;
                     openBlocks--;
 
                 if (openBlocks < 0)
-                    return false; // Closing tag without opening
+                    return false;
             }
 
-            return openBlocks == 0; // All blocks are closed
+            return openBlocks == 0;
         }
     }
 }

@@ -38,7 +38,6 @@ namespace ParsonsPuzzleApp.Services
                 SaveAccessList(accessList);
             }
 
-            // Also store the timestamp for security
             session.SetString($"BundleAccess_{bundleId}_Time", DateTime.UtcNow.ToString("O"));
         }
 
@@ -53,7 +52,6 @@ namespace ParsonsPuzzleApp.Services
             if (!accessList.Contains(accessKey))
                 return false;
 
-            // Check if access is still valid (e.g., within 24 hours)
             var timeStr = session.GetString($"BundleAccess_{bundleId}_Time");
             if (DateTime.TryParse(timeStr, out var grantedTime))
             {
@@ -87,7 +85,6 @@ namespace ParsonsPuzzleApp.Services
 
             session.Remove(SessionKey);
 
-            // Remove all time entries
             var keys = session.Keys.Where(k => k.StartsWith("BundleAccess_") && k.EndsWith("_Time")).ToList();
             foreach (var key in keys)
             {

@@ -20,7 +20,6 @@ namespace ParsonsPuzzleApp.Pages
 
         public async Task OnGetAsync()
         {
-            // Show only published bundles with basic info (no direct access)
             PublishedBundles = await _context.Bundles
                 .Where(b => b.IsPublished)
                 .Include(b => b.BundlePuzzles)

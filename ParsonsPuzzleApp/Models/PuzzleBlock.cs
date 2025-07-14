@@ -10,8 +10,6 @@ namespace ParsonsPuzzleApp.Models
         public int OrderIndex { get; set; }
         public bool IsDistractor { get; set; }
         public string? SlotName { get; set; } // Nullable
-
-        // Полета за многоредови блокове
         public bool IsMultiline { get; set; }
         public string? GroupId { get; set; } // Nullable
         public bool IsOrderIndependent { get; set; }
@@ -28,7 +26,6 @@ namespace ParsonsPuzzleApp.Models
         public string Content { get; set; }
         public int LineOrder { get; set; }
         public bool IsOptional { get; set; }
-
         public PuzzleBlock PuzzleBlock { get; set; }
     }
 }

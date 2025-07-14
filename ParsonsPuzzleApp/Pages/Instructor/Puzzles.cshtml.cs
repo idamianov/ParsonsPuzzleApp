@@ -27,7 +27,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         {
             var userId = _userManager.GetUserId(User);
 
-            // Show only puzzles created by this instructor
             Puzzles = await _context.Puzzles
                 .Where(p => p.InstructorId == userId)
                 .Include(p => p.BundlePuzzles)

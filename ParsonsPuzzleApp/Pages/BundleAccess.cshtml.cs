@@ -35,7 +35,6 @@ namespace ParsonsPuzzleApp.Pages
 
             if (Bundle == null)
             {
-                // Redirect to a better error page instead of just returning NotFound
                 return RedirectToPage("/BundleNotFound", new { shareableLink });
             }
 
@@ -57,19 +56,15 @@ namespace ParsonsPuzzleApp.Pages
                 return Page();
             }
 
-            // Verify the unlock code
             if (Bundle.Key != BundleCode)
             {
                 ModelState.AddModelError("BundleCode", "Невалиден код за отключване.");
-                // Add a more visible error message
                 TempData["ErrorMessage"] = "Въведеният код за отключване е грешен. Моля, опитайте отново.";
                 return Page();
             }
 
-            // Grant access to the bundle
             _bundleAccessService.GrantAccess(Bundle.Id, StudentIdentifier);
 
-            // Generate new attempt ID and redirect to puzzle solving
             var bundleAttemptId = Guid.NewGuid();
             return RedirectToPage("/SolvePuzzle", new
             {

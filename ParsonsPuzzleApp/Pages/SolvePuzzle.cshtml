@@ -661,7 +661,7 @@
         // DIRECT FIX: Move block to target panel for single-block puzzles
         const puzzleBlocks = @Html.Raw(Json.Serialize(Model.PuzzleBlocksJson));
         if (puzzleBlocks.length === 1) {
-            console.log('🔧 DIRECT FIX: Single block puzzle detected');
+            console.log('== DIRECT FIX: Single block puzzle detected');
 
             // Wait a bit for DOM to be ready, then force move
             setTimeout(() => {
@@ -671,14 +671,14 @@
                 if (sourcePanel && targetPanel) {
                     const block = sourcePanel.querySelector('.code-block');
                     if (block) {
-                        console.log('📦 Found block in source panel, moving to target...');
+                        console.log('== Found block in source panel, moving to target...');
                         targetPanel.appendChild(block);
-                        console.log('✅ SUCCESS: Block moved to target panel');
+                        console.log('== SUCCESS: Block moved to target panel');
 
                         // Re-initialize slots after moving
                         setTimeout(() => {
                             const slots = block.querySelectorAll('.slot');
-                            console.log(`🎰 Re-initializing ${slots.length} slots after move`);
+                            console.log(`== Re-initializing ${slots.length} slots after move`);
 
                             const miniBlocksPanel = document.getElementById('miniBlocksPanel');
                             slots.forEach(slot => {
@@ -704,14 +704,14 @@
                             });
                         }, 10);
                     } else {
-                        console.log('❌ No block found in source panel');
+                        console.log('== No block found in source panel');
                     }
                 } else {
-                    console.log('❌ Panels not found');
+                    console.log('== Panels not found');
                 }
             }, 50);
         } else {
-            console.log('📝 Multi-block puzzle - no fix needed');
+            console.log('== Multi-block puzzle - no fix needed');
         }
     </script>
 }

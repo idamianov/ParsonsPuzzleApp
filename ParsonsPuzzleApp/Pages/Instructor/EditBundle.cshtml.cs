@@ -50,7 +50,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return NotFound();
             }
 
-            // Show only puzzles created by this instructor
             PuzzleOptions = await _context.Puzzles
                 .Where(p => p.InstructorId == userId)
                 .Select(p => new SelectListItem
@@ -69,7 +68,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         {
             var userId = _userManager.GetUserId(User);
 
-            // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Bundle.InstructorId");
 
             if (!ModelState.IsValid)
@@ -85,7 +83,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return Page();
             }
 
-            // Validate that at least one puzzle is selected
             if (SelectedPuzzleIds == null || !SelectedPuzzleIds.Any())
             {
                 ModelState.AddModelError("", "Моля, изберете поне един пъзел за колекцията.");
@@ -109,17 +106,14 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return NotFound();
             }
 
-            // Update basic properties
             bundleToUpdate.Identifier = Bundle.Identifier;
             bundleToUpdate.Key = Bundle.Key;
             bundleToUpdate.Description = Bundle.Description;
             bundleToUpdate.LastModifiedAt = DateTime.UtcNow;
 
-            // Remove old puzzle associations
             var existingPuzzles = _context.BundlePuzzles.Where(bp => bp.BundleId == Bundle.Id);
             _context.BundlePuzzles.RemoveRange(existingPuzzles);
 
-            // Add new puzzle associations (only if they belong to this instructor)
             var validPuzzleIds = await _context.Puzzles
                 .Where(p => p.InstructorId == userId && SelectedPuzzleIds.Contains(p.Id))
                 .Select(p => p.Id)

@@ -11,7 +11,6 @@ namespace ParsonsPuzzleApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(connectionString));
@@ -23,11 +22,11 @@ namespace ParsonsPuzzleApp
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
-                // Деактивиране на изискването за потвърден имейл
+                // TODO: Деактивиране на изискването за потвърден имейл - промени по късно при внедряване
                 options.SignIn.RequireConfirmedAccount = false;
                 options.SignIn.RequireConfirmedEmail = false;
 
-                // Облекчаване на изискванията за паролата
+                // TODO: Облекчаване на изискванията за паролата - промени по късно при внедряване
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;
                 options.Password.RequireUppercase = false;
@@ -36,7 +35,6 @@ namespace ParsonsPuzzleApp
                 options.Password.RequiredUniqueChars = 1;
             });
 
-            // Configure session for bundle access control
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
@@ -59,7 +57,6 @@ namespace ParsonsPuzzleApp
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
@@ -67,7 +64,6 @@ namespace ParsonsPuzzleApp
             else
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
@@ -79,7 +75,6 @@ namespace ParsonsPuzzleApp
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Add session middleware before endpoints
             app.UseSession();
 
             app.MapRazorPages();

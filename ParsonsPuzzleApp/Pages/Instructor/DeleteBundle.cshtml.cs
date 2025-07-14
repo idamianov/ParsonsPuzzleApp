@@ -52,11 +52,9 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             if (Bundle != null)
             {
-                // Премахваме свързаните връзки в BundlePuzzle
                 var bundlePuzzles = _context.BundlePuzzles.Where(bp => bp.BundleId == Bundle.Id);
                 _context.BundlePuzzles.RemoveRange(bundlePuzzles);
 
-                // Премахваме пакета
                 _context.Bundles.Remove(Bundle);
                 await _context.SaveChangesAsync();
             }

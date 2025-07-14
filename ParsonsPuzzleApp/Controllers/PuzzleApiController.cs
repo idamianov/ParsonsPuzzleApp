@@ -177,7 +177,7 @@ namespace ParsonsPuzzleApp.Controllers
             // Check if any slots remain unprocessed in student's arrangement
             if (Regex.IsMatch(processedArrangement, @"§\w+§"))
             {
-                Debug.WriteLine("❌ FAILED: Unreplaced slots found in student arrangement");
+                Debug.WriteLine("== FAILED: Unreplaced slots found in student arrangement");
                 return false; // Unreplaced slots indicate incorrect solution
             }
 
@@ -196,20 +196,20 @@ namespace ParsonsPuzzleApp.Controllers
 
         private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Languages language)
         {
-            Debug.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
+            Debug.WriteLine($"GenerateExpectedSolutionFromBlocks called for language: {language}");
 
             var validBlocks = puzzleBlocks
                 .Where(pb => !pb.IsDistractor) // Skip distractors
                 .OrderBy(pb => pb.OrderIndex)
                 .ToList();
 
-            Debug.WriteLine($"🔧 Valid blocks count: {validBlocks.Count}");
+            Debug.WriteLine($"== Valid blocks count: {validBlocks.Count}");
 
             var lines = new List<string>();
 
             foreach (var block in validBlocks)
             {
-                Debug.WriteLine($"🔧 Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
+                Debug.WriteLine($"== Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
 
                 if (block.IsMultiline)
                 {
@@ -221,7 +221,7 @@ namespace ParsonsPuzzleApp.Controllers
                             .Select(l => l.TrimEnd('\r'))
                             .ToList();
 
-                        Debug.WriteLine($"🔧 Adding {blockLines.Count} lines from multiline block content");
+                        Debug.WriteLine($"== Adding {blockLines.Count} lines from multiline block content");
                         lines.AddRange(blockLines);
                     }
                 }
@@ -230,14 +230,14 @@ namespace ParsonsPuzzleApp.Controllers
                     // Handle single-line blocks
                     if (!string.IsNullOrWhiteSpace(block.Content))
                     {
-                        Debug.WriteLine($"🔧 Adding single line: '{block.Content}'");
+                        Debug.WriteLine($"== Adding single line: '{block.Content}'");
                         lines.Add(block.Content);
                     }
                 }
             }
 
             var result = string.Join("\n", lines);
-            Debug.WriteLine($"🔧 Generated solution:\n{result}");
+            Debug.WriteLine($"== Generated solution:\n{result}");
 
             return result;
         }

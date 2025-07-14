@@ -16,9 +16,7 @@ namespace ParsonsPuzzleApp.Data
         public DbSet<Puzzle> Puzzles { get; set; }
         public DbSet<BundlePuzzle> BundlePuzzles { get; set; }
         public DbSet<MiniBlock> MiniBlocks { get; set; }
-
         public DbSet<StudentAttempt> StudentAttempts { get; set; }
-
         public DbSet<PuzzleBlock> PuzzleBlocks { get; set; }
         public DbSet<PuzzleBlockLine> PuzzleBlockLines { get; set; }
 
@@ -66,7 +64,6 @@ namespace ParsonsPuzzleApp.Data
                 .WithMany(pb => pb.Lines)
                 .HasForeignKey(pbl => pbl.PuzzleBlockId);
 
-            // New configurations for instructor ownership
             modelBuilder.Entity<Bundle>()
                 .HasOne<IdentityUser>()
                 .WithMany()
@@ -79,7 +76,6 @@ namespace ParsonsPuzzleApp.Data
                 .HasForeignKey(p => p.InstructorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Ensure ShareableLink is unique
             modelBuilder.Entity<Bundle>()
                 .HasIndex(b => b.ShareableLink)
                 .IsUnique();

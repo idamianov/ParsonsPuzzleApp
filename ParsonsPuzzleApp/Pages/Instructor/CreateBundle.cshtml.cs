@@ -51,10 +51,8 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         {
             var userId = _userManager.GetUserId(User);
 
-            // Set the InstructorId
             Bundle.InstructorId = userId;
 
-            // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Bundle.InstructorId");
 
             if (!ModelState.IsValid)
@@ -74,7 +72,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             _context.Bundles.Add(Bundle);
             await _context.SaveChangesAsync();
 
-            // Add puzzle associations
             if (SelectedPuzzleIds != null)
             {
                 // Verify that selected puzzles belong to this instructor

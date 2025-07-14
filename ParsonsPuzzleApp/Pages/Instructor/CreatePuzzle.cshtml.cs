@@ -53,15 +53,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // Set the InstructorId before validation
             Puzzle.InstructorId = _userManager.GetUserId(User);
 
-            // Sanitize HTML in Task field
             if (!string.IsNullOrWhiteSpace(Puzzle.Task))
             {
                 if (_htmlSanitizer.ContainsDangerousContent(Puzzle.Task))
                 {
-                    // Log the attempt for security monitoring
                     var userId = _userManager.GetUserId(User);
                     Console.WriteLine($"WARNING: User {userId} attempted to submit dangerous HTML content");
                 }
@@ -69,7 +66,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 Puzzle.Task = _htmlSanitizer.SanitizeHtml(Puzzle.Task);
             }
 
-            // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Puzzle.InstructorId");
 
             if (!ModelState.IsValid)
@@ -78,7 +74,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return Page();
             }
 
-            // Validate multiline block syntax in source code
             if (!MultilineBlockValidator.ValidateBlockSyntax(Puzzle.SourceCode, Puzzle.Language))
             {
                 ModelState.AddModelError("Puzzle.SourceCode", "Има незатворени многоредови блокове в кода!");
@@ -86,10 +81,8 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 return Page();
             }
 
-            // Extract slots from SourceCode
             var slots = ExtractSlotsFromCode(Puzzle.SourceCode);
 
-            // Validate MiniBlocks for each slot
             foreach (var slot in slots)
             {
                 if (!MiniBlocks.ContainsKey(slot) || MiniBlocks[slot].Count == 0)
@@ -100,18 +93,15 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 }
             }
 
-            // Save puzzle
             _context.Puzzles.Add(Puzzle);
             await _context.SaveChangesAsync();
 
-            // Parse and create PuzzleBlocks from SourceCode
             var puzzleBlocks = _blockParser.ParseSourceCode(
                 Puzzle.SourceCode,
                 Puzzle.Id,
                 Puzzle.Language
             );
 
-            // Filter out bracket blocks for C-family languages during creation
             var isBracketLanguage = IsBracketBasedLanguage(Puzzle.Language);
             var validBlocks = puzzleBlocks.Where(pb =>
                 !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))
@@ -122,7 +112,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 _context.PuzzleBlocks.Add(block);
                 await _context.SaveChangesAsync();
 
-                // Create lines for multiline blocks
                 if (block.IsMultiline && !string.IsNullOrWhiteSpace(block.Content))
                 {
                     var lines = block.Content.Split('\n')
@@ -144,10 +133,8 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 }
             }
 
-            // Process distractors
             await ProcessDistractors(validBlocks.Count);
 
-            // Add MiniBlocks
             await AddMiniBlocks();
 
             await _context.SaveChangesAsync();
@@ -180,17 +167,14 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             var isBracketLanguage = IsBracketBasedLanguage(Puzzle.Language);
 
-            // Check if distractors contain multiline blocks
             if (MultilineBlockValidator.ValidateBlockSyntax(Puzzle.Distractors, Puzzle.Language))
             {
-                // Parse distractors as blocks
                 var distractorBlocks = _blockParser.ParseSourceCode(
                     Puzzle.Distractors,
                     Puzzle.Id,
                     Puzzle.Language
                 );
 
-                // Filter and process distractor blocks
                 var validDistractorBlocks = distractorBlocks.Where(pb =>
                     !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))
                 ).ToList();
@@ -203,7 +187,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
                     await _context.SaveChangesAsync();
 
-                    // Create lines for multiline distractor blocks
                     if (distractor.IsMultiline && !string.IsNullOrWhiteSpace(distractor.Content))
                     {
                         var lines = distractor.Content.Split('\n')
@@ -226,7 +209,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             }
             else
             {
-                // Treat distractors as simple lines
                 var distractorLines = Puzzle.Distractors.Split('\n')
                     .Select(l => l.Trim())
                     .Where(l => !string.IsNullOrWhiteSpace(l) &&

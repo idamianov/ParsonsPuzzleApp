@@ -32,7 +32,6 @@ namespace ParsonsPuzzleApp.Pages
         public string StudentIdentifier { get; set; }
         public Guid BundleAttemptId { get; set; }
 
-        // Only keep the new PuzzleBlocks system
         public List<PuzzleBlock> PuzzleBlocks { get; set; }
         public List<PuzzleBlockViewModel> PuzzleBlocksJson { get; set; }
         public List<MiniBlockConfig> MiniBlocks { get; set; }
@@ -49,7 +48,6 @@ namespace ParsonsPuzzleApp.Pages
                 return BadRequest("Липсва валиден BundleAttemptId.");
             }
 
-            // Check if student has access to this bundle
             if (!_bundleAccessService.HasAccess(bundleId, studentId))
             {
                 return RedirectToPage("/AccessDenied", new { message = "Нямате достъп до тази колекция. Моля, използвайте валидна връзка и код за отключване." });
@@ -69,7 +67,6 @@ namespace ParsonsPuzzleApp.Pages
                 return NotFound("Колекцията не е намерена.");
             }
 
-            // Additional check: ensure bundle is published
             if (!Bundle.IsPublished)
             {
                 return RedirectToPage("/AccessDenied", new { message = "Тази колекция не е публикувана." });
@@ -93,20 +90,16 @@ namespace ParsonsPuzzleApp.Pages
 
             PuzzleIndex = puzzleIndex;
 
-            // Load PuzzleBlocks
             PuzzleBlocks = await _puzzleBlockService.GetPuzzleBlocksAsync(Puzzle.Id);
 
             if (PuzzleBlocks != null && PuzzleBlocks.Any())
             {
-                // Use new PuzzleBlocks system
                 var isBracketLanguage = IsBracketBasedLanguage(Puzzle.Language);
 
-                // Filter blocks for display
                 var filteredBlocks = PuzzleBlocks
                     .Where(pb => !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))) // Skip bracket blocks for C-family
                     .ToList();
 
-                // Convert to ViewModel for JSON serialization
                 PuzzleBlocksJson = filteredBlocks.Select(pb => new PuzzleBlockViewModel
                 {
                     Id = pb.Id,
@@ -126,15 +119,12 @@ namespace ParsonsPuzzleApp.Pages
                     }).ToList() ?? new List<PuzzleBlockLineViewModel>()
                 }).ToList();
 
-                // Shuffle the blocks for display
                 PuzzleBlocksJson = PuzzleBlocksJson.OrderBy(x => Random.Shared.Next()).ToList();
             }
             else
             {
-                // Fallback to legacy parsing if no PuzzleBlocks exist
                 var legacyBlocks = ParseLegacySourceCode(Puzzle);
 
-                // Convert legacy blocks to PuzzleBlockViewModel format
                 PuzzleBlocksJson = legacyBlocks.Select((block, index) => new PuzzleBlockViewModel
                 {
                     Id = index,
@@ -149,7 +139,6 @@ namespace ParsonsPuzzleApp.Pages
                 }).OrderBy(x => Random.Shared.Next()).ToList();
             }
 
-            // Load MiniBlocks
             MiniBlocks = Puzzle.MiniBlocks.Select(mb => new MiniBlockConfig
             {
                 Content = mb.Content,
@@ -200,7 +189,6 @@ namespace ParsonsPuzzleApp.Pages
                 blocks.Add(new LegacyCodeBlock { Content = content, SlotName = slotName, IsDistractor = false });
             }
 
-            // Add distractors
             if (!string.IsNullOrEmpty(puzzle.Distractors))
             {
                 var distractors = puzzle.Distractors.Split('\n', StringSplitOptions.RemoveEmptyEntries)
@@ -233,7 +221,6 @@ namespace ParsonsPuzzleApp.Pages
             };
         }
 
-        // ViewModels for JSON serialization
         public class PuzzleBlockViewModel
         {
             public int Id { get; set; }
