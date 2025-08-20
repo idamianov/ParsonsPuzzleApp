@@ -11,8 +11,8 @@ using ParsonsPuzzleApp.Data;
 namespace ParsonsPuzzleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250611135609_InitDB")]
-    partial class InitDB
+    [Migration("20250706100941_OptionalDistractors")]
+    partial class OptionalDistractors
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -287,8 +287,10 @@ namespace ParsonsPuzzleApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BlockConfiguration")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Distractors")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Language")
@@ -304,11 +306,80 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.ToTable("Puzzles");
+                });
+
+            modelBuilder.Entity("ParsonsPuzzleApp.Models.PuzzleBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BlockType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GroupId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDistractor")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsMultiline")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsOrderIndependent")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PuzzleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SlotName")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PuzzleId");
+
+                    b.ToTable("PuzzleBlocks");
+                });
+
+            modelBuilder.Entity("ParsonsPuzzleApp.Models.PuzzleBlockLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsOptional")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LineOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PuzzleBlockId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PuzzleBlockId");
+
+                    b.ToTable("PuzzleBlockLines");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Models.StudentAttempt", b =>
@@ -433,6 +504,28 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Navigation("Puzzle");
                 });
 
+            modelBuilder.Entity("ParsonsPuzzleApp.Models.PuzzleBlock", b =>
+                {
+                    b.HasOne("ParsonsPuzzleApp.Models.Puzzle", "Puzzle")
+                        .WithMany("PuzzleBlocks")
+                        .HasForeignKey("PuzzleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Puzzle");
+                });
+
+            modelBuilder.Entity("ParsonsPuzzleApp.Models.PuzzleBlockLine", b =>
+                {
+                    b.HasOne("ParsonsPuzzleApp.Models.PuzzleBlock", "PuzzleBlock")
+                        .WithMany("Lines")
+                        .HasForeignKey("PuzzleBlockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PuzzleBlock");
+                });
+
             modelBuilder.Entity("ParsonsPuzzleApp.Models.StudentAttempt", b =>
                 {
                     b.HasOne("ParsonsPuzzleApp.Models.Bundle", "Bundle")
@@ -462,6 +555,13 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Navigation("BundlePuzzles");
 
                     b.Navigation("MiniBlocks");
+
+                    b.Navigation("PuzzleBlocks");
+                });
+
+            modelBuilder.Entity("ParsonsPuzzleApp.Models.PuzzleBlock", b =>
+                {
+                    b.Navigation("Lines");
                 });
 #pragma warning restore 612, 618
         }

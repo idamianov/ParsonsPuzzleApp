@@ -19,6 +19,9 @@ namespace ParsonsPuzzleApp.Data
 
         public DbSet<StudentAttempt> StudentAttempts { get; set; }
 
+        public DbSet<PuzzleBlock> PuzzleBlocks { get; set; }
+        public DbSet<PuzzleBlockLine> PuzzleBlockLines { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -52,6 +55,34 @@ namespace ParsonsPuzzleApp.Data
                 .WithMany()
                 .HasForeignKey(sa => sa.PuzzleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PuzzleBlock>()
+                .HasOne(pb => pb.Puzzle)
+                .WithMany(p => p.PuzzleBlocks)
+                .HasForeignKey(pb => pb.PuzzleId);
+
+            modelBuilder.Entity<PuzzleBlockLine>()
+                .HasOne(pbl => pbl.PuzzleBlock)
+                .WithMany(pb => pb.Lines)
+                .HasForeignKey(pbl => pbl.PuzzleBlockId);
+
+            // New configurations for instructor ownership
+            modelBuilder.Entity<Bundle>()
+                .HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(b => b.InstructorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Puzzle>()
+                .HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(p => p.InstructorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Ensure ShareableLink is unique
+            modelBuilder.Entity<Bundle>()
+                .HasIndex(b => b.ShareableLink)
+                .IsUnique();
         }
     }
 }

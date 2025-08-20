@@ -1,9 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,42 +16,29 @@ namespace ParsonsPuzzleApp.Pages
             _context = context;
         }
 
-        public List<Bundle> Bundles { get; set; }
+        public List<BundleInfo> PublishedBundles { get; set; }
 
-        [BindProperty]
-        public int SelectedBundleId { get; set; }
-
-        [BindProperty]
-        public string StudentIdentifier { get; set; }
-
-        [BindProperty]
-        public string BundleCode { get; set; }
-
-        public async Task<IActionResult> OnGetAsync()
+        public async Task OnGetAsync()
         {
-            Bundles = await _context.Bundles.ToListAsync();
-            return Page();
+            // Show only published bundles with basic info (no direct access)
+            PublishedBundles = await _context.Bundles
+                .Where(b => b.IsPublished)
+                .Include(b => b.BundlePuzzles)
+                .Select(b => new BundleInfo
+                {
+                    Identifier = b.Identifier,
+                    Description = b.Description ?? "Без описание",
+                    PuzzleCount = b.BundlePuzzles.Count
+                })
+                .OrderBy(b => b.Identifier)
+                .ToListAsync();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public class BundleInfo
         {
-            if (string.IsNullOrWhiteSpace(StudentIdentifier))
-            {
-                ModelState.AddModelError("StudentIdentifier", "Моля, въведете идентификатор.");
-                Bundles = await _context.Bundles.ToListAsync();
-                return Page();
-            }
-
-            var bundle = await _context.Bundles.FirstOrDefaultAsync(b => b.Id == SelectedBundleId);
-            if (bundle == null || bundle.Key != BundleCode)
-            {
-                ModelState.AddModelError("BundleCode", "Невалиден код за колекцията.");
-                Bundles = await _context.Bundles.ToListAsync();
-                return Page();
-            }
-
-            var bundleAttemptId = Guid.NewGuid();
-            return RedirectToPage("/SolvePuzzle", new { bundleId = SelectedBundleId, studentId = StudentIdentifier, puzzleIndex = 1, bundleAttemptId });
+            public string Identifier { get; set; }
+            public string Description { get; set; }
+            public int PuzzleCount { get; set; }
         }
     }
 }

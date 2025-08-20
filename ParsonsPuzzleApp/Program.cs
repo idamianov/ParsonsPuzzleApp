@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Services;
 
 namespace ParsonsPuzzleApp
 {
@@ -35,9 +36,26 @@ namespace ParsonsPuzzleApp
                 options.Password.RequiredUniqueChars = 1;
             });
 
+            // Configure session for bundle access control
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(24);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+            });
+
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddRazorPages();
             builder.Services.AddControllers();
+
+            builder.Services.AddScoped<IPuzzleBlockService, PuzzleBlockService>();
+            builder.Services.AddScoped<ILanguageIndentationService, LanguageIndentationService>();
+            builder.Services.AddScoped<IMultilineBlockParser, MultilineBlockParser>();
+            builder.Services.AddScoped<IBundleAccessService, BundleAccessService>();
+            builder.Services.AddScoped<IHtmlSanitizerService, HtmlSanitizerService>();
 
             var app = builder.Build();
 
@@ -58,10 +76,13 @@ namespace ParsonsPuzzleApp
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapRazorPages();
+            // Add session middleware before endpoints
+            app.UseSession();
 
+            app.MapRazorPages();
             app.MapControllers();
 
             app.Run();

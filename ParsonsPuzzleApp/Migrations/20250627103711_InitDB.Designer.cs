@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ParsonsPuzzleApp.Data;
 
@@ -10,9 +11,11 @@ using ParsonsPuzzleApp.Data;
 namespace ParsonsPuzzleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250627103711_InitDB")]
+    partial class InitDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.16");
@@ -219,9 +222,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -230,29 +230,11 @@ namespace ParsonsPuzzleApp.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("InstructorId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ShareableLink")
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("InstructorId");
-
-                    b.HasIndex("ShareableLink")
-                        .IsUnique();
 
                     b.ToTable("Bundles");
                 });
@@ -308,21 +290,12 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Property<string>("BlockConfiguration")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Distractors")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("InstructorId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Language")
                         .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("SourceCode")
                         .IsRequired()
@@ -334,12 +307,9 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("InstructorId");
 
                     b.ToTable("Puzzles");
                 });
@@ -504,15 +474,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ParsonsPuzzleApp.Models.Bundle", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("InstructorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ParsonsPuzzleApp.Models.BundlePuzzle", b =>
                 {
                     b.HasOne("ParsonsPuzzleApp.Models.Bundle", "Bundle")
@@ -541,15 +502,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .IsRequired();
 
                     b.Navigation("Puzzle");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Models.Puzzle", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("InstructorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Models.PuzzleBlock", b =>
