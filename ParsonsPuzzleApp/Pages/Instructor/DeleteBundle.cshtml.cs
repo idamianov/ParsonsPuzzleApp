@@ -1,13 +1,11 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Entities;
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Mvc.RazorPages;
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.EntityFrameworkCore;
-    using ParsonsPuzzleApp.Data;
-    using ParsonsPuzzleApp.Models;
-    using System.Threading.Tasks;
-
     [Authorize]
     public class DeleteBundleModel : PageModel
     {

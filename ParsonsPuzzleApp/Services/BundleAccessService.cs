@@ -1,19 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using ParsonsPuzzleApp.Interfaces;
 using System.Text.Json;
 
 namespace ParsonsPuzzleApp.Services
 {
-    public interface IBundleAccessService
-    {
-        void GrantAccess(int bundleId, string studentIdentifier);
-        bool HasAccess(int bundleId, string studentIdentifier);
-        void RevokeAccess(int bundleId);
-        void RevokeAllAccess();
-    }
-
     public class BundleAccessService : IBundleAccessService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

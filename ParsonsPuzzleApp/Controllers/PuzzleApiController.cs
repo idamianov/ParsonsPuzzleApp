@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
-using ParsonsPuzzleApp.Services;
-using System;
+using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Interfaces;
 using System.Diagnostics;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Controllers

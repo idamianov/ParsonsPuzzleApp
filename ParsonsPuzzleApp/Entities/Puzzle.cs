@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ParsonsPuzzleApp.Models
+namespace ParsonsPuzzleApp.Entities
 {
     public class Puzzle
     {

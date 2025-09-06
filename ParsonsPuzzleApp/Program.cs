@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Services;
 
 namespace ParsonsPuzzleApp
