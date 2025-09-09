@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
-using ParsonsPuzzleApp.Services;
+using ParsonsPuzzleApp.Models;
 using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Pages
@@ -59,12 +60,8 @@ namespace ParsonsPuzzleApp.Pages
                 .Include(b => b.BundlePuzzles)
                 .ThenInclude(bp => bp.Puzzle)
                 .ThenInclude(p => p.MiniBlocks)
-                .FirstOrDefaultAsync(b => b.Id == bundleId);
-
-            if (Bundle == null)
-            {
-                return NotFound("Колекцията не е намерена.");
-            }
+                .FirstOrDefaultAsync(b => b.Id == bundleId) ?? 
+                throw new ArgumentNullException("Колекцията не е намерена.");
 
             // Additional check: ensure bundle is published
             if (!Bundle.IsPublished)
@@ -81,12 +78,8 @@ namespace ParsonsPuzzleApp.Pages
             Puzzle = Bundle.BundlePuzzles
                 .OrderBy(bp => bp.PuzzleId)
                 .Skip(puzzleIndex - 1)
-                .FirstOrDefault()?.Puzzle;
-
-            if (Puzzle == null)
-            {
-                return NotFound("Пъзелът не е намерен.");
-            }
+                .FirstOrDefault()?.Puzzle ??
+                throw new ArgumentNullException("Пъзелът не е намерен.");
 
             PuzzleIndex = puzzleIndex;
 
@@ -96,7 +89,7 @@ namespace ParsonsPuzzleApp.Pages
             if (PuzzleBlocks != null && PuzzleBlocks.Any())
             {
                 // Use new PuzzleBlocks system
-                var isBracketLanguage = IsBracketBasedLanguage(Puzzle.Language);
+                var isBracketLanguage = BracketBasedLanguage.IsBracketBasedLanguage(Puzzle.Language);
 
                 // Filter blocks for display
                 var filteredBlocks = PuzzleBlocks
@@ -157,15 +150,6 @@ namespace ParsonsPuzzleApp.Pages
             return Page();
         }
 
-        private bool IsBracketBasedLanguage(Languages language)
-        {
-            return language == Languages.C ||
-                   language == Languages.Cpp ||
-                   language == Languages.CSharp ||
-                   language == Languages.Java ||
-                   language == Languages.JavaScript;
-        }
-
         private List<LegacyCodeBlock> ParseLegacySourceCode(Puzzle puzzle)
         {
             var lines = puzzle.SourceCode.Split('\n', StringSplitOptions.RemoveEmptyEntries)
@@ -173,7 +157,7 @@ namespace ParsonsPuzzleApp.Pages
                 .ToList();
             var blocks = new List<LegacyCodeBlock>();
 
-            var isBracketLanguage = IsBracketBasedLanguage(puzzle.Language);
+            var isBracketLanguage = BracketBasedLanguage.IsBracketBasedLanguage(puzzle.Language);
 
             foreach (var line in lines)
             {
@@ -228,42 +212,6 @@ namespace ParsonsPuzzleApp.Pages
                 Languages.TSQL or Languages.MySQL or Languages.PostgreSQL or Languages.plSQL => "--",
                 _ => "//"
             };
-        }
-
-        // ViewModels for JSON serialization
-        public class PuzzleBlockViewModel
-        {
-            public int Id { get; set; }
-            public string Content { get; set; }
-            public string GroupId { get; set; }
-            public string BlockType { get; set; }
-            public bool IsMultiline { get; set; }
-            public bool IsOrderIndependent { get; set; }
-            public int OrderIndex { get; set; }
-            public bool IsDistractor { get; set; }
-            public string SlotName { get; set; }
-            public List<PuzzleBlockLineViewModel> Lines { get; set; }
-        }
-
-        public class PuzzleBlockLineViewModel
-        {
-            public string Content { get; set; }
-            public int LineOrder { get; set; }
-            public bool IsOptional { get; set; }
-        }
-
-        public class MiniBlockConfig
-        {
-            public string Content { get; set; }
-            public string SlotName { get; set; }
-            public bool IsCorrect { get; set; }
-        }
-
-        public class LegacyCodeBlock
-        {
-            public string Content { get; set; }
-            public string SlotName { get; set; }
-            public bool IsDistractor { get; set; }
         }
     }
 }

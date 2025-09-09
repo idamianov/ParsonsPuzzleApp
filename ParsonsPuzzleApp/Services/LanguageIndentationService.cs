@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Web;
 using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 
 namespace ParsonsPuzzleApp.Services
@@ -10,7 +11,7 @@ namespace ParsonsPuzzleApp.Services
         public string ProcessIndentation(string code, Languages language)
         {
             // For bracket-based languages, add braces when indentation changes
-            if (IsBracketBasedLanguage(language))
+            if (BracketBasedLanguage.IsBracketBasedLanguage(language))
             {
                 return AddBracesForIndentation(code);
             }
@@ -30,7 +31,7 @@ namespace ParsonsPuzzleApp.Services
                 // For Python, indentation matters - compare with normalized indentation
                 return CompareWithIndentation(normalizedStudent, normalizedCorrect);
             }
-            else if (IsBracketBasedLanguage(language))
+            else if (BracketBasedLanguage.IsBracketBasedLanguage(language))
             {
                 // For bracket-based languages, ignore indentation but keep structure
                 return CompareIgnoringIndentation(normalizedStudent, normalizedCorrect);
@@ -40,15 +41,6 @@ namespace ParsonsPuzzleApp.Services
                 // For SQL and other languages, compare ignoring indentation
                 return CompareIgnoringIndentation(normalizedStudent, normalizedCorrect);
             }
-        }
-
-        private bool IsBracketBasedLanguage(Languages language)
-        {
-            return language == Languages.C ||
-                   language == Languages.Cpp ||
-                   language == Languages.CSharp ||
-                   language == Languages.Java ||
-                   language == Languages.JavaScript;
         }
 
         private string CleanAndNormalizeCode(string code, Languages language)

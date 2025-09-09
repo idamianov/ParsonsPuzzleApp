@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Models;
 
 namespace ParsonsPuzzleApp.Pages
 {
@@ -74,24 +75,6 @@ namespace ParsonsPuzzleApp.Pages
             }
 
             return Page();
-        }
-
-        public class BundleStatistics
-        {
-            public int TotalPuzzles { get; set; }
-            public int CorrectPuzzles { get; set; }
-            public int CorrectOnFirstTry { get; set; }
-            public int TotalAttempts { get; set; }
-            public int SuccessRate { get; set; }
-        }
-
-        public class PuzzleResultViewModel
-        {
-            public int PuzzleId { get; set; }
-            public string PuzzleTitle { get; set; }
-            public bool IsCorrect { get; set; }
-            public int Attempts { get; set; }
-            public int TimeTaken { get; set; }
         }
     }
 }
