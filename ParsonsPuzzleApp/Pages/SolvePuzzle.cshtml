@@ -601,7 +601,7 @@
                 }
 
                 const result = await response.json();
-                alert(result.isCorrect ? 'Решението е вярно!' : 'Решението е грешно.');
+                alert(result ? 'Решението е вярно!' : 'Решението е грешно.');
             } catch (error) {
                 console.error('Error checking solution:', error);
                 alert('Грешка при проверка на решението. Моля, опитайте отново.');
