@@ -638,7 +638,7 @@
                 }
 
                 const result = await response.json();
-                if (result.isLast) {
+                if (result.isLastPuzzle) {
                     const stats = result.statistics;
                     alert(`Поздравления! Завършихте колекцията!\n\nВашите резултати ще бъдат показани на следващата страница.`);
                     window.location.href = result.nextUrl;
