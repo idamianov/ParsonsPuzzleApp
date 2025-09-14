@@ -57,6 +57,7 @@ namespace ParsonsPuzzleApp
             builder.Services.AddScoped<IMultilineBlockParser, MultilineBlockParser>();
             builder.Services.AddScoped<IBundleAccessService, BundleAccessService>();
             builder.Services.AddScoped<IHtmlSanitizerService, HtmlSanitizerService>();
+            builder.Services.AddScoped<IPuzzleSolutionService, PuzzleSolutionService>();
 
             var app = builder.Build();
 
