@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using ParsonsPuzzleApp.Models;
+﻿using System.Text.RegularExpressions;
+using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Interfaces;
 
 namespace ParsonsPuzzleApp.Services
 {
-    public interface IMultilineBlockParser
-    {
-        List<PuzzleBlock> ParseSourceCode(string sourceCode, int puzzleId, Languages language);
-        string GetCommentSyntaxForLanguage(Languages language);
-    }
-
     public class MultilineBlockParser : IMultilineBlockParser
     {
         private readonly Dictionary<Languages, string> _commentSyntax = new()
@@ -251,16 +243,16 @@ namespace ParsonsPuzzleApp.Services
         {
             var syntax = _commentSyntax[language];
             return $@"За {language} използвайте:
-{syntax}--> за начало на многоредов блок
-{syntax}<-- за край на многоредов блок
+                    {syntax}--> за начало на многоредов блок
+                    {syntax}<-- за край на многоредов блок
 
-Пример:
-{syntax}-->
-int x = 10;
-int y = 20;
-{syntax}<--
+                    Пример:
+                    {syntax}-->
+                    int x = 10;
+                    int y = 20;
+                    {syntax}<--
 
-ВАЖНО: Индентацията от изходния код се премахва автоматично, за да не се дават подсказки на студентите.";
+                    ВАЖНО: Индентацията от изходния код се премахва автоматично, за да не се дават подсказки на студентите.";
         }
     }
 

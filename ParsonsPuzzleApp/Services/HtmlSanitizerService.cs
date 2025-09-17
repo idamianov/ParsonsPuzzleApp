@@ -1,12 +1,8 @@
-﻿using System.Text.RegularExpressions;
+﻿using ParsonsPuzzleApp.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Services
 {
-    public interface IHtmlSanitizerService
-    {
-        string SanitizeHtml(string html);
-        bool ContainsDangerousContent(string html);
-    }
 
     public class HtmlSanitizerService : IHtmlSanitizerService
     {

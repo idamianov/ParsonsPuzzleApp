@@ -601,7 +601,7 @@
                 }
 
                 const result = await response.json();
-                alert(result.isCorrect ? 'Решението е вярно!' : 'Решението е грешно.');
+                alert(result ? 'Решението е вярно!' : 'Решението е грешно.');
             } catch (error) {
                 console.error('Error checking solution:', error);
                 alert('Грешка при проверка на решението. Моля, опитайте отново.');
@@ -638,7 +638,7 @@
                 }
 
                 const result = await response.json();
-                if (result.isLast) {
+                if (result.isLastPuzzle) {
                     const stats = result.statistics;
                     alert(`Поздравления! Завършихте колекцията!\n\nВашите резултати ще бъдат показани на следващата страница.`);
                     window.location.href = result.nextUrl;

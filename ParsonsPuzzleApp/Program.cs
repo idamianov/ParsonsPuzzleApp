@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Services;
 
 namespace ParsonsPuzzleApp
@@ -56,6 +57,7 @@ namespace ParsonsPuzzleApp
             builder.Services.AddScoped<IMultilineBlockParser, MultilineBlockParser>();
             builder.Services.AddScoped<IBundleAccessService, BundleAccessService>();
             builder.Services.AddScoped<IHtmlSanitizerService, HtmlSanitizerService>();
+            builder.Services.AddScoped<IPuzzleSolutionService, PuzzleSolutionService>();
 
             var app = builder.Build();
 

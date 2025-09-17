@@ -1,4 +1,4 @@
-﻿namespace ParsonsPuzzleApp.Models
+﻿namespace ParsonsPuzzleApp.Entities
 {
     public enum Languages
     {

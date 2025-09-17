@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ParsonsPuzzleApp.Models
+namespace ParsonsPuzzleApp.Entities
 {
     public class PuzzleBlock
     {

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
+using ParsonsPuzzleApp.Entities;
 using System.Threading.Tasks;
 
 namespace ParsonsPuzzleApp.Pages.Instructor

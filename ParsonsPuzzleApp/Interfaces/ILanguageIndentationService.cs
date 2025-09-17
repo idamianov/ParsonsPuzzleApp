@@ -1,8 +1,7 @@
-﻿namespace ParsonsPuzzleApp.Services
-{
-    using System.Collections.Generic;
-    using ParsonsPuzzleApp.Models;
+﻿using ParsonsPuzzleApp.Entities;
 
+namespace ParsonsPuzzleApp.Interfaces
+{
     public interface ILanguageIndentationService
     {
         string ProcessIndentation(string code, Languages language);

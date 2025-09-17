@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
-using ParsonsPuzzleApp.Services;
-using System;
-using System.Threading.Tasks;
+using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Interfaces;
 
 namespace ParsonsPuzzleApp.Pages
 {

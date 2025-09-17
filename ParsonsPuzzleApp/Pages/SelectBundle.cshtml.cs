@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using ParsonsPuzzleApp.Models;
 
 namespace ParsonsPuzzleApp.Pages
 {
@@ -32,13 +30,6 @@ namespace ParsonsPuzzleApp.Pages
                 })
                 .OrderBy(b => b.Identifier)
                 .ToListAsync();
-        }
-
-        public class BundleInfo
-        {
-            public string Identifier { get; set; }
-            public string Description { get; set; }
-            public int PuzzleCount { get; set; }
         }
     }
 }

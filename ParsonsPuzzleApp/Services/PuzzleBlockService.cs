@@ -1,14 +1,11 @@
-﻿namespace ParsonsPuzzleApp.Services
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text.Json;
-    using System.Threading.Tasks;
-    using Microsoft.EntityFrameworkCore;
-    using ParsonsPuzzleApp.Data;
-    using ParsonsPuzzleApp.Models;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Interfaces;
 
+namespace ParsonsPuzzleApp.Services
+{
     public class PuzzleBlockService : IPuzzleBlockService
     {
         private readonly ApplicationDbContext _context;

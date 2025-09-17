@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using ParsonsPuzzleApp.Models;
+using ParsonsPuzzleApp.Entities;
 
 namespace ParsonsPuzzleApp.Data
 {
@@ -16,9 +16,7 @@ namespace ParsonsPuzzleApp.Data
         public DbSet<Puzzle> Puzzles { get; set; }
         public DbSet<BundlePuzzle> BundlePuzzles { get; set; }
         public DbSet<MiniBlock> MiniBlocks { get; set; }
-
         public DbSet<StudentAttempt> StudentAttempts { get; set; }
-
         public DbSet<PuzzleBlock> PuzzleBlocks { get; set; }
         public DbSet<PuzzleBlockLine> PuzzleBlockLines { get; set; }
 

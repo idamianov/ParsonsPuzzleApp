@@ -1,20 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Interfaces;
+using ParsonsPuzzleApp.Services;
+using System.Text.RegularExpressions;
+
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Identity;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Mvc.RazorPages;
-    using Microsoft.AspNetCore.Mvc.Rendering;
-    using Microsoft.EntityFrameworkCore;
-    using ParsonsPuzzleApp.Data;
-    using ParsonsPuzzleApp.Models;
-    using ParsonsPuzzleApp.Services;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-
     [Authorize]
     public class EditPuzzleModel : PageModel
     {
