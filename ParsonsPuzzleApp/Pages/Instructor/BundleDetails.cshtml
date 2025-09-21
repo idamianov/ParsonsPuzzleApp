@@ -115,6 +115,82 @@
             </div>
         }
 
+        <!-- Language Summary Visualization -->
+        @if (Model.LanguageAnalysis.TotalPuzzles > 0)
+        {
+            <div class="language-stats-section">
+                <div class="language-stats-header">
+                    <i class="fas fa-chart-pie icon"></i>
+                    <h4>Анализ на езиците в колекцията</h4>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="number">@Model.LanguageAnalysis.TotalPuzzles</div>
+                        <div class="label">Общо пъзели</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">@Model.LanguageAnalysis.UniqueLanguages</div>
+                        <div class="label">Различни езици</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number">@Model.LanguageAnalysis.UniqueCategories</div>
+                        <div class="label">Категории езици</div>
+                    </div>
+                </div>
+
+                <!-- Language Distribution -->
+                <div class="language-distribution">
+                    <h5><i class="fas fa-list"></i> Разпределение по езици</h5>
+                    @foreach (var language in Model.LanguageAnalysis.LanguageBreakdown)
+                    {
+                        <div class="language-item">
+                            <div class="language-icon" style="background-color: @language.Color;">
+                                <i class="@language.Icon"></i>
+                            </div>
+                            <div class="language-info">
+                                <div class="language-name">@language.DisplayName</div>
+                                <div class="language-stats">
+                                    <span class="language-count">@language.PuzzleCount пъзела</span>
+                                    <span class="language-percentage">@language.Percentage%</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="category-breakdown">
+                    <h5><i class="fas fa-layer-group"></i> Разпределение по категории</h5>
+                    @foreach (var category in Model.LanguageAnalysis.CategoryBreakdown)
+                    {
+                        <div class="category-item category-@category.Category.ToString().ToLower()">
+                            <div class="category-header">
+                                <div class="category-icon" style="background-color: @category.Color;">
+                                    <i class="@category.Icon"></i>
+                                </div>
+                                <div class="category-info">
+                                    <h6>@category.CategoryName</h6>
+                                </div>
+                            </div>
+                            <div class="category-stats">
+                                <div class="category-percentage">@category.Percentage%</div>
+                                <div class="category-count">@category.PuzzleCount пъзела</div>
+                            </div>
+                            <div class="category-languages">
+                                @foreach (var language in category.Languages)
+                                {
+                                    <span class="language-tag">@language.DisplayName</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+            </div>
+        }
+
         <div class="card">
             <div class="card-header">
                 <h3>Пъзели в колекцията (@Model.Bundle.BundlePuzzles.Count)</h3>
@@ -173,6 +249,7 @@
 </div>
 
 @section Scripts {
+    <link rel="stylesheet" href="~/css/language-stats.css" />
     <script>
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(function() {
@@ -181,5 +258,14 @@
                 console.error('Грешка при копиране: ', err);
             });
         }
+
+        // Animate progress bars on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.getAttribute('data-width');
+                bar.style.setProperty('--progress-width', width + '%');
+            });
+        });
     </script>
 }
