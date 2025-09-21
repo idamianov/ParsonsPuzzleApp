@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/ParsonsPuzzleApp/app.db-shm
+/ParsonsPuzzleApp/app.db-wal
+/ParsonsPuzzleApp/Language_Summary_Visualization_Plan.md
