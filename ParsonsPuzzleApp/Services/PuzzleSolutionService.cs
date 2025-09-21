@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
-using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Models;
 using System.Diagnostics;
@@ -23,6 +22,7 @@ namespace ParsonsPuzzleApp.Services
         public async Task<bool> CheckSolutionAsync(CheckRequestModel model)
         {
             var puzzle = await _context.Puzzles
+            .Include(p => p.Language)
             .Include(p => p.MiniBlocks)
             .Include(p => p.PuzzleBlocks).ThenInclude(pb => pb.Lines)
             .FirstOrDefaultAsync(p => p.Id == model.PuzzleId);
@@ -40,6 +40,7 @@ namespace ParsonsPuzzleApp.Services
             var result = new SubmitSolutionResponse();
 
             var puzzle = await _context.Puzzles
+                .Include(p => p.Language)
                 .Include(p => p.MiniBlocks)
                 .Include(p => p.PuzzleBlocks)
                 .ThenInclude(pb => pb.Lines)
@@ -123,18 +124,18 @@ namespace ParsonsPuzzleApp.Services
         private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
         {
             // DEBUGGING: Log the comparison
-            Debug.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language}) ===");
+            Debug.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language.DisplayName}) ===");
             Debug.WriteLine($"Student arrangement:\n{arrangement}");
             Debug.WriteLine("--- END Student ---");
 
             // Generate expected solution
             string expectedSolution;
-            var isBracketLanguage = BracketBasedLanguage.IsBracketBasedLanguage(puzzle.Language);
+            var isBracketLanguage = puzzle.Language.IsBracketBased;
 
             // For bracket-based languages AND Python, use SourceCode to preserve structure
             // For Python, we need the original indentation
             // For SQL languages, we can use PuzzleBlocks
-            if (isBracketLanguage || puzzle.Language == Languages.Python ||
+            if (isBracketLanguage || puzzle.Language.IsIndentationSensitive ||
                 puzzle.PuzzleBlocks == null || !puzzle.PuzzleBlocks.Any())
             {
                 expectedSolution = puzzle.SourceCode;
@@ -143,7 +144,7 @@ namespace ParsonsPuzzleApp.Services
             else
             {
                 // For SQL languages with PuzzleBlocks, generate from blocks
-                expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks, puzzle.Language);
+                expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks.ToList(), puzzle.Language);
                 Debug.WriteLine($"Expected from PuzzleBlocks:\n{expectedSolution}");
             }
             Debug.WriteLine("--- END Expected ---");
@@ -184,7 +185,7 @@ namespace ParsonsPuzzleApp.Services
             return result;
         }
 
-        private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Languages language)
+        private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Language language)
         {
             Debug.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
 

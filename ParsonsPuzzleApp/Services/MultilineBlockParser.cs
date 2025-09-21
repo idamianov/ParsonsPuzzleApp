@@ -6,21 +6,8 @@ namespace ParsonsPuzzleApp.Services
 {
     public class MultilineBlockParser : IMultilineBlockParser
     {
-        private readonly Dictionary<Languages, string> _commentSyntax = new()
-        {
-            { Languages.C, "//" },
-            { Languages.Cpp, "//" },
-            { Languages.CSharp, "//" },
-            { Languages.Java, "//" },
-            { Languages.JavaScript, "//" },
-            { Languages.Python, "#" },
-            { Languages.TSQL, "--" },
-            { Languages.MySQL, "--" },
-            { Languages.PostgreSQL, "--" },
-            { Languages.plSQL, "--" }
-        };
 
-        public List<PuzzleBlock> ParseSourceCode(string sourceCode, int puzzleId, Languages language)
+        public List<PuzzleBlock> ParseSourceCode(string sourceCode, int puzzleId, Language language)
         {
             var blocks = new List<PuzzleBlock>();
 
@@ -28,7 +15,7 @@ namespace ParsonsPuzzleApp.Services
             var preprocessedCode = PreprocessBrackets(sourceCode, language);
 
             var lines = preprocessedCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
-            var commentSyntax = _commentSyntax[language];
+            var commentSyntax = language.CommentSyntax;
 
             // Simple patterns: just start and end markers
             var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
@@ -108,7 +95,7 @@ namespace ParsonsPuzzleApp.Services
             return blocks;
         }
 
-        private string PreprocessBrackets(string sourceCode, Languages language)
+        private string PreprocessBrackets(string sourceCode, Language language)
         {
             // Only process bracket-based languages
             if (!IsBracketBasedLanguage(language))
@@ -193,18 +180,14 @@ namespace ParsonsPuzzleApp.Services
             return result;
         }
 
-        private bool IsBracketBasedLanguage(Languages language)
+        private bool IsBracketBasedLanguage(Language language)
         {
-            return language == Languages.C ||
-                   language == Languages.Cpp ||
-                   language == Languages.CSharp ||
-                   language == Languages.Java ||
-                   language == Languages.JavaScript;
+            return language.IsBracketBased;
         }
 
-        private bool IsCommentMarker(string line, Languages language)
+        private bool IsCommentMarker(string line, Language language)
         {
-            var commentSyntax = _commentSyntax[language];
+            var commentSyntax = language.CommentSyntax;
             var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
             var endPattern = $@"^{Regex.Escape(commentSyntax)}<--\s*$";
 
@@ -239,10 +222,10 @@ namespace ParsonsPuzzleApp.Services
             return match.Success ? match.Groups[1].Value : null;
         }
 
-        public string GetCommentSyntaxForLanguage(Languages language)
+        public string GetCommentSyntaxForLanguage(Language language)
         {
-            var syntax = _commentSyntax[language];
-            return $@"За {language} използвайте:
+            var syntax = language.CommentSyntax;
+            return $@"За {language.DisplayName} използвайте:
                     {syntax}--> за начало на многоредов блок
                     {syntax}<-- за край на многоредов блок
 
@@ -259,24 +242,9 @@ namespace ParsonsPuzzleApp.Services
     // Simplified validator
     public static class MultilineBlockValidator
     {
-        private static readonly Dictionary<Languages, string> _commentSyntaxMap = new()
+        public static bool ValidateBlockSyntax(string sourceCode, Language language)
         {
-            { Languages.C, "//" },
-            { Languages.Cpp, "//" },
-            { Languages.CSharp, "//" },
-            { Languages.Java, "//" },
-            { Languages.JavaScript, "//" },
-            { Languages.Python, "#" },
-            { Languages.TSQL, "--" },
-            { Languages.MySQL, "--" },
-            { Languages.PostgreSQL, "--" },
-            { Languages.plSQL, "--" }
-        };
-
-        public static bool ValidateBlockSyntax(string sourceCode, Languages language)
-        {
-            if (!_commentSyntaxMap.TryGetValue(language, out var commentSyntax))
-                return true;
+            var commentSyntax = language.CommentSyntax;
 
             var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
             var endPattern = $@"^{Regex.Escape(commentSyntax)}<--\s*$";

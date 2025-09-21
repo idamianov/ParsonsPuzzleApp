@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
 using ParsonsPuzzleApp.Interfaces;
@@ -36,16 +37,9 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         public List<SelectListItem> LanguageOptions { get; set; }
 
-        public void OnGet()
+        public async Task OnGetAsync()
         {
-            LanguageOptions = Enum.GetValues(typeof(Languages))
-                .Cast<Languages>()
-                .Select(l => new SelectListItem
-                {
-                    Value = ((int)l).ToString(),
-                    Text = l.ToString()
-                })
-                .ToList();
+            LanguageOptions = await GetLanguageOptionsAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -71,15 +65,24 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             if (!ModelState.IsValid)
             {
-                LanguageOptions = GetLanguageOptions();
+                LanguageOptions = await GetLanguageOptionsAsync();
+                return Page();
+            }
+
+            // Load language entity for validation
+            var language = await _context.Languages.FindAsync(Puzzle.LanguageId);
+            if (language == null)
+            {
+                ModelState.AddModelError("Puzzle.LanguageId", "Невалиден език.");
+                LanguageOptions = await GetLanguageOptionsAsync();
                 return Page();
             }
 
             // Validate multiline block syntax in source code
-            if (!MultilineBlockValidator.ValidateBlockSyntax(Puzzle.SourceCode, Puzzle.Language))
+            if (!MultilineBlockValidator.ValidateBlockSyntax(Puzzle.SourceCode, language))
             {
                 ModelState.AddModelError("Puzzle.SourceCode", "Има незатворени многоредови блокове в кода!");
-                LanguageOptions = GetLanguageOptions();
+                LanguageOptions = await GetLanguageOptionsAsync();
                 return Page();
             }
 
@@ -92,7 +95,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 if (!MiniBlocks.ContainsKey(slot) || MiniBlocks[slot].Count == 0)
                 {
                     ModelState.AddModelError("", $"Слотът '{slot}' няма дефинирани мини-блокове.");
-                    LanguageOptions = GetLanguageOptions();
+                    LanguageOptions = await GetLanguageOptionsAsync();
                     return Page();
                 }
             }
@@ -105,11 +108,11 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             var puzzleBlocks = _blockParser.ParseSourceCode(
                 Puzzle.SourceCode,
                 Puzzle.Id,
-                Puzzle.Language
+                language
             );
 
             // Filter out bracket blocks for C-family languages during creation
-            var isBracketLanguage = IsBracketBasedLanguage(Puzzle.Language);
+            var isBracketLanguage = language.IsBracketBased;
             var validBlocks = puzzleBlocks.Where(pb =>
                 !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))
             ).ToList();
@@ -142,7 +145,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             }
 
             // Process distractors
-            await ProcessDistractors(validBlocks.Count);
+            await ProcessDistractors(validBlocks.Count, language);
 
             // Add MiniBlocks
             await AddMiniBlocks();
@@ -151,14 +154,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             return RedirectToPage("/Instructor/Puzzles");
         }
 
-        private bool IsBracketBasedLanguage(Languages language)
-        {
-            return language == Languages.C ||
-                   language == Languages.Cpp ||
-                   language == Languages.CSharp ||
-                   language == Languages.Java ||
-                   language == Languages.JavaScript;
-        }
 
         private List<string> ExtractSlotsFromCode(string sourceCode)
         {
@@ -170,21 +165,21 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 .ToList();
         }
 
-        private async Task ProcessDistractors(int baseOrderIndex)
+        private async Task ProcessDistractors(int baseOrderIndex, Language language)
         {
             if (string.IsNullOrEmpty(Puzzle.Distractors))
                 return;
 
-            var isBracketLanguage = IsBracketBasedLanguage(Puzzle.Language);
+            var isBracketLanguage = language.IsBracketBased;
 
             // Check if distractors contain multiline blocks
-            if (MultilineBlockValidator.ValidateBlockSyntax(Puzzle.Distractors, Puzzle.Language))
+            if (MultilineBlockValidator.ValidateBlockSyntax(Puzzle.Distractors, language))
             {
                 // Parse distractors as blocks
                 var distractorBlocks = _blockParser.ParseSourceCode(
                     Puzzle.Distractors,
                     Puzzle.Id,
-                    Puzzle.Language
+                    language
                 );
 
                 // Filter and process distractor blocks
@@ -264,16 +259,18 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             }
         }
 
-        private List<SelectListItem> GetLanguageOptions()
+        private async Task<List<SelectListItem>> GetLanguageOptionsAsync()
         {
-            return Enum.GetValues(typeof(Languages))
-                .Cast<Languages>()
-                .Select(l => new SelectListItem
-                {
-                    Value = ((int)l).ToString(),
-                    Text = l.ToString()
-                })
-                .ToList();
+            var languages = await _context.Languages
+                .Where(l => l.IsActive)
+                .OrderBy(l => l.SortOrder)
+                .ToListAsync();
+
+            return languages.Select(l => new SelectListItem
+            {
+                Value = l.Id.ToString(),
+                Text = l.DisplayName
+            }).ToList();
         }
 
         public class MiniBlockInput

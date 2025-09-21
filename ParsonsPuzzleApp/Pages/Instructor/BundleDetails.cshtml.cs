@@ -34,6 +34,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             Bundle = await _context.Bundles
                 .Include(b => b.BundlePuzzles)
                 .ThenInclude(bp => bp.Puzzle)
+                .ThenInclude(p => p.Language)
                 .FirstOrDefaultAsync(b => b.Id == id && b.InstructorId == userId);
 
             if (Bundle == null)

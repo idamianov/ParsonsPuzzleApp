@@ -51,7 +51,7 @@
                 }
                 <tr>
                     <td>@puzzle.Title</td>
-                    <td>@puzzle.Language</td>
+                    <td>@puzzle.Language.DisplayName</td>
                     <td>@Html.Raw(puzzle.Task)</td>
                     <td>
                         @if (puzzle.BundlePuzzles.Any())

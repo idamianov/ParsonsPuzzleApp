@@ -28,6 +28,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             // Show only puzzles created by this instructor
             Puzzles = await _context.Puzzles
                 .Where(p => p.InstructorId == userId)
+                .Include(p => p.Language)
                 .Include(p => p.BundlePuzzles)
                 .ThenInclude(bp => bp.Bundle)
                 .OrderByDescending(p => p.CreatedAt)

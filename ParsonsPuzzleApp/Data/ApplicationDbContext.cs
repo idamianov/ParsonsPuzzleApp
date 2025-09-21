@@ -13,6 +13,7 @@ namespace ParsonsPuzzleApp.Data
         }
 
         public DbSet<Bundle> Bundles { get; set; }
+        public DbSet<Language> Languages { get; set; }
         public DbSet<Puzzle> Puzzles { get; set; }
         public DbSet<BundlePuzzle> BundlePuzzles { get; set; }
         public DbSet<MiniBlock> MiniBlocks { get; set; }
@@ -63,6 +64,17 @@ namespace ParsonsPuzzleApp.Data
                 .HasOne(pbl => pbl.PuzzleBlock)
                 .WithMany(pb => pb.Lines)
                 .HasForeignKey(pbl => pbl.PuzzleBlockId);
+
+            // Language configuration
+            modelBuilder.Entity<Language>()
+                .HasIndex(l => l.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<Puzzle>()
+                .HasOne(p => p.Language)
+                .WithMany(l => l.Puzzles)
+                .HasForeignKey(p => p.LanguageId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // New configurations for instructor ownership
             modelBuilder.Entity<Bundle>()
