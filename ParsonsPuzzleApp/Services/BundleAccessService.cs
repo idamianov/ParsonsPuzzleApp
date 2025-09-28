@@ -1,4 +1,6 @@
-﻿using ParsonsPuzzleApp.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Interfaces;
 using System.Text.Json;
 
 namespace ParsonsPuzzleApp.Services
@@ -6,11 +8,13 @@ namespace ParsonsPuzzleApp.Services
     public class BundleAccessService : IBundleAccessService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDbContext _context;
         private const string SessionKey = "BundleAccess";
 
-        public BundleAccessService(IHttpContextAccessor httpContextAccessor)
+        public BundleAccessService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
         public void GrantAccess(int bundleId, string studentIdentifier)
@@ -33,6 +37,12 @@ namespace ParsonsPuzzleApp.Services
 
         public bool HasAccess(int bundleId, string studentIdentifier)
         {
+            var bundle = _context.Bundles.FirstOrDefault(b => b.Id == bundleId);
+            if (bundle != null && bundle.InstructorId == studentIdentifier)
+            {
+                return true;
+            }
+
             var session = _httpContextAccessor.HttpContext?.Session;
             if (session == null) return false;
 
