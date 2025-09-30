@@ -22,9 +22,13 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         public List<Bundle> Bundles { get; set; }
 
+        public string InstructorId { get; set; }
+
         public async Task OnGetAsync()
         {
             var userId = _userManager.GetUserId(User);
+
+            InstructorId = userId;
 
             Bundles = await _context.Bundles
                 .Include(b => b.BundlePuzzles)

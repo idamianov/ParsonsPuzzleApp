@@ -45,6 +45,9 @@
                         <div class="btn-group" role="group">
                             <a asp-page="EditBundle" asp-route-id="@bundle.Id" class="btn btn-sm btn-info">Редактирай</a>
                             <a asp-page="BundleDetails" asp-route-id="@bundle.Id" class="btn btn-sm btn-secondary">Детайли</a>
+                            <a href="@Url.Content($"/SolvePuzzle?bundleId={bundle.Id}&studentId={Model.InstructorId}&puzzleIndex=1&bundleAttemptId={Guid.NewGuid()}")" target="_blank" class="btn btn-sm btn-success rounded-end">
+                                Тествай
+                            </a>
                             <form method="post" asp-page-handler="Delete" asp-route-id="@bundle.Id" style="display:inline;">
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Сигурни ли сте?')">Изтрий</button>
                             </form>
