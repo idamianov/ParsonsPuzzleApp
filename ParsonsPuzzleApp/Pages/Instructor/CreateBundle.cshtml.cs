@@ -35,11 +35,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             // Show only puzzles created by this instructor
             PuzzleOptions = await _context.Puzzles
+                .Include(p => p.Language)
                 .Where(p => p.InstructorId == userId)
                 .Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = $"{p.Title} ({p.Language})"
+                    Text = $"{p.Title} ({p.Language.DisplayName})"
                 })
                 .ToListAsync();
         }
@@ -58,11 +59,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             {
                 // Reload puzzle options
                 PuzzleOptions = await _context.Puzzles
+                    .Include(p => p.Language)
                     .Where(p => p.InstructorId == userId)
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = $"{p.Title} ({p.Language})"
+                        Text = $"{p.Title} ({p.Language.DisplayName})"
                     })
                     .ToListAsync();
                 return Page();

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
-using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Models;
 using System.Text.RegularExpressions;
@@ -59,6 +58,9 @@ namespace ParsonsPuzzleApp.Pages
             Bundle = await _context.Bundles
                 .Include(b => b.BundlePuzzles)
                 .ThenInclude(bp => bp.Puzzle)
+                .ThenInclude(p => p.Language)
+                .Include(b => b.BundlePuzzles)
+                .ThenInclude(bp => bp.Puzzle)
                 .ThenInclude(p => p.MiniBlocks)
                 .FirstOrDefaultAsync(b => b.Id == bundleId) ?? 
                 throw new ArgumentNullException("Колекцията не е намерена.");
@@ -89,7 +91,7 @@ namespace ParsonsPuzzleApp.Pages
             if (PuzzleBlocks != null && PuzzleBlocks.Any())
             {
                 // Use new PuzzleBlocks system
-                var isBracketLanguage = BracketBasedLanguage.IsBracketBasedLanguage(Puzzle.Language);
+                var isBracketLanguage = Puzzle.Language.IsBracketBased;
 
                 // Filter blocks for display
                 var filteredBlocks = PuzzleBlocks
@@ -157,7 +159,7 @@ namespace ParsonsPuzzleApp.Pages
                 .ToList();
             var blocks = new List<LegacyCodeBlock>();
 
-            var isBracketLanguage = BracketBasedLanguage.IsBracketBasedLanguage(puzzle.Language);
+            var isBracketLanguage = puzzle.Language.IsBracketBased;
 
             foreach (var line in lines)
             {
@@ -194,24 +196,14 @@ namespace ParsonsPuzzleApp.Pages
             return blocks;
         }
 
-        private bool IsCommentMarker(string line, Languages language)
+        private bool IsCommentMarker(string line, Language language)
         {
-            var commentSyntax = GetCommentSyntax(language);
+            var commentSyntax = language.CommentSyntax;
             var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\[[\w]+:(ordered|unordered)\]";
             var endPattern = $@"^{Regex.Escape(commentSyntax)}<--";
 
             return Regex.IsMatch(line, startPattern) || Regex.IsMatch(line, endPattern);
         }
 
-        private string GetCommentSyntax(Languages language)
-        {
-            return language switch
-            {
-                Languages.C or Languages.Cpp or Languages.CSharp or Languages.Java or Languages.JavaScript => "//",
-                Languages.Python => "#",
-                Languages.TSQL or Languages.MySQL or Languages.PostgreSQL or Languages.plSQL => "--",
-                _ => "//"
-            };
-        }
     }
 }

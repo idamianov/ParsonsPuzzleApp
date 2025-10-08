@@ -4,7 +4,7 @@ namespace ParsonsPuzzleApp.Interfaces
 {
     public interface ILanguageIndentationService
     {
-        string ProcessIndentation(string code, Languages language);
-        bool ValidateIndentation(string studentCode, string correctCode, Languages language);
+        string ProcessIndentation(string code, Language language);
+        bool ValidateIndentation(string studentCode, string correctCode, Language language);
     }
 }

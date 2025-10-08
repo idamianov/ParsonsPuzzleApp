@@ -1,17 +1,16 @@
 ﻿using System.Text.RegularExpressions;
 using System.Web;
 using ParsonsPuzzleApp.Entities;
-using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 
 namespace ParsonsPuzzleApp.Services
 {
     public class LanguageIndentationService : ILanguageIndentationService
     {
-        public string ProcessIndentation(string code, Languages language)
+        public string ProcessIndentation(string code, Language language)
         {
             // For bracket-based languages, add braces when indentation changes
-            if (BracketBasedLanguage.IsBracketBasedLanguage(language))
+            if (language.IsBracketBased)
             {
                 return AddBracesForIndentation(code);
             }
@@ -20,18 +19,18 @@ namespace ParsonsPuzzleApp.Services
             return code;
         }
 
-        public bool ValidateIndentation(string studentCode, string correctCode, Languages language)
+        public bool ValidateIndentation(string studentCode, string correctCode, Language language)
         {
             // Clean and normalize both codes
             var normalizedStudent = CleanAndNormalizeCode(studentCode, language);
             var normalizedCorrect = CleanAndNormalizeCode(correctCode, language);
 
-            if (language == Languages.Python)
+            if (language.IsIndentationSensitive)
             {
                 // For Python, indentation matters - compare with normalized indentation
                 return CompareWithIndentation(normalizedStudent, normalizedCorrect);
             }
-            else if (BracketBasedLanguage.IsBracketBasedLanguage(language))
+            else if (language.IsBracketBased)
             {
                 // For bracket-based languages, ignore indentation but keep structure
                 return CompareIgnoringIndentation(normalizedStudent, normalizedCorrect);
@@ -43,7 +42,7 @@ namespace ParsonsPuzzleApp.Services
             }
         }
 
-        private string CleanAndNormalizeCode(string code, Languages language)
+        private string CleanAndNormalizeCode(string code, Language language)
         {
             if (string.IsNullOrWhiteSpace(code))
                 return string.Empty;
@@ -56,7 +55,7 @@ namespace ParsonsPuzzleApp.Services
                 .Select(l => l.TrimEnd('\r', '\n'));
 
             // Remove comment markers for multiline blocks
-            var commentSyntax = GetCommentSyntax(language);
+            var commentSyntax = language.CommentSyntax;
             var cleanedLines = new List<string>();
 
             foreach (var line in lines)
@@ -91,16 +90,6 @@ namespace ParsonsPuzzleApp.Services
             return patterns.Any(pattern => Regex.IsMatch(line, pattern));
         }
 
-        private string GetCommentSyntax(Languages language)
-        {
-            return language switch
-            {
-                Languages.C or Languages.Cpp or Languages.CSharp or Languages.Java or Languages.JavaScript => "//",
-                Languages.Python => "#",
-                Languages.TSQL or Languages.MySQL or Languages.PostgreSQL or Languages.plSQL => "--",
-                _ => "//"
-            };
-        }
 
         private bool CompareWithIndentation(string studentCode, string correctCode)
         {

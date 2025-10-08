@@ -20,16 +20,18 @@ namespace ParsonsPuzzleApp.Entities
         public string? Distractors { get; set; }
 
         [Required(ErrorMessage = "Езикът е задължителен")]
-        public Languages Language { get; set; }
+        public int LanguageId { get; set; }
+        
+        public Language Language { get; set; } = null!;
 
         // New property for instructor ownership
         public string InstructorId { get; set; } // Foreign key to AspNetUsers
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastModifiedAt { get; set; }
 
-        public List<BundlePuzzle> BundlePuzzles { get; set; } = new List<BundlePuzzle>();
-        public List<MiniBlock> MiniBlocks { get; set; } = new List<MiniBlock>();
-        public List<PuzzleBlock> PuzzleBlocks { get; set; } = new List<PuzzleBlock>();
+        public ICollection<BundlePuzzle> BundlePuzzles { get; set; } = new List<BundlePuzzle>();
+        public ICollection<MiniBlock> MiniBlocks { get; set; } = new List<MiniBlock>();
+        public ICollection<PuzzleBlock> PuzzleBlocks { get; set; } = new List<PuzzleBlock>();
         public string? BlockConfiguration { get; set; }
     }
 }

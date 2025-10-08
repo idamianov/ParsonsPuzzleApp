@@ -1,0 +1,245 @@
+/* Language Statistics Visualization Styles */
+
+.language-stats-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.language-stats-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.language-stats-header h4 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.language-stats-header .icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    color: #007bff;
+}
+
+/* Quick Stats Cards */
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card .number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Language Distribution */
+.language-distribution {
+    margin-bottom: 2rem;
+}
+
+.language-distribution h5 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.language-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.language-item:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transform: translateX(4px);
+}
+
+.language-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.language-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.language-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+
+.language-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.language-count {
+    font-weight: 600;
+    color: #007bff;
+}
+
+.language-percentage {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+
+/* Category Breakdown */
+.category-breakdown {
+    margin-bottom: 2rem;
+}
+
+.category-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.category-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.category-info h6 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+
+.category-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.category-percentage {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.category-count {
+    color: #6c757d;
+}
+
+.category-languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.language-tag {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    color: #495057;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .quick-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .language-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .language-icon {
+        margin-bottom: 0.75rem;
+        margin-right: 0;
+    }
+    
+    .language-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .category-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .category-icon {
+        margin-bottom: 0.75rem;
+        margin-right: 0;
+    }
+}
+
+
+/* Color variations for different categories */
+.category-bracket { border-left-color: #007bff !important; }
+.category-indentation { border-left-color: #28a745 !important; }
+.category-sql { border-left-color: #ffc107 !important; }
+.category-other { border-left-color: #6c757d !important; }

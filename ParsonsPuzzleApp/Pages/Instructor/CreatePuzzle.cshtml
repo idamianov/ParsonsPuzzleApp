@@ -22,11 +22,11 @@
     </div>
 
     <div class="form-group mb-3">
-        <label asp-for="Puzzle.Language" class="form-label">Език</label>
-        <select asp-for="Puzzle.Language" asp-items="Model.LanguageOptions" class="form-control" id="languageSelect" required>
+        <label asp-for="Puzzle.LanguageId" class="form-label">Език</label>
+        <select asp-for="Puzzle.LanguageId" asp-items="Model.LanguageOptions" class="form-control" id="languageSelect" required>
             <option value="">Избери език</option>
         </select>
-        <span asp-validation-for="Puzzle.Language" class="text-danger"></span>
+        <span asp-validation-for="Puzzle.LanguageId" class="text-danger"></span>
     </div>
 
     <!-- Simplified help panel -->
@@ -160,8 +160,8 @@
                 distractorsEditor.setOption("mode", mode);
 
                 // Show syntax help
-                var language = $(this).find("option:selected").text();
-                updateMultilineHelp(language);
+                var languageId = $(this).val();
+                updateMultilineHelp(languageId);
             });
 
             $("#insertSlotButton").click(function() {
@@ -186,84 +186,37 @@
 
             // Show syntax help on load if language is selected
             if ($("#languageSelect").val()) {
-                var language = $("#languageSelect").find("option:selected").text();
-                updateMultilineHelp(language);
+                var languageId = $("#languageSelect").val();
+                updateMultilineHelp(languageId);
             }
 
-            function updateMultilineHelp(language) {
-                var syntax = getCommentSyntax(language);
-                if (syntax) {
+            function updateMultilineHelp(languageId) {
+                if (!languageId || !window.languageHelper.initialized) {
+                    $("#multilineHelp").hide();
+                    return;
+                }
+
+                const helpText = window.languageHelper.getMultilineHelp(languageId);
+                if (helpText) {
                     $("#multilineHelp").show();
-                    $("#syntaxExample").html(`
-                        <pre class="mb-2"><code>${syntax.example}</code></pre>
-                        <div class="text-muted">
-                            <small>
-                                <strong>Съвет:</strong> Просто поставете кода между маркерите. Редовете се запазват в същия ред.
-                            </small>
-                        </div>
-                    `);
+                    $("#syntaxExample").html(helpText);
                 } else {
                     $("#multilineHelp").hide();
                 }
             }
 
-            function getCommentSyntax(language) {
-                const syntaxMap = {
-                    'C': {
-                        comment: '//',
-                        example: '//-->\nint a = 10;\nfloat b = 20.5;\nchar c = \'A\';\n//<--\n\nint main() {\n    printf("Hello");\n    return 0;\n}'
-                    },
-                    'Cpp': {
-                        comment: '//',
-                        example: '//-->\n#include &lt;iostream&gt;\n#include &lt;vector&gt;\n//<--\n\nusing namespace §nspc§;\nint main() {\n    cout << "Hello" << endl;\n    return 0;\n}'
-                    },
-                    'CSharp': {
-                        comment: '//',
-                        example: '//-->\nusing System;\nusing System.Collections.Generic;\n//<--\n\npublic class Program {\n    public static void Main() {\n        Console.WriteLine("Hello");\n    }\n}'
-                    },
-                    'Java': {
-                        comment: '//',
-                        example: '//-->\nimport java.util.List;\nimport java.util.ArrayList;\n//<--\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello");\n    }\n}'
-                    },
-                    'JavaScript': {
-                        comment: '//',
-                        example: '//-->\nimport React from "react";\nimport { useState } from "react";\n//<--\n\nfunction App() {\n    return <div>Hello</div>;\n}'
-                    },
-                    'Python': {
-                        comment: '#',
-                        example: '#-->\nimport math\nimport random\nfrom datetime import datetime\n#<--\n\ndef calculate_area(radius):\n    return math.pi * radius ** 2'
-                    },
-                    'TSQL': {
-                        comment: '--',
-                        example: '-->\nDECLARE @@UserId INT;\nDECLARE @@UserName NVARCHAR(100);\n--<\n\nSELECT * FROM Users WHERE IsActive = 1;'
-                    },
-                    'MySQL': {
-                        comment: '--',
-                        example: '-->\nDECLARE userId INT;\nDECLARE userName VARCHAR(100);\n--<\n\nSELECT * FROM users WHERE active = 1;'
-                    },
-                    'PostgreSQL': {
-                        comment: '--',
-                        example: '-->\nDECLARE user_id INTEGER;\nDECLARE user_name VARCHAR(100);\n--<\n\nSELECT * FROM users WHERE active = true;'
-                    },
-                    'plSQL': {
-                        comment: '--',
-                        example: '-->\nv_employee_id NUMBER;\nv_employee_name VARCHAR2(100);\n--<\n\nBEGIN\n    SELECT salary INTO v_salary FROM employees;\nEND;'
-                    }
-                };
-                return syntaxMap[language];
-            }
+            // getCommentSyntax removed - now handled by language-helper.js
 
             // Insert multiline block
             $("#insertMultilineButton").click(function() {
-                var language = $("#languageSelect").find("option:selected").text();
-                var syntax = getCommentSyntax(language);
-
-                if (!syntax) {
+                var languageId = $("#languageSelect").val();
+                if (!languageId) {
                     alert("Моля, изберете език първо!");
                     return;
                 }
-
-                var template = `${syntax.comment}-->\n\n${syntax.comment}<--`;
+                
+                var commentSyntax = window.languageHelper.getCommentSyntax(languageId);
+                var template = `${commentSyntax}-->\n\n${commentSyntax}<--`;
                 sourceCodeEditor.replaceSelection(template);
                 var cursor = sourceCodeEditor.getCursor();
                 sourceCodeEditor.setCursor({line: cursor.line - 1, ch: 0});
@@ -319,16 +272,7 @@
             window.updateMiniBlocksPanel(sourceCodeEditor);
         });
 
-        window.getCodeMirrorMode = function() {
-            var language = $("#languageSelect").val();
-            switch (parseInt(language)) {
-                case 1: case 2: case 3: case 4: return "clike";
-                case 5: return "javascript";
-                case 6: return "python";
-                case 7: case 8: case 9: case 10: return "sql";
-                default: return "text/plain";
-            }
-        };
+        // getCodeMirrorMode is now provided by language-helper.js
 
         window.insertSlot = function(editor) {
             var slotName = prompt("Въведете име на слота:");

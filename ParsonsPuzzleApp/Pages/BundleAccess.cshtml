@@ -5,23 +5,178 @@
     Layout = "_Layout";
 }
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">@Model.Bundle.Identifier</h3>
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="mb-0 text-center">
+                        <i class="fas fa-puzzle-piece me-2"></i>@Model.Bundle.Identifier
+                    </h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     @if (!string.IsNullOrEmpty(Model.Bundle.Description))
                     {
-                        <p class="text-muted">@Model.Bundle.Description</p>
+                        <div class="mb-4 text-center">
+                            <p class="lead text-muted fst-italic mb-0">
+                                <i class="fas fa-quote-left me-2 text-primary opacity-50"></i>@Model.Bundle.Description
+                            </p>
+                        </div>
                     }
+
+                    <!-- Collection Information -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Информация за колекцията
+                            </h5>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center p-3 bg-white rounded shadow-sm">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary bg-opacity-10 rounded p-3">
+                                                <i class="fas fa-puzzle-piece text-primary fa-lg"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="small text-muted">Брой пъзели</div>
+                                            <div class="fw-bold fs-5">@Model.PuzzleCount</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center p-3 bg-white rounded shadow-sm">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-success bg-opacity-10 rounded p-3">
+                                                <i class="fas fa-calendar-plus text-success fa-lg"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="small text-muted">Създадена</div>
+                                            <div class="fw-bold">@Model.Bundle.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.Bundle.LastModifiedAt.HasValue)
+                            {
+                                <div class="p-3 bg-white rounded shadow-sm mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-edit text-info me-2"></i>
+                                        <span class="small text-muted me-2">Последна промяна:</span>
+                                        <span class="fw-semibold">@Model.Bundle.LastModifiedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.Languages.Any())
+                            {
+                                <div class="p-3 bg-white rounded shadow-sm mb-3">
+                                    <div class="mb-2">
+                                        <i class="fas fa-code text-primary me-2"></i>
+                                        <strong>Програмни езици:</strong>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var language in Model.Languages)
+                                        {
+                                            <span class="badge bg-primary bg-gradient px-3 py-2 fs-6">
+                                                <i class="fas fa-terminal me-1"></i>
+                                                @language.DisplayName 
+                                                <small class="opacity-75">(@language.Category.ToString())</small>
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.PuzzleTitles.Any())
+                            {
+                                <div class="p-3 bg-white rounded shadow-sm">
+                                    <div class="mb-2">
+                                        <i class="fas fa-list-ul text-primary me-2"></i>
+                                        <strong>Пъзели в колекцията:</strong>
+                                    </div>
+                                    <div class="row row-cols-1 row-cols-md-2 g-2">
+                                        @foreach (var title in Model.PuzzleTitles)
+                                        {
+                                            <div class="col">
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fas fa-chevron-right text-primary me-2 mt-1" style="font-size: 0.75rem;"></i>
+                                                    <span class="small">@title</span>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="card border-0 bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">
+                                <i class="fas fa-lightbulb me-2"></i>Как да решавате
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <strong>1</strong>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0 small">Въведете вашето име или студентски номер за идентификация</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <strong>2</strong>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0 small">Въведете кода за отключване, предоставен от преподавателя</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <strong>3</strong>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0 small">Решавайте пъзелите последователно, като подреждате блоковете код</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <strong>4</strong>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0 small">Вашето решение ще бъде автоматично проверено</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     @if (TempData["ErrorMessage"] != null)
                     {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                            <i class="fas fa-exclamation-circle me-1"></i> @TempData["ErrorMessage"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     }
@@ -30,19 +185,25 @@
                         <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                         <div class="mb-3">
-                            <label asp-for="StudentIdentifier" class="form-label">Вашето име или студентски номер:</label>
-                            <input asp-for="StudentIdentifier" class="form-control" required placeholder="Например: Иван Иванов или 12345" />
+                            <label asp-for="StudentIdentifier" class="form-label fw-semibold">
+                                <i class="fas fa-user me-2 text-primary"></i>Вашето име или студентски номер
+                            </label>
+                            <input asp-for="StudentIdentifier" class="form-control form-control-lg" required placeholder="Например: Иван Иванов или 12345" />
                             <span asp-validation-for="StudentIdentifier" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="BundleCode" class="form-label">Код за отключване:</label>
-                            <input asp-for="BundleCode" type="password" class="form-control" required placeholder="Въведете кода, предоставен от преподавателя" />
+                        <div class="mb-4">
+                            <label asp-for="BundleCode" class="form-label fw-semibold">
+                                <i class="fas fa-key me-2 text-primary"></i>Код за отключване
+                            </label>
+                            <input asp-for="BundleCode" type="password" class="form-control form-control-lg" required placeholder="Въведете кода, предоставен от преподавателя" />
                             <span asp-validation-for="BundleCode" class="text-danger"></span>
                         </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Започни решаването</button>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-3 shadow-sm">
+                                <i class="fas fa-rocket me-2"></i>Започни решаването
+                            </button>
                         </div>
                     </form>
                 </div>
