@@ -1,5 +1,3 @@
-using ParsonsPuzzleApp.Entities;
-
 namespace ParsonsPuzzleApp.Models
 {
     public class CollectionLanguageAnalysis
