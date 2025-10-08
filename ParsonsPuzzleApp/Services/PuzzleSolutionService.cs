@@ -32,6 +32,11 @@ namespace ParsonsPuzzleApp.Services
                 throw new KeyNotFoundException("Пъзелът не е намерен.");
             }
 
+            if (puzzle.Language == null)
+            {
+                throw new InvalidOperationException($"Пъзелът {model.PuzzleId} има невалидна или липсваща езикова конфигурация.");
+            }
+
             return IsSolutionCorrect(model.Arrangement, puzzle);
         }
 
@@ -74,8 +79,8 @@ namespace ParsonsPuzzleApp.Services
                 BundleAttemptId = model.BundleAttemptId
             };
 
-            _context.StudentAttempts.Add(attempt);
-            _context.SaveChanges();
+            await _context.StudentAttempts.AddAsync(attempt);
+            await _context.SaveChangesAsync();
 
             bool isLast = model.PuzzleIndex >= bundle.BundlePuzzles.Count;
 
