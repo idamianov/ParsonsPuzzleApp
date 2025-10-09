@@ -102,9 +102,12 @@ class LanguageHelper {
 
         const syntax = language.commentSyntax;
         return `
+            <strong>Кога да използвате многоредови блокове:</strong><br>
+            Използвайте многоредови блокове, когато имате последователни редове код, които са валидни независимо от реда им.<br><br>
+            <strong>Синтаксис:</strong><br>
             <code>${syntax}--></code> за начало на многоредов блок<br>
             <code>${syntax}&lt;--</code> за край на многоредов блок<br><br>
-            Пример:<br>
+            <strong>Пример:</strong><br>
             <code>${syntax}--><br>
             var x = 10;<br>
             var y = 20;<br>
