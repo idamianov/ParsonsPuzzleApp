@@ -8,6 +8,7 @@ using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Services;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Pages.Instructor

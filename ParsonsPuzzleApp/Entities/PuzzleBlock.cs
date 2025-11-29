@@ -7,6 +7,7 @@ namespace ParsonsPuzzleApp.Entities
         public int Id { get; set; }
         public int PuzzleId { get; set; }
         public string Content { get; set; }
+        public int Indent { get; set; }
         public int OrderIndex { get; set; }
         // Полета за многоредови блокове
         public bool IsMultiline { get; set; }

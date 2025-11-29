@@ -39,11 +39,22 @@ namespace ParsonsPuzzleApp.Services
                 throw new InvalidOperationException($"Пъзелът {model.PuzzleId} има невалидна или липсваща езикова конфигурация.");
             }
 
+            var map = BuildLetterMaps(puzzle);
+
             var blocks = model.Arrangement.Where(b => b.Id != 0).ToList();
 
-            var studentSolution = BuildStudentSolutionString(blocks);
+            var correctEncoded = EncodeCorrectSolution(puzzle, map);
 
-            return IsSolutionCorrect(studentSolution, puzzle);
+            var studentEncoded = EncodeStudentSolution(blocks, map, puzzle);
+
+            var distance = LevenshteinDistance(correctEncoded, studentEncoded);
+
+            if(distance == 0)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<SubmitSolutionResponse> SubmitSolutionAsync(SubmitSolutionModel model)
@@ -71,7 +82,22 @@ namespace ParsonsPuzzleApp.Services
                 throw new KeyNotFoundException("Колекцията не е намерена.");
             }
 
-            bool isCorrect = true;// IsSolutionCorrect(model.Arrangement, puzzle);
+            var map = BuildLetterMaps(puzzle);
+
+            var blocks = model.Arrangement.Where(b => b.Id != 0).ToList();
+
+            var correctEncoded = EncodeCorrectSolution(puzzle, map);
+
+            var studentEncoded = EncodeStudentSolution(blocks, map, puzzle);
+
+            var distance = LevenshteinDistance(correctEncoded, studentEncoded);
+
+            var isCorrect = false;
+
+            if (distance == 0)
+            {
+                isCorrect = true;
+            }
 
             var attempt = new StudentAttempt
             {
@@ -133,119 +159,121 @@ namespace ParsonsPuzzleApp.Services
                 return result;
             }
         }
-        private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
-        {
-            // DEBUGGING: Log the comparison
-            Debug.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language.DisplayName}) ===");
-            Debug.WriteLine($"Student arrangement:\n{arrangement}");
-            Debug.WriteLine("--- END Student ---");
 
-            // Generate expected solution
-            string expectedSolution;
-            var isBracketLanguage = puzzle.Language.IsBracketBased;
+        //TODO: remove this code 
+        //private bool IsSolutionCorrect(string arrangement, Puzzle puzzle)
+        //{
+        //    // DEBUGGING: Log the comparison
+        //    Debug.WriteLine($"=== DEBUGGING PUZZLE {puzzle.Id} (Language: {puzzle.Language.DisplayName}) ===");
+        //    Debug.WriteLine($"Student arrangement:\n{arrangement}");
+        //    Debug.WriteLine("--- END Student ---");
 
-            // For bracket-based languages AND Python, use SourceCode to preserve structure
-            // For Python, we need the original indentation
-            // For SQL languages, we can use PuzzleBlocks
-            if (isBracketLanguage || puzzle.Language.IsIndentationSensitive ||
-                puzzle.PuzzleBlocks == null || !puzzle.PuzzleBlocks.Any())
-            {
-                expectedSolution = puzzle.SourceCode;
-                Debug.WriteLine($"Expected from SourceCode (bracket language, Python, or no blocks):\n{expectedSolution}");
-            }
-            else
-            {
-                // For SQL languages with PuzzleBlocks, generate from blocks
-                expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks.ToList(), puzzle.Language);
-                Debug.WriteLine($"Expected from PuzzleBlocks:\n{expectedSolution}");
-            }
-            Debug.WriteLine("--- END Expected ---");
+        //    // Generate expected solution
+        //    string expectedSolution;
+        //    var isBracketLanguage = puzzle.Language.IsBracketBased;
 
-            // Replace slots with correct mini-blocks in both arrangement and expected solution
-            string processedArrangement = arrangement;
-            string processedExpectedSolution = expectedSolution;
+        //    // For bracket-based languages AND Python, use SourceCode to preserve structure
+        //    // For Python, we need the original indentation
+        //    // For SQL languages, we can use PuzzleBlocks
+        //    if (isBracketLanguage || puzzle.Language.IsIndentationSensitive ||
+        //        puzzle.PuzzleBlocks == null || !puzzle.PuzzleBlocks.Any())
+        //    {
+        //        expectedSolution = puzzle.SourceCode;
+        //        Debug.WriteLine($"Expected from SourceCode (bracket language, Python, or no blocks):\n{expectedSolution}");
+        //    }
+        //    else
+        //    {
+        //        // For SQL languages with PuzzleBlocks, generate from blocks
+        //        expectedSolution = GenerateExpectedSolutionFromBlocks(puzzle.PuzzleBlocks.ToList(), puzzle.Language);
+        //        Debug.WriteLine($"Expected from PuzzleBlocks:\n{expectedSolution}");
+        //    }
+        //    Debug.WriteLine("--- END Expected ---");
 
-            var miniBlocks = puzzle.PuzzleBlocks.SelectMany(pb => pb.Lines).SelectMany(l => l.MiniBlocks).ToList();
+        //    // Replace slots with correct mini-blocks in both arrangement and expected solution
+        //    string processedArrangement = arrangement;
+        //    string processedExpectedSolution = expectedSolution;
 
-            foreach (var miniBlock in miniBlocks.Where(mb => mb.IsCorrect))
-            {
-                string slotPattern = $"§{miniBlock.SlotName}§";
-                processedArrangement = processedArrangement.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
-                processedExpectedSolution = processedExpectedSolution.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
-            }
+        //    var miniBlocks = puzzle.PuzzleBlocks.SelectMany(pb => pb.Lines).SelectMany(l => l.MiniBlocks).ToList();
 
-            Debug.WriteLine($"After slot replacement:");
-            Debug.WriteLine($"Student processed:\n{processedArrangement}");
-            Debug.WriteLine($"Expected processed:\n{processedExpectedSolution}");
-            Debug.WriteLine("--- END Processed ---");
+        //    foreach (var miniBlock in miniBlocks.Where(mb => mb.IsCorrect))
+        //    {
+        //        string slotPattern = $"§{miniBlock.SlotName}§";
+        //        processedArrangement = processedArrangement.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
+        //        processedExpectedSolution = processedExpectedSolution.Replace(slotPattern, miniBlock.Content, StringComparison.OrdinalIgnoreCase);
+        //    }
 
-            // Check if any slots remain unprocessed in student's arrangement
-            if (Regex.IsMatch(processedArrangement, @"§\w+§"))
-            {
-                Debug.WriteLine("❌ FAILED: Unreplaced slots found in student arrangement");
-                return false; // Unreplaced slots indicate incorrect solution
-            }
+        //    Debug.WriteLine($"After slot replacement:");
+        //    Debug.WriteLine($"Student processed:\n{processedArrangement}");
+        //    Debug.WriteLine($"Expected processed:\n{processedExpectedSolution}");
+        //    Debug.WriteLine("--- END Processed ---");
 
-            // Validate using the indentation service
-            bool result = _indentationService.ValidateIndentation(
-                processedArrangement,
-                processedExpectedSolution,
-                puzzle.Language
-            );
+        //    // Check if any slots remain unprocessed in student's arrangement
+        //    if (Regex.IsMatch(processedArrangement, @"§\w+§"))
+        //    {
+        //        Debug.WriteLine("❌ FAILED: Unreplaced slots found in student arrangement");
+        //        return false; // Unreplaced slots indicate incorrect solution
+        //    }
 
-            Debug.WriteLine($"Final result: {result}");
-            Debug.WriteLine("=== END DEBUGGING ===");
+        //    // Validate using the indentation service
+        //    bool result = _indentationService.ValidateIndentation(
+        //        processedArrangement,
+        //        processedExpectedSolution,
+        //        puzzle.Language
+        //    );
 
-            return result;
-        }
+        //    Debug.WriteLine($"Final result: {result}");
+        //    Debug.WriteLine("=== END DEBUGGING ===");
 
-        private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Language language)
-        {
-            Debug.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
+        //    return result;
+        //}
 
-            var validBlocks = puzzleBlocks
-                .Where(pb => pb.Lines.All(l => !l.IsDistractor))
-                .OrderBy(pb => pb.OrderIndex)
-                .ToList();
+        //private string GenerateExpectedSolutionFromBlocks(List<PuzzleBlock> puzzleBlocks, Language language)
+        //{
+        //    Debug.WriteLine($"🔧 GenerateExpectedSolutionFromBlocks called for language: {language}");
 
-            Debug.WriteLine($"🔧 Valid blocks count: {validBlocks.Count}");
+        //    var validBlocks = puzzleBlocks
+        //        .Where(pb => pb.Lines.All(l => !l.IsDistractor))
+        //        .OrderBy(pb => pb.OrderIndex)
+        //        .ToList();
 
-            var lines = new List<string>();
+        //    Debug.WriteLine($"🔧 Valid blocks count: {validBlocks.Count}");
 
-            foreach (var block in validBlocks)
-            {
-                Debug.WriteLine($"🔧 Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
+        //    var lines = new List<string>();
 
-                if (block.IsMultiline)
-                {
-                    // For multiline blocks, use the content directly (it already contains line breaks)
-                    if (!string.IsNullOrWhiteSpace(block.Content))
-                    {
-                        // Split the content by newlines and add each line
-                        var blockLines = block.Content.Split('\n')
-                            .Select(l => l.TrimEnd('\r'))
-                            .ToList();
+        //    foreach (var block in validBlocks)
+        //    {
+        //        Debug.WriteLine($"🔧 Processing block: IsMultiline={block.IsMultiline}, Content='{block.Content?.Take(50)}...'");
 
-                        Debug.WriteLine($"🔧 Adding {blockLines.Count} lines from multiline block content");
-                        lines.AddRange(blockLines);
-                    }
-                }
-                else
-                {
-                    // Handle single-line blocks
-                    if (!string.IsNullOrWhiteSpace(block.Content))
-                    {
-                        Debug.WriteLine($"🔧 Adding single line: '{block.Content}'");
-                        lines.Add(block.Content);
-                    }
-                }
-            }
+        //        if (block.IsMultiline)
+        //        {
+        //            // For multiline blocks, use the content directly (it already contains line breaks)
+        //            if (!string.IsNullOrWhiteSpace(block.Content))
+        //            {
+        //                // Split the content by newlines and add each line
+        //                var blockLines = block.Content.Split('\n')
+        //                    .Select(l => l.TrimEnd('\r'))
+        //                    .ToList();
 
-            var result = string.Join("\n", lines);
-            Debug.WriteLine($"🔧 Generated solution:\n{result}");
+        //                Debug.WriteLine($"🔧 Adding {blockLines.Count} lines from multiline block content");
+        //                lines.AddRange(blockLines);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            // Handle single-line blocks
+        //            if (!string.IsNullOrWhiteSpace(block.Content))
+        //            {
+        //                Debug.WriteLine($"🔧 Adding single line: '{block.Content}'");
+        //                lines.Add(block.Content);
+        //            }
+        //        }
+        //    }
 
-            return result;
-        }
+        //    var result = string.Join("\n", lines);
+        //    Debug.WriteLine($"🔧 Generated solution:\n{result}");
+
+        //    return result;
+        //}
 
         public async Task SaveStructuredSolutionAsync(
         StudentAttempt attempt,
@@ -335,23 +363,158 @@ namespace ParsonsPuzzleApp.Services
             }
         }
 
-        public static string BuildStudentSolutionString(List<ArrangementModel> arrangement)
+        private (Dictionary<int, char>  lineMap, Dictionary<string, char> slotMap) BuildLetterMaps(Puzzle puzzle)
         {
-            var sb = new StringBuilder();
+            var lineMap = new Dictionary<int, char>();
+            var slotMap = new Dictionary<string, char>();
 
-            foreach (var block in arrangement)
+            char current = 'a';
+
+            foreach (var block in puzzle.PuzzleBlocks.OrderBy(b => b.OrderIndex))
             {
-                int indentSpaces = block.Indent * 2;
-
-                foreach (var line in block.Lines.OrderBy(l => l.LineIndex))
+                foreach (var line in block.Lines)
                 {
-                    string processedText = line.Text;
+                    lineMap[line.Id] = current++;
 
-                    sb.AppendLine(new string(' ', indentSpaces) + processedText);
+                    foreach (var slot in line.MiniBlocks.Where(m => m.IsCorrect))
+                    {
+                        var key = slot.SlotName + "|" + slot.Content;
+
+                        slotMap[key] = current++;
+                    }
                 }
             }
 
-            return sb.ToString().TrimEnd();
+            return new (lineMap, slotMap);
+        }
+
+        private string EncodeCorrectSolution(Puzzle puzzle, (Dictionary<int, char> lineMap, Dictionary<string, char> slotMap) maps)
+        {
+            var sb = new StringBuilder();
+
+            foreach (var block in puzzle.PuzzleBlocks.OrderBy(b => b.OrderIndex))
+            {
+                foreach (var line in block.Lines.Where(l => !l.IsDistractor))
+                {
+                    char lineLetter = maps.lineMap[line.Id];
+
+                    var slots = line.MiniBlocks.Where(m => m.IsCorrect).ToList();
+
+                    if (slots.Any())
+                    {
+                        sb.Append("(");
+                        sb.Append(lineLetter);
+
+                        foreach (var s in slots)
+                        {
+                            var key = s.SlotName + "|" + s.Content;
+                            sb.Append(maps.slotMap[key]);
+                        }
+
+                        sb.Append(")");
+                    }
+                    else
+                    {
+                        sb.Append(lineLetter);
+                    }
+
+                    sb.Append(block.Indent);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private string EncodeStudentSolution(
+        List<ArrangementModel> student,
+        (Dictionary<int, char> lineMap, Dictionary<string, char> slotMap) maps, Puzzle puzzle)
+        {
+            var puzzleBlocksById = puzzle.PuzzleBlocks
+                .ToDictionary(b => b.Id, b => b);
+
+            var sb = new StringBuilder();
+
+            foreach (var block in student)
+            {
+                if (!puzzleBlocksById.TryGetValue(block.Id, out var puzzleBlock))
+                {
+                    continue;
+                }
+
+                var puzzleLinesOrdered = puzzleBlock.Lines
+                    .OrderBy(l => l.LineOrder)
+                    .ToList();
+
+                foreach (var line in block.Lines.OrderBy(l => l.LineIndex))
+                {
+                    PuzzleBlockLine? puzzleLine = null;
+
+                    puzzleLine = puzzleLinesOrdered[line.LineIndex];
+
+                    char lineLetter = maps.lineMap[puzzleLine.Id];
+
+                    var hasSlots = line.Slots.Any();
+
+                    if (hasSlots)
+                    {
+                        sb.Append("(");
+                        sb.Append(lineLetter);
+
+                        foreach (var slot in line.Slots)
+                        {
+                            var key = slot.SlotName + "|" + slot.Value;
+                            if (!maps.slotMap.ContainsKey(key))
+                            {
+                                sb.Append('?');
+                            }
+                            else
+                            {
+                                sb.Append(maps.slotMap[key]);
+                            }
+                        }
+
+                        sb.Append(")");
+                    }
+                    else
+                    {
+                        sb.Append(lineLetter);
+                    }
+
+                    sb.Append(block.Indent);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static uint MIN3(uint a, uint b, uint c)
+        {
+            return ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)));
+        }
+
+        public static int LevenshteinDistance(string s1, string s2)
+        {
+            uint s1len, s2len, x, y, lastdiag, olddiag;
+            s1len = (uint)s1.Length;
+            s2len = (uint)s2.Length;
+            uint[] column = new uint[s1len + 1];
+
+            for (y = 1; y <= s1len; ++y)
+                column[y] = y;
+
+            for (x = 1; x <= s2len; ++x)
+            {
+                column[0] = x;
+
+                for (y = 1, lastdiag = x - 1; y <= s1len; ++y)
+                {
+                    olddiag = column[y];
+                    column[y] = MIN3(column[y] + 1, column[y - 1] + 1, (uint)(lastdiag + (s1[(int)(y - 1)] == s2[(int)(x - 1)] ? 0 : 1)));
+                    lastdiag = olddiag;
+                }
+            }
+
+            return (int)(column[s1len]);
         }
     }
 }
