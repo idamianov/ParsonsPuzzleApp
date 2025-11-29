@@ -47,7 +47,6 @@ namespace ParsonsPuzzleApp.Services
                         // For multiline blocks: preserve ALL lines (including empty ones) but remove indentation hints
                         var cleanedBlockLines = CleanMultilineBlockContent(blockLines);
                         var blockContent = string.Join("\n", cleanedBlockLines);
-                        var slotName = ExtractSlotName(blockContent);
 
                         // Create multiline block (even if it contains empty lines - that's intentional formatting)
                         var block = new PuzzleBlock
@@ -58,9 +57,7 @@ namespace ParsonsPuzzleApp.Services
                             IsMultiline = true,
                             IsOrderIndependent = false,
                             OrderIndex = orderIndex++,
-                            IsDistractor = false,
                             Content = blockContent,
-                            SlotName = slotName
                         };
 
                         blocks.Add(block);
@@ -83,8 +80,6 @@ namespace ParsonsPuzzleApp.Services
                             IsMultiline = false,
                             IsOrderIndependent = false,
                             OrderIndex = orderIndex++,
-                            IsDistractor = false,
-                            SlotName = ExtractSlotName(normalizedLine)
                         });
                     }
                 }
@@ -214,12 +209,6 @@ namespace ParsonsPuzzleApp.Services
             }
 
             return cleanedLines;
-        }
-
-        private string? ExtractSlotName(string content)
-        {
-            var match = Regex.Match(content, @"§(\w+)§");
-            return match.Success ? match.Groups[1].Value : null;
         }
 
         public string GetCommentSyntaxForLanguage(Language language)

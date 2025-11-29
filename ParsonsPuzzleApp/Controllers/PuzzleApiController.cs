@@ -18,7 +18,7 @@ namespace ParsonsPuzzleApp.Controllers
         [HttpPost("check")]
         public async Task<IActionResult> CheckSolution([FromBody] CheckRequestModel model)
         {
-            if (model == null || string.IsNullOrEmpty(model.Arrangement) || model.PuzzleId <= 0)
+            if (model == null || model.Arrangement == null || model.PuzzleId <= 0)
             {
                 return BadRequest("Invalid request data.");
             }
@@ -32,7 +32,7 @@ namespace ParsonsPuzzleApp.Controllers
         public async Task<IActionResult> SubmitSolution([FromBody] SubmitSolutionModel model)
         {
             if (model == null || 
-                string.IsNullOrEmpty(model.Arrangement) || 
+                model.Arrangement == null || 
                 model.PuzzleId <= 0 ||
                 model.BundleId <= 0 || 
                 string.IsNullOrEmpty(model.StudentIdentifier) || 

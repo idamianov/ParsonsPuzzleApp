@@ -30,8 +30,6 @@ namespace ParsonsPuzzleApp.Entities
         public DateTime? LastModifiedAt { get; set; }
 
         public ICollection<BundlePuzzle> BundlePuzzles { get; set; } = new List<BundlePuzzle>();
-        public ICollection<MiniBlock> MiniBlocks { get; set; } = new List<MiniBlock>();
         public ICollection<PuzzleBlock> PuzzleBlocks { get; set; } = new List<PuzzleBlock>();
-        public string? BlockConfiguration { get; set; }
     }
 }

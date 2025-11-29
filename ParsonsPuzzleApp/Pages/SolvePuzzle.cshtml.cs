@@ -61,7 +61,6 @@ namespace ParsonsPuzzleApp.Pages
                 .ThenInclude(p => p.Language)
                 .Include(b => b.BundlePuzzles)
                 .ThenInclude(bp => bp.Puzzle)
-                .ThenInclude(p => p.MiniBlocks)
                 .FirstOrDefaultAsync(b => b.Id == bundleId) ?? 
                 throw new ArgumentNullException("Колекцията не е намерена.");
 
@@ -108,13 +107,13 @@ namespace ParsonsPuzzleApp.Pages
                     IsMultiline = pb.IsMultiline,
                     IsOrderIndependent = pb.IsOrderIndependent,
                     OrderIndex = pb.OrderIndex,
-                    IsDistractor = pb.IsDistractor,
-                    SlotName = pb.SlotName,
                     Lines = pb.Lines?.Select(l => new PuzzleBlockLineViewModel
                     {
                         Content = l.Content,
                         LineOrder = l.LineOrder,
-                        IsOptional = l.IsOptional
+                        IsOptional = l.IsOptional,
+                        IsDistractor = l.IsDistractor,
+                        Slots = ExtractSlotsFromLine(l.Content)
                     }).ToList() ?? new List<PuzzleBlockLineViewModel>()
                 }).ToList();
 
@@ -135,14 +134,17 @@ namespace ParsonsPuzzleApp.Pages
                     IsMultiline = false,
                     IsOrderIndependent = false,
                     OrderIndex = index,
-                    IsDistractor = block.IsDistractor,
-                    SlotName = block.SlotName,
                     Lines = new List<PuzzleBlockLineViewModel>()
                 }).OrderBy(x => Random.Shared.Next()).ToList();
             }
 
+            var miniBlocks = PuzzleBlocks
+                .SelectMany( pb => pb.Lines)
+                .SelectMany(l => l.MiniBlocks)
+                .ToList();
+
             // Load MiniBlocks
-            MiniBlocks = Puzzle.MiniBlocks.Select(mb => new MiniBlockConfig
+            MiniBlocks = miniBlocks.Select(mb => new MiniBlockConfig
             {
                 Content = mb.Content,
                 SlotName = mb.SlotName,
@@ -203,6 +205,16 @@ namespace ParsonsPuzzleApp.Pages
             var endPattern = $@"^{Regex.Escape(commentSyntax)}<--";
 
             return Regex.IsMatch(line, startPattern) || Regex.IsMatch(line, endPattern);
+        }
+
+        private List<string> ExtractSlotsFromLine(string content)
+        {
+            var slotRegex = new Regex(@"§(\w+)§");
+            return slotRegex.Matches(content)
+                            .Cast<Match>()
+                            .Select(m => m.Groups[1].Value)
+                            .Distinct()
+                            .ToList();
         }
 
     }

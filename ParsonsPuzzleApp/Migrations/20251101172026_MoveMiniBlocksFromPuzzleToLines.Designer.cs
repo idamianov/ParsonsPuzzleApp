@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ParsonsPuzzleApp.Data;
 
@@ -10,9 +11,11 @@ using ParsonsPuzzleApp.Data;
 namespace ParsonsPuzzleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251101172026_MoveMiniBlocksFromPuzzleToLines")]
+    partial class MoveMiniBlocksFromPuzzleToLines
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.16");
@@ -403,6 +406,9 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Property<string>("GroupId")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsDistractor")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsMultiline")
                         .HasColumnType("INTEGER");
 
@@ -414,6 +420,9 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.Property<int>("PuzzleId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("SlotName")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -431,9 +440,6 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDistractor")
-                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsOptional")
                         .HasColumnType("INTEGER");
@@ -490,85 +496,6 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("PuzzleId");
 
                     b.ToTable("StudentAttempts");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlock", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Indent")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PuzzleBlockId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StudentAttemptId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PuzzleBlockId");
-
-                    b.HasIndex("StudentAttemptId");
-
-                    b.ToTable("StudentAttemptBlocks");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlockLine", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PuzzleBlockLineId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StudentAttemptBlockId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PuzzleBlockLineId");
-
-                    b.HasIndex("StudentAttemptBlockId");
-
-                    b.ToTable("StudentAttemptBlockLines");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptMiniBlock", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MiniBlockId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("StudentAttemptBlockLineId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MiniBlockId");
-
-                    b.HasIndex("StudentAttemptBlockLineId");
-
-                    b.ToTable("StudentAttemptMiniBlocks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -719,61 +646,6 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Navigation("Puzzle");
                 });
 
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlock", b =>
-                {
-                    b.HasOne("ParsonsPuzzleApp.Entities.PuzzleBlock", "PuzzleBlock")
-                        .WithMany()
-                        .HasForeignKey("PuzzleBlockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ParsonsPuzzleApp.Entities.StudentAttempt", "Attempt")
-                        .WithMany("Blocks")
-                        .HasForeignKey("StudentAttemptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attempt");
-
-                    b.Navigation("PuzzleBlock");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlockLine", b =>
-                {
-                    b.HasOne("ParsonsPuzzleApp.Entities.PuzzleBlockLine", "PuzzleBlockLine")
-                        .WithMany()
-                        .HasForeignKey("PuzzleBlockLineId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ParsonsPuzzleApp.Entities.StudentAttemptBlock", "StudentAttemptBlock")
-                        .WithMany("Lines")
-                        .HasForeignKey("StudentAttemptBlockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PuzzleBlockLine");
-
-                    b.Navigation("StudentAttemptBlock");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptMiniBlock", b =>
-                {
-                    b.HasOne("ParsonsPuzzleApp.Entities.MiniBlock", "MiniBlock")
-                        .WithMany()
-                        .HasForeignKey("MiniBlockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ParsonsPuzzleApp.Entities.StudentAttemptBlockLine", "AttemptBlockLine")
-                        .WithMany("MiniBlocks")
-                        .HasForeignKey("StudentAttemptBlockLineId");
-
-                    b.Navigation("AttemptBlockLine");
-
-                    b.Navigation("MiniBlock");
-                });
-
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.Bundle", b =>
                 {
                     b.Navigation("BundlePuzzles");
@@ -797,21 +669,6 @@ namespace ParsonsPuzzleApp.Migrations
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.PuzzleBlockLine", b =>
-                {
-                    b.Navigation("MiniBlocks");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttempt", b =>
-                {
-                    b.Navigation("Blocks");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlock", b =>
-                {
-                    b.Navigation("Lines");
-                });
-
-            modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlockLine", b =>
                 {
                     b.Navigation("MiniBlocks");
                 });

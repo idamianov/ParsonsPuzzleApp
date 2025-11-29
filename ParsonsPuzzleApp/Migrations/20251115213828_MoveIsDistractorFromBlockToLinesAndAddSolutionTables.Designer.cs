@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ParsonsPuzzleApp.Data;
 
@@ -10,9 +11,11 @@ using ParsonsPuzzleApp.Data;
 namespace ParsonsPuzzleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251115213828_MoveIsDistractorFromBlockToLinesAndAddSolutionTables")]
+    partial class MoveIsDistractorFromBlockToLinesAndAddSolutionTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.16");
@@ -325,7 +328,7 @@ namespace ParsonsPuzzleApp.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsCorrect")
+                    b.Property<bool>("IsDistractor")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("PuzzleBlockLineId")
@@ -498,9 +501,6 @@ namespace ParsonsPuzzleApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Indent")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Position")
                         .HasColumnType("INTEGER");
 
@@ -524,10 +524,6 @@ namespace ParsonsPuzzleApp.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("Position")
                         .HasColumnType("INTEGER");
