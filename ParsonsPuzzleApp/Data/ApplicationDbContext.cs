@@ -17,9 +17,12 @@ namespace ParsonsPuzzleApp.Data
         public DbSet<Puzzle> Puzzles { get; set; }
         public DbSet<BundlePuzzle> BundlePuzzles { get; set; }
         public DbSet<MiniBlock> MiniBlocks { get; set; }
-        public DbSet<StudentAttempt> StudentAttempts { get; set; }
         public DbSet<PuzzleBlock> PuzzleBlocks { get; set; }
         public DbSet<PuzzleBlockLine> PuzzleBlockLines { get; set; }
+        public DbSet<StudentAttempt> StudentAttempts { get; set; }
+        public DbSet<StudentAttemptBlock> StudentAttemptBlocks { get; set; }
+        public DbSet<StudentAttemptBlockLine> StudentAttemptBlockLines { get; set; }
+        public DbSet<StudentAttemptMiniBlock> StudentAttemptMiniBlocks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,9 +42,9 @@ namespace ParsonsPuzzleApp.Data
                 .HasForeignKey(bp => bp.PuzzleId);
 
             modelBuilder.Entity<MiniBlock>()
-                .HasOne(mb => mb.Puzzle)
+                .HasOne(mb => mb.PuzzleBlockLine)
                 .WithMany(p => p.MiniBlocks)
-                .HasForeignKey(mb => mb.PuzzleId);
+                .HasForeignKey(mb => mb.PuzzleBlockLineId);
 
             modelBuilder.Entity<StudentAttempt>()
                 .HasOne(sa => sa.Bundle)
@@ -54,6 +57,21 @@ namespace ParsonsPuzzleApp.Data
                 .WithMany()
                 .HasForeignKey(sa => sa.PuzzleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StudentAttemptBlock>()
+                .HasOne(sab => sab.Attempt)
+                .WithMany(a => a.Blocks)
+                .HasForeignKey(sab => sab.StudentAttemptId);
+
+            modelBuilder.Entity<StudentAttemptBlockLine>()
+                .HasOne(sabl => sabl.StudentAttemptBlock)
+                .WithMany(sab => sab.Lines)
+                .HasForeignKey(sabl => sabl.StudentAttemptBlockId);
+
+            modelBuilder.Entity<StudentAttemptMiniBlock>()
+                .HasOne(samb => samb.AttemptBlockLine)
+                .WithMany(sabl => sabl.MiniBlocks)
+                .HasForeignKey(samb => samb.StudentAttemptBlockLineId);
 
             modelBuilder.Entity<PuzzleBlock>()
                 .HasOne(pb => pb.Puzzle)

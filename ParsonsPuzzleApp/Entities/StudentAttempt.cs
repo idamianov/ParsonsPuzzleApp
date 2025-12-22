@@ -12,7 +12,7 @@
         public string StudentArrangement { get; set; } // JSON с подредбата
         public int TimeTakenSeconds { get; set; } // Време за решаване
         public DateTime AttemptDate { get; set; } = DateTime.UtcNow;
-
         public Guid BundleAttemptId { get; set; } // Добавено за групиране на опити
+        public List<StudentAttemptBlock> Blocks { get; set; } = new List<StudentAttemptBlock>();
     }
 }

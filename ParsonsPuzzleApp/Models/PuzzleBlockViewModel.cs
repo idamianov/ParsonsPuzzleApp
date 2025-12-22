@@ -9,8 +9,6 @@
         public bool IsMultiline { get; set; }
         public bool IsOrderIndependent { get; set; }
         public int OrderIndex { get; set; }
-        public bool IsDistractor { get; set; }
-        public string SlotName { get; set; } = string.Empty;
         public List<PuzzleBlockLineViewModel> Lines { get; set; } = new List<PuzzleBlockLineViewModel>();
     }
 }

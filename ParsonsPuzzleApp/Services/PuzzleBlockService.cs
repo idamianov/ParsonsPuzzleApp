@@ -20,6 +20,7 @@ namespace ParsonsPuzzleApp.Services
             return await _context.PuzzleBlocks
                 .Where(pb => pb.PuzzleId == puzzleId)
                 .Include(pb => pb.Lines)
+                    .ThenInclude(l => l.MiniBlocks)
                 .OrderBy(pb => pb.OrderIndex)
                 .ToListAsync();
         }

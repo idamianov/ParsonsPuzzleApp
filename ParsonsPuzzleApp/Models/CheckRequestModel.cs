@@ -3,6 +3,6 @@
     public class CheckRequestModel
     {
         public int PuzzleId { get; set; }
-        public string Arrangement { get; set; } = string.Empty;
+        public List<ArrangementModel> Arrangement { get; set; } = new List<ArrangementModel>();
     }
 }

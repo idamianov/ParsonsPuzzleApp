@@ -8,6 +8,7 @@ using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Services;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Pages.Instructor
@@ -15,6 +16,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
     [Authorize]
     public class EditPuzzleModel : PageModel
     {
+        private static readonly Regex SlotRegex = new Regex(@"§([^§]+)§", RegexOptions.Compiled);
         private readonly ApplicationDbContext _context;
         private readonly IMultilineBlockParser _blockParser;
         private readonly UserManager<IdentityUser> _userManager;
@@ -44,9 +46,9 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             var userId = _userManager.GetUserId(User);
             Puzzle = await _context.Puzzles
                 .Include(p => p.Language)
-                .Include(p => p.MiniBlocks)
                 .Include(p => p.PuzzleBlocks)
-                .ThenInclude(pb => pb.Lines)
+                    .ThenInclude(pb => pb.Lines)
+                        .ThenInclude(l => l.MiniBlocks)
                 .FirstOrDefaultAsync(m => m.Id == id && m.InstructorId == userId);
 
             if (Puzzle == null)
@@ -56,8 +58,13 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             LanguageOptions = await GetLanguageOptionsAsync();
 
+            var miniBlocks = Puzzle.PuzzleBlocks
+                .SelectMany(pb => pb.Lines)
+                .SelectMany(l => l.MiniBlocks)
+                .ToList();
+
             // Load existing MiniBlocks
-            MiniBlocks = Puzzle.MiniBlocks
+            MiniBlocks = miniBlocks
                 .GroupBy(mb => mb.SlotName)
                 .ToDictionary(
                     g => g.Key,
@@ -72,6 +79,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         {
             // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Puzzle.InstructorId");
+            ModelState.Remove("Puzzle.Language");
 
             if (!ModelState.IsValid)
             {
@@ -124,10 +132,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             Puzzle.LastModifiedAt = DateTime.UtcNow;
             _context.Attach(Puzzle).State = EntityState.Modified;
 
-            // Remove existing related data
-            var existingMiniBlocks = _context.MiniBlocks.Where(mb => mb.PuzzleId == Puzzle.Id);
-            _context.MiniBlocks.RemoveRange(existingMiniBlocks);
-
             var existingPuzzleBlocks = _context.PuzzleBlocks.Where(pb => pb.PuzzleId == Puzzle.Id);
             _context.PuzzleBlocks.RemoveRange(existingPuzzleBlocks);
 
@@ -146,53 +150,114 @@ namespace ParsonsPuzzleApp.Pages.Instructor
                 !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))
             ).ToList();
 
+            var createdLines = new List<(int LineId, string Content)>();
+
             foreach (var block in validBlocks)
             {
                 _context.PuzzleBlocks.Add(block);
                 await _context.SaveChangesAsync();
 
-                // Create lines for multiline blocks
-                if (block.IsMultiline && !string.IsNullOrWhiteSpace(block.Content))
-                {
-                    var lines = block.Content.Split('\n')
-                        .Select(l => l.TrimEnd('\r'))
-                        .Where(l => !string.IsNullOrWhiteSpace(l))
-                        .ToList();
-
-                    for (int lineIndex = 0; lineIndex < lines.Count; lineIndex++)
-                    {
-                        _context.PuzzleBlockLines.Add(new PuzzleBlockLine
-                        {
-                            PuzzleBlockId = block.Id,
-                            Content = lines[lineIndex],
-                            LineOrder = lineIndex,
-                            IsOptional = false
-                        });
-                    }
-                    await _context.SaveChangesAsync();
-                }
+                await CreateLinesForBlockAsync(block, createdLines);
             }
 
             // Process distractors
             await ProcessDistractors(validBlocks.Count, language);
 
-            // Recreate MiniBlocks
-            foreach (var slot in MiniBlocks)
-            {
-                for (int i = 0; i < slot.Value.Count; i++)
-                {
-                    _context.MiniBlocks.Add(new MiniBlock
-                    {
-                        PuzzleId = Puzzle.Id,
-                        SlotName = slot.Key,
-                        Content = slot.Value[i].Content,
-                        IsCorrect = i == 0 // First one is correct
-                    });
-                }
-            }
+            var slotIndex = IndexSlotsByLine(createdLines);
+
+            // 5) Create MiniBlocks under PuzzleBlockLineId
+            await AddMiniBlocks(slotIndex);
 
             await _context.SaveChangesAsync();
             return RedirectToPage("/Instructor/Puzzles");
+        }
+
+        private async Task CreateLinesForBlockAsync(PuzzleBlock block, List<(int LineId, string Content)> createdLines)
+        {
+            // Multiline: split into multiple lines
+            if (block.IsMultiline && !string.IsNullOrWhiteSpace(block.Content))
+            {
+                var lines = block.Content.Split('\n')
+                    .Select(l => l.TrimEnd('\r'))
+                    .Where(l => !string.IsNullOrWhiteSpace(l))
+                    .ToList();
+
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    var lineEntity = new PuzzleBlockLine
+                    {
+                        PuzzleBlockId = block.Id,
+                        Content = lines[i],
+                        LineOrder = i,
+                        IsOptional = false
+                    };
+                    _context.PuzzleBlockLines.Add(lineEntity);
+                    await _context.SaveChangesAsync(); // need Line Id now
+                    createdLines.Add((lineEntity.Id, lineEntity.Content));
+                }
+            }
+            else
+            {
+                // Single-line: create one line for the block content
+                var lineEntity = new PuzzleBlockLine
+                {
+                    PuzzleBlockId = block.Id,
+                    Content = block.Content,
+                    LineOrder = 0,
+                    IsOptional = false
+                };
+                _context.PuzzleBlockLines.Add(lineEntity);
+                await _context.SaveChangesAsync();
+                createdLines.Add((lineEntity.Id, lineEntity.Content ?? string.Empty));
+            }
+        }
+
+        private Dictionary<string, List<int>> IndexSlotsByLine(IEnumerable<(int LineId, string Content)> lines)
+        {
+            var map = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+            foreach (var (lineId, content) in lines)
+            {
+                if (string.IsNullOrEmpty(content)) continue;
+
+                foreach (Match m in SlotRegex.Matches(content))
+                {
+                    var slot = m.Groups[1].Value;
+                    if (!map.TryGetValue(slot, out var list))
+                    {
+                        list = new List<int>();
+                        map[slot] = list;
+                    }
+                    if (!list.Contains(lineId))
+                        list.Add(lineId);
+                }
+            }
+            return map;
+        }
+
+        private async Task AddMiniBlocks(Dictionary<string, List<int>> slotIndex)
+        {
+            foreach (var kvp in MiniBlocks)
+            {
+                var slotName = kvp.Key;
+                if (!slotIndex.TryGetValue(slotName, out var lineIds) || lineIds.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var lineId in lineIds)
+                {
+                    for (int i = 0; i < kvp.Value.Count; i++)
+                    {
+                        _context.MiniBlocks.Add(new MiniBlock
+                        {
+                            PuzzleBlockLineId = lineId,
+                            SlotName = slotName,
+                            Content = kvp.Value[i].Content,
+                            IsCorrect = i == 0 // first is correct
+                        });
+                    }
+                }
+            }
         }
 
         private List<string> ExtractSlotsFromCode(string sourceCode)
@@ -207,78 +272,44 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         private async Task ProcessDistractors(int baseOrderIndex, Language language)
         {
-            if (string.IsNullOrEmpty(Puzzle.Distractors))
+            if (string.IsNullOrWhiteSpace(Puzzle.Distractors))
                 return;
 
             var isBracketLanguage = language.IsBracketBased;
 
-            // Check if distractors contain multiline blocks
-            if (MultilineBlockValidator.ValidateBlockSyntax(Puzzle.Distractors, language))
+            // Treat distractors as simple single-line blocks
+            var distractorLines = Puzzle.Distractors.Split('\n')
+                .Select(l => l.Trim())
+                .Where(l => !string.IsNullOrWhiteSpace(l) &&
+                            !(isBracketLanguage && (l == "{" || l == "}")))
+                .ToList();
+
+            int orderIndex = baseOrderIndex;
+            foreach (var line in distractorLines)
             {
-                // Parse distractors as blocks
-                var distractorBlocks = _blockParser.ParseSourceCode(
-                    Puzzle.Distractors,
-                    Puzzle.Id,
-                    language
-                );
-
-                // Filter and process distractor blocks
-                var validDistractorBlocks = distractorBlocks.Where(pb =>
-                    !(isBracketLanguage && (pb.Content?.Trim() == "{" || pb.Content?.Trim() == "}"))
-                ).ToList();
-
-                foreach (var distractor in validDistractorBlocks)
+                var block = new PuzzleBlock
                 {
-                    distractor.IsDistractor = true;
-                    distractor.OrderIndex += baseOrderIndex;
-                    _context.PuzzleBlocks.Add(distractor);
+                    PuzzleId = Puzzle.Id,
+                    Content = line,
+                    BlockType = "single",
+                    IsMultiline = false,
+                    IsOrderIndependent = false,
+                    OrderIndex = orderIndex++,
+                };
 
-                    await _context.SaveChangesAsync();
+                _context.PuzzleBlocks.Add(block);
+                await _context.SaveChangesAsync(); // need Block.Id
 
-                    // Create lines for multiline distractor blocks
-                    if (distractor.IsMultiline && !string.IsNullOrWhiteSpace(distractor.Content))
-                    {
-                        var lines = distractor.Content.Split('\n')
-                            .Select(l => l.TrimEnd('\r'))
-                            .Where(l => !string.IsNullOrWhiteSpace(l))
-                            .ToList();
-
-                        for (int lineIndex = 0; lineIndex < lines.Count; lineIndex++)
-                        {
-                            _context.PuzzleBlockLines.Add(new PuzzleBlockLine
-                            {
-                                PuzzleBlockId = distractor.Id,
-                                Content = lines[lineIndex],
-                                LineOrder = lineIndex,
-                                IsOptional = false
-                            });
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Treat distractors as simple lines
-                var distractorLines = Puzzle.Distractors.Split('\n')
-                    .Select(l => l.Trim())
-                    .Where(l => !string.IsNullOrWhiteSpace(l) &&
-                                !(isBracketLanguage && (l == "{" || l == "}")))
-                    .ToList();
-
-                int orderIndex = baseOrderIndex;
-                foreach (var line in distractorLines)
+                _context.PuzzleBlockLines.Add(new PuzzleBlockLine
                 {
-                    _context.PuzzleBlocks.Add(new PuzzleBlock
-                    {
-                        PuzzleId = Puzzle.Id,
-                        Content = line,
-                        BlockType = "single",
-                        IsMultiline = false,
-                        IsOrderIndependent = false,
-                        OrderIndex = orderIndex++,
-                        IsDistractor = true
-                    });
-                }
+                    PuzzleBlockId = block.Id,
+                    Content = block.Content,
+                    IsDistractor = true,
+                    LineOrder = 0,
+                    IsOptional = false
+                });
+
+                await _context.SaveChangesAsync();
             }
         }
 

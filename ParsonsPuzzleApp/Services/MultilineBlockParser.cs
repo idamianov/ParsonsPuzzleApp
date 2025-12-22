@@ -1,6 +1,7 @@
-﻿using System.Text.RegularExpressions;
-using ParsonsPuzzleApp.Entities;
+﻿using ParsonsPuzzleApp.Entities;
 using ParsonsPuzzleApp.Interfaces;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ParsonsPuzzleApp.Services
 {
@@ -14,12 +15,14 @@ namespace ParsonsPuzzleApp.Services
             // Step 1: Preprocess the source code for bracket-based languages
             var preprocessedCode = PreprocessBrackets(sourceCode, language);
 
-            var lines = preprocessedCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
             var commentSyntax = language.CommentSyntax;
 
             // Simple patterns: just start and end markers
             var startPattern = $@"^{Regex.Escape(commentSyntax)}-->\s*$";
             var endPattern = $@"^{Regex.Escape(commentSyntax)}<--\s*$";
+
+            var lines = preprocessedCode.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
+            var indentSize = DetectIndentSize(lines, startPattern, endPattern);
 
             int orderIndex = 0;
             int i = 0;
@@ -44,10 +47,13 @@ namespace ParsonsPuzzleApp.Services
 
                     if (blockLines.Any())
                     {
+                        var firstNonEmpty = blockLines.FirstOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? "";
+                        int leadingSpaces = firstNonEmpty.Length - firstNonEmpty.TrimStart().Length;
+                        int indent = (indentSize > 0) ? (leadingSpaces / indentSize) : 0;
+
                         // For multiline blocks: preserve ALL lines (including empty ones) but remove indentation hints
                         var cleanedBlockLines = CleanMultilineBlockContent(blockLines);
                         var blockContent = string.Join("\n", cleanedBlockLines);
-                        var slotName = ExtractSlotName(blockContent);
 
                         // Create multiline block (even if it contains empty lines - that's intentional formatting)
                         var block = new PuzzleBlock
@@ -58,9 +64,8 @@ namespace ParsonsPuzzleApp.Services
                             IsMultiline = true,
                             IsOrderIndependent = false,
                             OrderIndex = orderIndex++,
-                            IsDistractor = false,
                             Content = blockContent,
-                            SlotName = slotName
+                            Indent = indent,
                         };
 
                         blocks.Add(block);
@@ -69,6 +74,9 @@ namespace ParsonsPuzzleApp.Services
                 else if (!string.IsNullOrWhiteSpace(trimmedLine) &&
                          !Regex.IsMatch(trimmedLine, endPattern))
                 {
+                    int leadingSpaces = line.Length - line.TrimStart().Length;
+                    int indent = (indentSize > 0) ? (leadingSpaces / indentSize) : 0;
+
                     // Regular single line block - remove indentation hints
                     var normalizedLine = line.Trim();
 
@@ -83,8 +91,7 @@ namespace ParsonsPuzzleApp.Services
                             IsMultiline = false,
                             IsOrderIndependent = false,
                             OrderIndex = orderIndex++,
-                            IsDistractor = false,
-                            SlotName = ExtractSlotName(normalizedLine)
+                            Indent = indent,
                         });
                     }
                 }
@@ -97,30 +104,120 @@ namespace ParsonsPuzzleApp.Services
 
         private string PreprocessBrackets(string sourceCode, Language language)
         {
+            var lines = GetLinesPreservingRawCharacters(sourceCode);
+            var processedLines = new List<string>();
+
             // Only process bracket-based languages
             if (!IsBracketBasedLanguage(language))
-                return sourceCode;
+            {
+                foreach (var line in lines)
+                {
+                    processedLines.Add(ExpandIndentationTabs(line));
+                }
 
-            var lines = sourceCode.Split('\n').Select(l => l.TrimEnd('\r')).ToList();
-            var processedLines = new List<string>();
+                return string.Join("\n", processedLines);
+            }
 
             foreach (var line in lines)
             {
-                var trimmedLine = line.Trim();
+                var rawLine = ExpandIndentationTabs(line);
+                var trimmedLine = rawLine.Trim();
 
                 // Skip comment markers and empty lines
                 if (string.IsNullOrWhiteSpace(trimmedLine) || IsCommentMarker(trimmedLine, language))
                 {
-                    processedLines.Add(line);
+                    processedLines.Add(rawLine);
                     continue;
                 }
 
                 // Process lines that contain brackets mixed with other code
-                var processedLine = ProcessBracketsInLine(line);
+                var processedLine = ProcessBracketsInLine(rawLine);
                 processedLines.AddRange(processedLine);
             }
 
             return string.Join("\n", processedLines);
+        }
+
+        private List<string> GetLinesPreservingRawCharacters(string text)
+        {
+            var lines = new List<string>();
+
+            using (var reader = new StringReader(text))
+            {
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    lines.Add(line);
+                }
+            }
+
+            return lines;
+        }
+
+        private string ExpandIndentationTabs(string line)
+        {
+            int index = 0;
+            int visualIndent = 0;
+            var result = new StringBuilder();
+
+            while (index < line.Length)
+            {
+                char c = line[index];
+
+                if (c == ' ')
+                {
+                    result.Append(' ');
+                    visualIndent++;
+                    index++;
+                }
+                else if (c == '\t')
+                {
+                    int spacesToAdd = 4 - (visualIndent % 4);
+
+                    result.Append(new string(' ', spacesToAdd));
+                    visualIndent += spacesToAdd;
+
+                    index++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (index < line.Length)
+                result.Append(line.Substring(index));
+
+            return result.ToString();
+        }
+
+        private int DetectIndentSize(string[] lines, string? startPattern, string? endPattern)
+        {
+            foreach (var line in lines)
+            {
+                var trimmedLine = line.Trim();
+                if (string.IsNullOrWhiteSpace(line)
+                    || Regex.IsMatch(trimmedLine, startPattern)
+                    || Regex.IsMatch(trimmedLine, endPattern))
+                    continue;
+
+                int count = 0;
+                foreach (char c in line)
+                {
+                    if (c == ' ') count++;
+                    else break;
+                }
+
+                if (count > 0)
+                {
+                    if (count == 2) return 2;
+                    if (count == 4) return 4;
+
+                    return (count < 3) ? 2 : 4;
+                }
+            }
+
+            return 0;
         }
 
         private List<string> ProcessBracketsInLine(string line)
@@ -214,12 +311,6 @@ namespace ParsonsPuzzleApp.Services
             }
 
             return cleanedLines;
-        }
-
-        private string? ExtractSlotName(string content)
-        {
-            var match = Regex.Match(content, @"§(\w+)§");
-            return match.Success ? match.Groups[1].Value : null;
         }
 
         public string GetCommentSyntaxForLanguage(Language language)
