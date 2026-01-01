@@ -20,7 +20,7 @@ namespace ParsonsPuzzleApp.Services
             _indentationService = indentationService;
         }
 
-        public async Task<bool> CheckSolutionAsync(CheckRequestModel model)
+        public async Task<int> CheckSolutionAsync(CheckRequestModel model)
         {
             var puzzle = await _context.Puzzles
             .Include(p => p.Language)
@@ -49,12 +49,7 @@ namespace ParsonsPuzzleApp.Services
 
             var distance = LevenshteinDistance(correctEncoded, studentEncoded);
 
-            if(distance == 0)
-            {
-                return true;
-            }
-
-            return false;
+            return distance;
         }
 
         public async Task<SubmitSolutionResponse> SubmitSolutionAsync(SubmitSolutionModel model)

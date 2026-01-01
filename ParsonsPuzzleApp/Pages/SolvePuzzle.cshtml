@@ -13,9 +13,17 @@
         <h3>Пъзел @Model.PuzzleIndex от @Model.TotalPuzzles - @Model.Puzzle.Language.DisplayName</h3>
         <div>
             <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#taskModal">Условие на заданието</button>
-            <button class="btn btn-primary me-2" onclick="checkSolution()">Провери</button>
             <button class="btn btn-success me-2" onclick="submitSolution()">Подай</button>
             <button class="btn btn-danger" onclick="if(confirm('Сигурни ли сте?')) resetPuzzle()">Рестарт</button>
+            <div class="progress-indicator me-3">
+                <svg width="50" height="50">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="5" />
+                    <circle id="progressCircle" cx="25" cy="25" r="20" fill="none" stroke="#4CAF50" stroke-width="5"
+                            stroke-dasharray="126" stroke-dashoffset="126"
+                            style="transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;" />
+                </svg>
+                <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 12px;">0%</span>
+            </div>
         </div>
     </div>
     <div class="middle-section d-flex" style="flex: 0 1 70vh; min-height: 350px; overflow: hidden;">
@@ -86,9 +94,9 @@
             word-break: break-word;
         }
 
-            .code-block:hover {
-                background-color: #e9ecef;
-            }
+        .code-block:hover {
+            background-color: #e9ecef;
+        }
 
         .source-panel .code-block {
             background-color: #e2f0fd;
@@ -126,10 +134,10 @@
             position: relative;
         }
 
-            .slot.filled {
-                min-width: auto;
-                padding: 0;
-            }
+        .slot.filled {
+            min-width: auto;
+            padding: 0;
+        }
 
         .mini-block {
             display: inline-block;
@@ -227,6 +235,13 @@
         .multiline-block .code-content {
             white-space: pre-wrap;
             word-break: break-word;
+        }
+
+        .progress-indicator {
+            margin-left: 20px;
+            position: relative;
+            display: inline-block;
+            align-items: center;
         }
     </style>
     <script>
@@ -386,6 +401,7 @@
         }
 
         const blockManager = new PuzzleBlockManager();
+        let maxDistance = null;
 
         function initializePuzzle() {
             const sourcePanel = document.getElementById('sourcePanel');
@@ -461,9 +477,17 @@
                 onAdd: function(evt) {
                     addIndentButtons(evt.item);
                     updateBraces();
+                    checkSolution();
                 },
-                onSort: function() {
+                onSort: function(evt) {
                     updateBraces();
+                    if (!evt.from || evt.from === evt.to) 
+                    {
+                        checkSolution();
+                    }
+                },
+                onRemove: function() {
+                    checkSolution();
                 }
             });
 
@@ -492,8 +516,10 @@
                                 }
                                 removeBtn.remove();
                                 slot.classList.remove('filled');
+                                checkSolution();
                             };
                             slot.appendChild(removeBtn);
+                            checkSolution();
                         }
                     });
                 });
@@ -523,6 +549,7 @@
                 block.style.marginLeft = `${indent - 20}px`;
                 updateBraces();
             }
+            checkSolution();
         }
 
         function shiftRight(btn) {
@@ -530,6 +557,7 @@
             let indent = parseInt(block.style.marginLeft || 0);
             block.style.marginLeft = `${indent + 20}px`;
             updateBraces();
+            checkSolution();
         }
 
         function updateBraces() {
@@ -583,6 +611,8 @@
                 }
             });
 
+            checkSolution();
+
             // Close remaining open braces at the end
             while (braceStack.length) {
                 const closed = braceStack.pop();
@@ -624,7 +654,12 @@
                 }
 
                 const result = await response.json();
-                alert(result ? 'Решението е вярно!' : 'Решението е грешно.');
+
+                if (maxDistance === null) {
+                    maxDistance = result;
+                }
+
+                updateProgressIndicator(result);
             } catch (error) {
                 console.error('Error checking solution:', error);
                 alert('Грешка при проверка на решението. Моля, опитайте отново.');
@@ -722,8 +757,10 @@
                                             }
                                             removeBtn.remove();
                                             slot.classList.remove('filled');
+                                            checkSolution();
                                         };
                                         slot.appendChild(removeBtn);
+                                        checkSolution();
                                     }
                                 });
                             });
@@ -737,6 +774,38 @@
             }, 50);
         } else {
             console.log('📝 Multi-block puzzle - no fix needed');
+        }
+
+        checkSolution();
+
+        function updateProgressIndicator(currentDistance) 
+        {
+            const percentage = maxDistance > 0
+                ? Math.max(0, Math.round(((maxDistance - currentDistance) / maxDistance) * 100))
+                : 0;
+
+            const progressCircle = document.getElementById('progressCircle');
+            const progressText = document.getElementById('progressText');
+
+            progressText.textContent = percentage + '%';
+
+            // Update circle (126 is circumference of circle with r=20: 2 * π * 20)
+            const circumference = 126;
+            const offset = circumference - (percentage / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+
+            // Change color based on percentage
+            if (percentage === 100) {
+                progressCircle.style.stroke = '#4CAF50'; // Green
+            } else if (percentage >= 75) {
+                progressCircle.style.stroke = '#8BC34A'; // Light green
+            } else if (percentage >= 50) {
+                progressCircle.style.stroke = '#FFC107'; // Yellow
+            } else if (percentage >= 25) {
+                progressCircle.style.stroke = '#FF9800'; // Orange
+            } else {
+                progressCircle.style.stroke = '#F44336'; // Red
+            }
         }
     </script>
 }
