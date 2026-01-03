@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Models;
 using System.Text;
@@ -35,15 +36,13 @@ namespace ParsonsPuzzleApp.Services
                 throw new InvalidOperationException($"Пъзелът {model.PuzzleId} има невалидна или липсваща езикова конфигурация.");
             }
 
-            var map = BuildLetterMaps(puzzle);
+            var map = PuzzleEncoderHelper.BuildLetterMaps(puzzle);
 
             var blocks = model.Arrangement.Where(b => b.Id != 0).ToList();
 
-            var correctEncoded = EncodeCorrectSolution(puzzle, map);
-
             var studentEncoded = EncodeStudentSolution(blocks, map, puzzle);
 
-            var distance = LevenshteinDistance(correctEncoded, studentEncoded);
+            var distance = LevenshteinDistance(puzzle.EncodedSolution, studentEncoded);
 
             return distance;
         }
@@ -73,15 +72,13 @@ namespace ParsonsPuzzleApp.Services
                 throw new KeyNotFoundException("Колекцията не е намерена.");
             }
 
-            var map = BuildLetterMaps(puzzle);
+            var map = PuzzleEncoderHelper.BuildLetterMaps(puzzle);
 
             var blocks = model.Arrangement.Where(b => b.Id != 0).ToList();
 
-            var correctEncoded = EncodeCorrectSolution(puzzle, map);
-
             var studentEncoded = EncodeStudentSolution(blocks, map, puzzle);
 
-            var distance = LevenshteinDistance(correctEncoded, studentEncoded);
+            var distance = LevenshteinDistance(puzzle.EncodedSolution, studentEncoded);
 
             var isCorrect = false;
 
@@ -237,68 +234,6 @@ namespace ParsonsPuzzleApp.Services
                     await _context.SaveChangesAsync();
                 }
             }
-        }
-
-        private (Dictionary<int, char> lineMap, Dictionary<string, char> slotMap) BuildLetterMaps(Puzzle puzzle)
-        {
-            var lineMap = new Dictionary<int, char>();
-            var slotMap = new Dictionary<string, char>();
-
-            char current = 'a';
-
-            foreach (var block in puzzle.PuzzleBlocks.OrderBy(b => b.OrderIndex))
-            {
-                foreach (var line in block.Lines)
-                {
-                    lineMap[line.Id] = current++;
-
-                    foreach (var slot in line.MiniBlocks.Where(m => m.IsCorrect))
-                    {
-                        var key = slot.SlotName + "|" + slot.Content;
-
-                        slotMap[key] = current++;
-                    }
-                }
-            }
-
-            return new(lineMap, slotMap);
-        }
-
-        private string EncodeCorrectSolution(Puzzle puzzle, (Dictionary<int, char> lineMap, Dictionary<string, char> slotMap) maps)
-        {
-            var sb = new StringBuilder();
-
-            foreach (var block in puzzle.PuzzleBlocks.OrderBy(b => b.OrderIndex))
-            {
-                foreach (var line in block.Lines.Where(l => !l.IsDistractor))
-                {
-                    char lineLetter = maps.lineMap[line.Id];
-
-                    var slots = line.MiniBlocks.Where(m => m.IsCorrect).ToList();
-
-                    if (slots.Any())
-                    {
-                        sb.Append("(");
-                        sb.Append(lineLetter);
-
-                        foreach (var s in slots)
-                        {
-                            var key = s.SlotName + "|" + s.Content;
-                            sb.Append(maps.slotMap[key]);
-                        }
-
-                        sb.Append(")");
-                    }
-                    else
-                    {
-                        sb.Append(lineLetter);
-                    }
-
-                    sb.Append(block.Indent);
-                }
-            }
-
-            return sb.ToString();
         }
 
         private string EncodeStudentSolution(

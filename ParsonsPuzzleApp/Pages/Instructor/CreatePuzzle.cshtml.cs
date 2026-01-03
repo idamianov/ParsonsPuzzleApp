@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Services;
 using System.Text.RegularExpressions;
@@ -47,6 +48,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         {
             // Set the InstructorId before validation
             Puzzle.InstructorId = _userManager.GetUserId(User);
+            Puzzle.EncodedSolution = string.Empty;
 
             // Sanitize HTML in Task field
             if (!string.IsNullOrWhiteSpace(Puzzle.Task))
@@ -64,6 +66,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Puzzle.InstructorId");
             ModelState.Remove("Puzzle.Language");
+            ModelState.Remove("Puzzle.EncodedSolution");
 
             if (!ModelState.IsValid)
             {
@@ -137,6 +140,15 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             await AddMiniBlocks(slotIndex);
 
             await _context.SaveChangesAsync();
+
+            var map = PuzzleEncoderHelper.BuildLetterMaps(Puzzle);
+
+            var correctEncoded = PuzzleEncoderHelper.EncodeCorrectSolution(Puzzle, map);
+
+            Puzzle.EncodedSolution = correctEncoded;
+
+            await _context.SaveChangesAsync();
+
             return RedirectToPage("/Instructor/Puzzles");
         }
 
