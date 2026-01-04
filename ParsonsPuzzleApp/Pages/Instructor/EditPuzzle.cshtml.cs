@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Helpers;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Services;
 using System.Text;
@@ -80,6 +81,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             // Remove InstructorId from ModelState to prevent validation errors
             ModelState.Remove("Puzzle.InstructorId");
             ModelState.Remove("Puzzle.Language");
+            ModelState.Remove("Puzzle.EncodedSolution");
 
             if (!ModelState.IsValid)
             {
@@ -130,6 +132,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             // Update puzzle basic info
             Puzzle.InstructorId = userId;
             Puzzle.LastModifiedAt = DateTime.UtcNow;
+            Puzzle.EncodedSolution = string.Empty;
             _context.Attach(Puzzle).State = EntityState.Modified;
 
             var existingPuzzleBlocks = _context.PuzzleBlocks.Where(pb => pb.PuzzleId == Puzzle.Id);
@@ -165,10 +168,19 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             var slotIndex = IndexSlotsByLine(createdLines);
 
-            // 5) Create MiniBlocks under PuzzleBlockLineId
+            //Create MiniBlocks under PuzzleBlockLineId
             await AddMiniBlocks(slotIndex);
 
             await _context.SaveChangesAsync();
+
+            var map = PuzzleEncoderHelper.BuildLetterMaps(Puzzle);
+
+            var correctEncoded = PuzzleEncoderHelper.EncodeCorrectSolution(Puzzle, map);
+
+            Puzzle.EncodedSolution = correctEncoded;
+
+            await _context.SaveChangesAsync();
+
             return RedirectToPage("/Instructor/Puzzles");
         }
 

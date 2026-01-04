@@ -18,6 +18,7 @@ namespace ParsonsPuzzleApp.Entities
 
         // Distractors are now optional - no [Required] attribute
         public string? Distractors { get; set; }
+        public string EncodedSolution { get; set; }
 
         [Required(ErrorMessage = "Езикът е задължителен")]
         public int LanguageId { get; set; }
