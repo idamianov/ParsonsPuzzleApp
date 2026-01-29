@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Interfaces;
+using ParsonsPuzzleApp.Models;
 using ParsonsPuzzleApp.Services;
 
 namespace ParsonsPuzzleApp
@@ -44,7 +45,10 @@ namespace ParsonsPuzzleApp
                 options.IdleTimeout = TimeSpan.FromHours(24);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
-                options.Cookie.SameSite = SameSiteMode.Strict;
+                // Use None for LTI 1.3 support - cross-site POSTs need cookies
+                // This requires Secure=true (HTTPS)
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
 
             builder.Services.AddHttpContextAccessor();
@@ -60,6 +64,29 @@ namespace ParsonsPuzzleApp
             builder.Services.AddScoped<ILanguageService, LanguageService>();
             builder.Services.AddScoped<ILanguageCategoryService, LanguageCategoryService>();
             builder.Services.AddScoped<IBundleAnalysisService, BundleAnalysisService>();
+
+            // Memory cache for JWKS caching
+            builder.Services.AddMemoryCache();
+
+            // LTI 1.3 configuration
+            builder.Services.Configure<LtiOptions>(builder.Configuration.GetSection("Lti"));
+            builder.Services.AddHttpClient("LtiPlatform", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            }).ConfigurePrimaryHttpMessageHandler(() =>
+            {
+                var handler = new HttpClientHandler();
+                // For development with self-signed certificates
+                if (builder.Environment.IsDevelopment())
+                {
+                    handler.ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                }
+                return handler;
+            });
+            builder.Services.AddSingleton<ILtiKeyProvider, LtiKeyProvider>();
+            builder.Services.AddScoped<ILtiService, LtiService>();
+            builder.Services.AddHostedService<LtiStateCleanupService>();
 
             var app = builder.Build();
 

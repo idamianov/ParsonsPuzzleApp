@@ -1,0 +1,276 @@
+@page "{id:int}"
+@model ParsonsPuzzleApp.Pages.Instructor.EditLtiPlatformModel
+@{
+    ViewData["Title"] = "Edit LTI Platform";
+}
+
+<h1>Edit LTI Platform</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.SetupDeploymentId))
+{
+    <div class="alert alert-warning">
+        <strong>New Deployment Detected!</strong> A new deployment ID <code>@Model.SetupDeploymentId</code> was detected from an LTI launch.
+        Add it below and link it to a bundle.
+    </div>
+}
+
+<ul class="nav nav-tabs mb-4" id="platformTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+            Platform Settings
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="deployments-tab" data-bs-toggle="tab" data-bs-target="#deployments" type="button" role="tab">
+            Deployments (@Model.Platform.Deployments.Count)
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="platformTabsContent">
+    <!-- Platform Settings Tab -->
+    <div class="tab-pane fade show active" id="settings" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8">
+                <form method="post" novalidate>
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                    <input type="hidden" asp-for="Input.Id" />
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Platform Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label asp-for="Input.Name" class="form-label"></label>
+                                <input asp-for="Input.Name" class="form-control" />
+                                <span asp-validation-for="Input.Name" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.Issuer" class="form-label"></label>
+                                <input asp-for="Input.Issuer" class="form-control" />
+                                <span asp-validation-for="Input.Issuer" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.ClientId" class="form-label"></label>
+                                <input asp-for="Input.ClientId" class="form-control" />
+                                <span asp-validation-for="Input.ClientId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Platform Endpoints</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label asp-for="Input.AuthorizationEndpoint" class="form-label"></label>
+                                <input asp-for="Input.AuthorizationEndpoint" class="form-control" />
+                                <span asp-validation-for="Input.AuthorizationEndpoint" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.TokenEndpoint" class="form-label"></label>
+                                <input asp-for="Input.TokenEndpoint" class="form-control" />
+                                <span asp-validation-for="Input.TokenEndpoint" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.JwksUrl" class="form-label"></label>
+                                <input asp-for="Input.JwksUrl" class="form-control" />
+                                <span asp-validation-for="Input.JwksUrl" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input asp-for="Input.IsActive" class="form-check-input" />
+                                <label asp-for="Input.IsActive" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <a asp-page="LtiPlatforms" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deployments Tab -->
+    <div class="tab-pane fade" id="deployments" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Add New Deployment</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="AddDeployment" asp-route-id="@Model.Platform.Id">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label asp-for="DeploymentInput.DeploymentId" class="form-label"></label>
+                                    <input asp-for="DeploymentInput.DeploymentId" class="form-control" placeholder="Deployment ID from LMS" />
+                                    <span asp-validation-for="DeploymentInput.DeploymentId" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="DeploymentInput.Name" class="form-label"></label>
+                                    <input asp-for="DeploymentInput.Name" class="form-control" placeholder="e.g., CS101 Fall 2024" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="DeploymentInput.BundleId" class="form-label"></label>
+                                    <select asp-for="DeploymentInput.BundleId" asp-items="Model.AvailableBundles" class="form-select"></select>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary">Add</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (Model.Platform.Deployments.Any())
+                {
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Existing Deployments</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Deployment ID</th>
+                                        <th>Name</th>
+                                        <th>Linked Bundle</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var deployment in Model.Platform.Deployments.OrderBy(d => d.CreatedAt))
+                                    {
+                                        <tr>
+                                            <td><code>@deployment.DeploymentId</code></td>
+                                            <td>@(deployment.Name ?? "-")</td>
+                                            <td>
+                                                <form method="post" asp-page-handler="UpdateDeployment"
+                                                      asp-route-id="@Model.Platform.Id"
+                                                      asp-route-deploymentId="@deployment.Id"
+                                                      class="d-flex align-items-center gap-2">
+                                                    <select name="bundleId" class="form-select form-select-sm" style="max-width: 200px;"
+                                                            onchange="this.form.submit()">
+                                                        <option value="">(Not linked)</option>
+                                                        @foreach (var bundle in Model.AvailableBundles.Skip(1))
+                                                        {
+                                                            <option value="@bundle.Value" selected="@(bundle.Value == deployment.BundleId?.ToString())">
+                                                                @bundle.Text
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </form>
+                                            </td>
+                                            <td>
+                                                @if (deployment.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <form method="post" asp-page-handler="ToggleDeployment"
+                                                          asp-route-id="@Model.Platform.Id"
+                                                          asp-route-deploymentId="@deployment.Id"
+                                                          style="display:inline;">
+                                                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                            @(deployment.IsActive ? "Deactivate" : "Activate")
+                                                        </button>
+                                                    </form>
+                                                    <form method="post" asp-page-handler="DeleteDeployment"
+                                                          asp-route-id="@Model.Platform.Id"
+                                                          asp-route-deploymentId="@deployment.Id"
+                                                          style="display:inline;">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                                onclick="return confirm('Delete this deployment?')">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <h6>No Deployments Yet</h6>
+                        <p class="mb-0">When users launch from your LMS, deployments will be automatically detected, or you can add them manually above.</p>
+                    </div>
+                }
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">About Deployments</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">
+                            A <strong>deployment</strong> represents a specific placement of this tool within the LMS
+                            (e.g., a course or activity).
+                        </p>
+                        <p class="small">
+                            Each deployment has a unique ID assigned by the LMS. You can link each deployment
+                            to a specific puzzle bundle, so different courses can have different puzzles.
+                        </p>
+                        <p class="small mb-0">
+                            <strong>Tip:</strong> If you launch from the LMS before adding the deployment here,
+                            the system will detect the new deployment ID and prompt you to configure it.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* Removed _ValidationScriptsPartial to disable client-side validation *@
+    <script>
+        // Auto-switch to deployments tab if there's a setup message
+        @if (!string.IsNullOrEmpty(Model.SetupDeploymentId))
+        {
+            <text>
+            document.addEventListener('DOMContentLoaded', function() {
+                var deploymentsTab = new bootstrap.Tab(document.getElementById('deployments-tab'));
+                deploymentsTab.show();
+            });
+            </text>
+        }
+    </script>
+}

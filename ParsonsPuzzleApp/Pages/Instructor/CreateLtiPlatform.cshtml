@@ -1,0 +1,122 @@
+@page
+@model ParsonsPuzzleApp.Pages.Instructor.CreateLtiPlatformModel
+@{
+    ViewData["Title"] = "Register LTI Platform";
+}
+
+<h1>Register LTI Platform</h1>
+
+<p class="text-muted">
+    Enter the LTI 1.3 configuration details provided by your LMS administrator.
+</p>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" novalidate>
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Platform Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label"></label>
+                        <input asp-for="Input.Name" class="form-control" placeholder="e.g., University Moodle, Blackboard Learn" />
+                        <span asp-validation-for="Input.Name" class="text-danger"></span>
+                        <div class="form-text">A friendly name to identify this platform.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Issuer" class="form-label"></label>
+                        <input asp-for="Input.Issuer" class="form-control" placeholder="e.g., https://moodle.university.edu" />
+                        <span asp-validation-for="Input.Issuer" class="text-danger"></span>
+                        <div class="form-text">The platform's issuer identifier (usually the base URL).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ClientId" class="form-label"></label>
+                        <input asp-for="Input.ClientId" class="form-control" placeholder="e.g., abc123xyz" />
+                        <span asp-validation-for="Input.ClientId" class="text-danger"></span>
+                        <div class="form-text">The Client ID assigned by the platform when you registered this tool.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Platform Endpoints</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Input.AuthorizationEndpoint" class="form-label"></label>
+                        <input asp-for="Input.AuthorizationEndpoint" class="form-control" placeholder="e.g., https://moodle.university.edu/mod/lti/auth.php" />
+                        <span asp-validation-for="Input.AuthorizationEndpoint" class="text-danger"></span>
+                        <div class="form-text">The OIDC authorization endpoint for user authentication.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.TokenEndpoint" class="form-label"></label>
+                        <input asp-for="Input.TokenEndpoint" class="form-control" placeholder="e.g., https://moodle.university.edu/mod/lti/token.php" />
+                        <span asp-validation-for="Input.TokenEndpoint" class="text-danger"></span>
+                        <div class="form-text">The OAuth 2.0 token endpoint (used for grade passback and other services).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.JwksUrl" class="form-label"></label>
+                        <input asp-for="Input.JwksUrl" class="form-control" placeholder="e.g., https://moodle.university.edu/mod/lti/certs.php" />
+                        <span asp-validation-for="Input.JwksUrl" class="text-danger"></span>
+                        <div class="form-text">The platform's public keyset URL for verifying signatures.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        <input asp-for="Input.IsActive" class="form-check-input" />
+                        <label asp-for="Input.IsActive" class="form-check-label"></label>
+                        <div class="form-text">Inactive platforms will not accept LTI launches.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Register Platform</button>
+                <a asp-page="LtiPlatforms" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Getting Platform Details</h6>
+            </div>
+            <div class="card-body">
+                <h6>Moodle</h6>
+                <ol class="small">
+                    <li>Go to Site administration > Plugins > External tool > Manage tools</li>
+                    <li>Click "configure a tool manually"</li>
+                    <li>Enter this tool's URLs (shown on LTI Platforms page)</li>
+                    <li>After saving, Moodle will show you the platform details</li>
+                </ol>
+
+                <h6>Blackboard</h6>
+                <ol class="small">
+                    <li>Register in the Developer Portal to get Client ID</li>
+                    <li>Go to Administrator Panel > LTI Tool Providers</li>
+                    <li>Register LTI 1.3/Advantage Tool</li>
+                    <li>Copy the platform details from the configuration</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* Client-side validation disabled for localhost URL support *@
+}
