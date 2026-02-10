@@ -32,7 +32,6 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         [BindProperty]
         public LtiPlatformInputModel Input { get; set; } = new();
 
-        [BindProperty]
         public LtiDeploymentInputModel DeploymentInput { get; set; } = new();
 
         public LtiPlatform Platform { get; set; } = null!;
@@ -141,6 +140,9 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             Platform = platform;
             await LoadAvailableBundlesAsync(userId, cancellationToken);
+
+            // Manually bind the deployment input for this handler only
+            await TryUpdateModelAsync(DeploymentInput, nameof(DeploymentInput));
 
             // Validate deployment input
             if (string.IsNullOrWhiteSpace(DeploymentInput.DeploymentId))

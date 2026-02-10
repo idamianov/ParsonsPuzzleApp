@@ -41,7 +41,10 @@
         <div class="row">
             <div class="col-md-8">
                 <form method="post" novalidate>
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                    }
                     <input type="hidden" asp-for="Input.Id" />
 
                     <div class="card mb-4">
