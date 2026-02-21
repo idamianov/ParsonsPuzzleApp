@@ -2,9 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ParsonsPuzzleApp.Models
 {
-    /// <summary>
-    /// Общ входен модел за създаване и редактиране на LTI Платформа.
-    /// </summary>
     public class LtiPlatformInputModel
     {
         public int Id { get; set; }
@@ -38,9 +35,6 @@ namespace ParsonsPuzzleApp.Models
         public bool IsActive { get; set; } = true;
     }
 
-    /// <summary>
-    /// Входен модел за LTI Deployment операции.
-    /// </summary>
     public class LtiDeploymentInputModel
     {
         [Required(ErrorMessage = "Deployment ID е задължителен")]
