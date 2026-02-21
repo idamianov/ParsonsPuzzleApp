@@ -66,11 +66,12 @@ namespace ParsonsPuzzleApp.Controllers
         public async Task<IActionResult> Login(CancellationToken cancellationToken)
         {
             // Support both GET (query) and POST (form) - Moodle may use either
-            var issuer = Request.Query["iss"].FirstOrDefault() ?? Request.Form["iss"].FirstOrDefault();
-            var loginHint = Request.Query["login_hint"].FirstOrDefault() ?? Request.Form["login_hint"].FirstOrDefault();
-            var targetLinkUri = Request.Query["target_link_uri"].FirstOrDefault() ?? Request.Form["target_link_uri"].FirstOrDefault();
-            var ltiMessageHint = Request.Query["lti_message_hint"].FirstOrDefault() ?? Request.Form["lti_message_hint"].FirstOrDefault();
-            var clientId = Request.Query["client_id"].FirstOrDefault() ?? Request.Form["client_id"].FirstOrDefault();
+            var hasForm = Request.HasFormContentType;
+            var issuer = Request.Query["iss"].FirstOrDefault() ?? (hasForm ? Request.Form["iss"].FirstOrDefault() : null);
+            var loginHint = Request.Query["login_hint"].FirstOrDefault() ?? (hasForm ? Request.Form["login_hint"].FirstOrDefault() : null);
+            var targetLinkUri = Request.Query["target_link_uri"].FirstOrDefault() ?? (hasForm ? Request.Form["target_link_uri"].FirstOrDefault() : null);
+            var ltiMessageHint = Request.Query["lti_message_hint"].FirstOrDefault() ?? (hasForm ? Request.Form["lti_message_hint"].FirstOrDefault() : null);
+            var clientId = Request.Query["client_id"].FirstOrDefault() ?? (hasForm ? Request.Form["client_id"].FirstOrDefault() : null);
 
             _logger.LogInformation("LTI login initiation: issuer={Issuer}, client_id={ClientId}, target_link_uri={TargetLinkUri}",
                 issuer, clientId, targetLinkUri);

@@ -3,54 +3,54 @@ using System.ComponentModel.DataAnnotations;
 namespace ParsonsPuzzleApp.Models
 {
     /// <summary>
-    /// Shared input model for LTI Platform create and edit operations.
+    /// Общ входен модел за създаване и редактиране на LTI Платформа.
     /// </summary>
     public class LtiPlatformInputModel
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Platform name is required")]
-        [Display(Name = "Platform Name")]
-        [StringLength(200, ErrorMessage = "Name must be less than 200 characters")]
+        [Required(ErrorMessage = "Името на платформата е задължително")]
+        [Display(Name = "Име на платформата")]
+        [StringLength(200, ErrorMessage = "Името трябва да е по-малко от 200 символа")]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Issuer is required")]
-        [Display(Name = "Issuer (iss)")]
+        [Required(ErrorMessage = "Issuer (издател) е задължителен")]
+        [Display(Name = "Issuer (iss) (издател)")]
         public string Issuer { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Client ID is required")]
-        [Display(Name = "Client ID")]
+        [Required(ErrorMessage = "Client ID е задължителен")]
+        [Display(Name = "Client ID (клиентски индентификатор)")]
         public string ClientId { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Authorization endpoint is required")]
-        [Display(Name = "Authorization Endpoint")]
+        [Required(ErrorMessage = "Крайната точка за авторизация е задължителна")]
+        [Display(Name = "Authorization endpoint (kрайна точка за авторизация)")]
         public string AuthorizationEndpoint { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Token endpoint is required")]
-        [Display(Name = "Token Endpoint")]
+        [Required(ErrorMessage = "Крайната точка за токени е задължителна")]
+        [Display(Name = "Token endpoint (kрайна точка за токени)")]
         public string TokenEndpoint { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "JWKS URL is required")]
+        [Required(ErrorMessage = "JWKS URL е задължителен")]
         [Display(Name = "JWKS URL")]
         public string JwksUrl { get; set; } = string.Empty;
 
-        [Display(Name = "Active")]
+        [Display(Name = "Активна")]
         public bool IsActive { get; set; } = true;
     }
 
     /// <summary>
-    /// Input model for LTI Deployment operations.
+    /// Входен модел за LTI Deployment операции.
     /// </summary>
     public class LtiDeploymentInputModel
     {
-        [Required(ErrorMessage = "Deployment ID is required")]
+        [Required(ErrorMessage = "Deployment ID е задължителен")]
         [Display(Name = "Deployment ID")]
         public string DeploymentId { get; set; } = string.Empty;
 
-        [Display(Name = "Name (optional)")]
+        [Display(Name = "Име (незадължително)")]
         public string? Name { get; set; }
 
-        [Display(Name = "Linked Bundle")]
+        [Display(Name = "Bundle ID (свързан пакет)")]
         public int? BundleId { get; set; }
     }
 }
