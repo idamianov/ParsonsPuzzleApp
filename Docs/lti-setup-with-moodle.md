@@ -421,7 +421,6 @@ After successfully setting up the testing environment:
 - [LTI 1.3 Core Specification](https://www.imsglobal.org/spec/lti/v1p3/)
 - [Moodle LTI Documentation](https://docs.moodle.org/en/LTI)
 - [Bitnami Moodle Docker Image](https://hub.docker.com/r/bitnami/moodle)
-- [ParsonsPuzzleApp LTI Implementation Plan](LTI_IMPLEMENTATION_PLAN.md)
 
 ---
 
