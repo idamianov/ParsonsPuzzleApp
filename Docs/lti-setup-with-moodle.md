@@ -431,4 +431,3 @@ If you encounter issues not covered in this guide:
 1. Check the application logs in ParsonsPuzzleApp
 2. Check Moodle logs: **Site administration** → **Reports** → **Logs**
 3. Check Docker logs: `docker-compose -f docker-compose.moodle.yml logs`
-4. Review the LTI_IMPLEMENTATION_PLAN.md for architectural details
