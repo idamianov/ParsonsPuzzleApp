@@ -53,6 +53,12 @@ namespace ParsonsPuzzleApp
 
             builder.Services.AddHttpContextAccessor();
 
+            // Disable X-Frame-Options: SAMEORIGIN so LMS platforms can embed the app in an iframe
+            builder.Services.AddAntiforgery(options =>
+            {
+                options.SuppressXFrameOptionsHeader = true;
+            });
+
             builder.Services.AddRazorPages();
             builder.Services.AddControllers();
 
@@ -104,6 +110,13 @@ namespace ParsonsPuzzleApp
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            // Allow LMS platforms to embed this app in an iframe via Content-Security-Policy
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers["Content-Security-Policy"] = "frame-ancestors 'self' *";
+                await next();
+            });
 
             app.UseRouting();
 

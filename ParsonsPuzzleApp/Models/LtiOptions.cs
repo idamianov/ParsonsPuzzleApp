@@ -43,6 +43,13 @@ namespace ParsonsPuzzleApp.Models
         /// </summary>
         public bool AllowUnregisteredPlatforms { get; set; } = false;
 
+        /// <summary>
+        /// Space-separated list of origins allowed to embed this app in an iframe.
+        /// Example: "https://moodle.university.edu https://another-lms.com"
+        /// Leave empty to allow all origins (not recommended for production).
+        /// </summary>
+        public string AllowedFrameAncestors { get; set; } = string.Empty;
+
         // Computed URLs based on ToolBaseUrl
         public string LoginUrl => $"{ToolBaseUrl}/lti/login";
         public string LaunchUrl => $"{ToolBaseUrl}/lti/launch";
