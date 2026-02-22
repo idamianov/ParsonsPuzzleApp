@@ -4,14 +4,15 @@ This guide explains how to set up a local Moodle instance using Docker and confi
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
-2. [Starting the Moodle Docker Environment](#starting-the-moodle-docker-environment)
-3. [Accessing Moodle](#accessing-moodle)
-4. [Configuring LTI 1.3 in ParsonsPuzzleApp](#configuring-lti-13-in-parsonspuzzleapp)
-5. [Registering the External Tool in Moodle](#registering-the-external-tool-in-moodle)
-6. [Creating an LTI Activity](#creating-an-lti-activity)
-7. [Testing the Integration](#testing-the-integration)
-8. [Troubleshooting](#troubleshooting)
-9. [Stopping the Environment](#stopping-the-environment)
+2. [Critical Setup Notes](#critical-setup-notes)
+3. [Starting the Moodle Docker Environment](#starting-the-moodle-docker-environment)
+4. [Accessing Moodle](#accessing-moodle)
+5. [Configuring LTI 1.3 in ParsonsPuzzleApp](#configuring-lti-13-in-parsonspuzzleapp)
+6. [Registering the External Tool in Moodle](#registering-the-external-tool-in-moodle)
+7. [Creating an LTI Activity](#creating-an-lti-activity)
+8. [Testing the Integration](#testing-the-integration)
+9. [Troubleshooting](#troubleshooting)
+10. [Stopping the Environment](#stopping-the-environment)
 
 ---
 
@@ -23,6 +24,26 @@ Before starting, ensure you have the following installed:
 - **Docker Compose** (usually included with Docker Desktop)
 - **.NET 8.0 SDK** (to run ParsonsPuzzleApp)
 - **Git** (to clone the repository)
+
+---
+
+## Critical Setup Notes
+
+Read these before starting. Each point corresponds to a real failure mode.
+
+### Use Kestrel (dotnet run), not IIS or IIS Express
+
+**IIS Express** only binds to `localhost` (the loopback adapter). Moodle runs inside Docker and connects to your machine via `host.docker.internal`, which resolves to a real network address — not loopback. This means IIS Express is completely unreachable from Docker, even if the port is correct.
+
+**Full IIS** has the same SSL problem: its development certificate is issued for `localhost`, so when Moodle connects via `host.docker.internal` the SSL handshake fails with a hostname mismatch.
+
+**Always use Kestrel** by running the app with `dotnet run` (the `https` launch profile):
+
+```bash
+dotnet run --launch-profile https
+```
+
+Kestrel binds to all interfaces and `host.docker.internal` can reach it. The HTTPS port will be `7096` as configured in `launchSettings.json`.
 
 ---
 
@@ -86,26 +107,38 @@ Once Moodle is ready, you can access it at:
 
 Before registering Moodle as a platform, you need to get your tool's configuration URLs.
 
-### Step 1: Start ParsonsPuzzleApp
+### Step 1: Configure the app's base URL
+
+Before starting the app, open `ParsonsPuzzleApp/appsettings.json` and verify the `Lti:ToolBaseUrl` matches the port the app will run on:
+
+```json
+"Lti": {
+  "ToolBaseUrl": "https://localhost:7096"
+}
+```
+
+The default Kestrel HTTPS port (from `launchSettings.json`) is `7096`. All LTI endpoint URLs shown to Moodle are derived from this value, so it must be correct. See [Critical Setup Notes](#critical-setup-notes) for why IIS Express and full IIS do not work with this Docker setup.
+
+### Step 2: Start ParsonsPuzzleApp
 
 ```bash
 cd ParsonsPuzzleApp
 dotnet run
 ```
 
-The app typically runs at: https://localhost:7294 (or http://localhost:5149)
+The app runs at: `https://localhost:7096` (or `http://localhost:5055`)
 
-### Step 2: Note the following URLs
+### Step 3: Note the following URLs
 
 These URLs are needed for Moodle configuration:
 
-- **Redirection URL (Launch URL)**: `https://localhost:7294/lti/launch`
-- **Initiate login URL**: `https://localhost:7294/lti/login`
-- **Public keyset URL**: `https://localhost:7294/.well-known/jwks.json`
+- **Redirection URL (Launch URL)**: `https://localhost:7096/lti/launch`
+- **Initiate login URL**: `https://localhost:7096/lti/login`
+- **Public keyset URL**: `https://localhost:7096/.well-known/jwks.json`
 
-> **Important**: If your app runs on a different port, update these URLs accordingly.
+> **Important**: If your app runs on a different port, update `Lti:ToolBaseUrl` in `appsettings.json` and use the correct port in all URLs below.
 
-### Step 3: Get Moodle's Platform Configuration
+### Step 4: Get Moodle's Platform Configuration
 
 You'll need these values from Moodle (we'll get them in the next section):
 
@@ -130,15 +163,14 @@ Fill in the following details:
 
 **General:**
 - **Tool name**: `Parsons Puzzle Toolkit`
-- **Tool URL**: Leave empty (we'll use deep linking)
+- **Tool URL**: https://localhost:7096/lti/launch
 - **LTI version**: `LTI 1.3`
 
 **Tool configuration:**
 - **Public key type**: `Keyset URL`
-- **Public keyset URL**: `https://host.docker.internal:7294/.well-known/jwks.json`
-  - Note: Use `host.docker.internal` instead of `localhost` to allow Moodle (running in Docker) to reach your local machine
-- **Initiate login URL**: `https://host.docker.internal:7294/lti/login`
-- **Redirection URI(s)**: `https://host.docker.internal:7294/lti/launch`
+- **Public keyset URL**: `https://localhost:7096/.well-known/jwks.json`
+- **Initiate login URL**: `https://localhost:7096/lti/login`
+- **Redirection URI(s)**: `https://localhost:7096/lti/launch`
 
 **Services:**
 Enable the following services (scroll down):
@@ -153,7 +185,7 @@ Enable the following services (scroll down):
 
 Click **Save changes**.
 
-> **Important SSL Note**: Since ParsonsPuzzleApp uses HTTPS with a self-signed certificate in development, you may need to trust the certificate in your browser before Moodle can connect. Visit https://localhost:7294 in your browser and accept the certificate warning.
+> **Important SSL Note**: Since ParsonsPuzzleApp uses HTTPS with a self-signed certificate in development, you may need to trust the certificate in your browser before Moodle can connect. Visit https://localhost:7096 in your browser and accept the certificate warning.
 
 ### Step 3: Get the Platform Configuration Details
 
@@ -174,7 +206,7 @@ Now register Moodle as an LTI platform in ParsonsPuzzleApp.
 
 ### Step 1: Log in to ParsonsPuzzleApp
 
-1. Navigate to https://localhost:7294
+1. Navigate to https://localhost:7096
 2. Register/login as an instructor
 
 ### Step 2: Navigate to LTI Platforms
@@ -220,25 +252,23 @@ Click **Turn editing on** button (top right)
 3. Fill in:
    - **Activity name**: `Parsons Puzzles - Basics`
    - **Preconfigured tool**: Select `Parsons Puzzle Toolkit`
-   - **Accept grades from the tool**: Yes (if you want grading)
 4. Expand **Privacy** section:
    - ✅ Share launcher's name with the tool
    - ✅ Share launcher's email with the tool
 5. Click **Save and display**
 
-### Step 4: Get the Deployment ID
+### Step 4: Trigger Deployment ID Generation
 
-1. After creating the activity, **launch it once** by clicking on it
-2. You should see an error or message about unconfigured deployment
-3. This triggers Moodle to generate a **Deployment ID**
+1. After creating the activity, **launch it once** by clicking on it while logged in as an **instructor**
+2. The app will redirect you to the **Bundles** page — this is expected. The launch registered a new Deployment ID in the session
+3. Navigate to **LTI Platforms** (or `/Instructor/LtiPlatforms`). You should see a setup warning message at the top identifying the new deployment
 
 ### Step 5: Link Deployment to a Bundle
 
-1. Go back to ParsonsPuzzleApp → **LTI Platforms** → **Edit** (the Moodle platform)
-2. Switch to the **Deployments** tab
-3. You should see the new deployment ID detected
-4. Select a **Puzzle Bundle** to link to this deployment
-5. Click **Add**
+1. From the **LTI Platforms** list, click **Edit** next to the Moodle platform
+2. The **Deployments** tab will open automatically, with the new Deployment ID already pre-filled in the "Add Deployment" form
+3. Select a **Puzzle Bundle** to link to this deployment
+4. Click **Add**
 
 ---
 
@@ -283,15 +313,16 @@ You can view this in the browser's developer console or check ParsonsPuzzleApp l
 
 ### Issue: "Invalid signature" or "Invalid JWT" error
 
-**Cause**: JWKS public key mismatch or SSL certificate issues.
+**Cause**: JWKS public key mismatch, app restart, or SSL certificate issues.
 
 **Solution**:
 - Ensure the JWKS URL is accessible from both sides
-- Visit `https://localhost:7294/.well-known/jwks.json` to verify it returns JSON
+- Visit `https://localhost:7096/.well-known/jwks.json` to verify it returns JSON
 - Visit `http://localhost:8085/mod/lti/certs.php` to verify Moodle's keys
 - Trust the ParsonsPuzzleApp SSL certificate in your browser
+- **If signatures started failing after a restart**: the app regenerated its RSA key. Configure `Lti:PrivateKeyPath` in `appsettings.json` to persist the key, then re-register the tool in Moodle to pick up the new public key
 
-### Issue: Moodle can't reach `localhost:7294`
+### Issue: Moodle can't reach `localhost:7096`
 
 **Cause**: Moodle is running inside Docker and can't access `localhost` on the host machine.
 
