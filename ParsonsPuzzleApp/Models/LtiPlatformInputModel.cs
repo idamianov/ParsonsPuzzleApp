@@ -6,45 +6,45 @@ namespace ParsonsPuzzleApp.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Името на платформата е задължително")]
-        [Display(Name = "Име на платформата")]
-        [StringLength(200, ErrorMessage = "Името трябва да е по-малко от 200 символа")]
+        [Required(ErrorMessage = "РРјРµС‚Рѕ РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р° Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РЅРѕ")]
+        [Display(Name = "РРјРµ РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р°")]
+        [StringLength(200, ErrorMessage = "РРјРµС‚Рѕ С‚СЂСЏР±РІР° РґР° Рµ РїРѕ-РјР°Р»РєРѕ РѕС‚ 200 СЃРёРјРІРѕР»Р°")]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Issuer (издател) е задължителен")]
-        [Display(Name = "Issuer (iss) (издател)")]
+        [Required(ErrorMessage = "Issuer (РёР·РґР°С‚РµР») Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РµРЅ")]
+        [Display(Name = "Issuer (iss) (РёР·РґР°С‚РµР»)")]
         public string Issuer { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Client ID е задължителен")]
-        [Display(Name = "Client ID (клиентски индентификатор)")]
+        [Required(ErrorMessage = "Client ID Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РµРЅ")]
+        [Display(Name = "Client ID (РєР»РёРµРЅС‚СЃРєРё РёРЅРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ)")]
         public string ClientId { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Крайната точка за авторизация е задължителна")]
-        [Display(Name = "Authorization endpoint (kрайна точка за авторизация)")]
+        [Required(ErrorMessage = "РљСЂР°Р№РЅР°С‚Р° С‚РѕС‡РєР° Р·Р° Р°РІС‚РѕСЂРёР·Р°С†РёСЏ Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РЅР°")]
+        [Display(Name = "Authorization endpoint (kСЂР°Р№РЅР° С‚РѕС‡РєР° Р·Р° Р°РІС‚РѕСЂРёР·Р°С†РёСЏ)")]
         public string AuthorizationEndpoint { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Крайната точка за токени е задължителна")]
-        [Display(Name = "Token endpoint (kрайна точка за токени)")]
+        [Required(ErrorMessage = "РљСЂР°Р№РЅР°С‚Р° С‚РѕС‡РєР° Р·Р° С‚РѕРєРµРЅРё Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РЅР°")]
+        [Display(Name = "Token endpoint (kСЂР°Р№РЅР° С‚РѕС‡РєР° Р·Р° С‚РѕРєРµРЅРё)")]
         public string TokenEndpoint { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "JWKS URL е задължителен")]
+        [Required(ErrorMessage = "JWKS URL Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РµРЅ")]
         [Display(Name = "JWKS URL")]
         public string JwksUrl { get; set; } = string.Empty;
 
-        [Display(Name = "Активна")]
+        [Display(Name = "РђРєС‚РёРІРЅР°")]
         public bool IsActive { get; set; } = true;
     }
 
     public class LtiDeploymentInputModel
     {
-        [Required(ErrorMessage = "Deployment ID е задължителен")]
+        [Required(ErrorMessage = "Deployment ID Рµ Р·Р°РґСЉР»Р¶РёС‚РµР»РµРЅ")]
         [Display(Name = "Deployment ID")]
         public string DeploymentId { get; set; } = string.Empty;
 
-        [Display(Name = "Име (незадължително)")]
+        [Display(Name = "РРјРµ (РЅРµР·Р°РґСЉР»Р¶РёС‚РµР»РЅРѕ)")]
         public string? Name { get; set; }
 
-        [Display(Name = "Bundle ID (свързан пакет)")]
+        [Display(Name = "Bundle ID (СЃРІСЉСЂР·Р°РЅ РїР°РєРµС‚)")]
         public int? BundleId { get; set; }
     }
 }

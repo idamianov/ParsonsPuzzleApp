@@ -1,13 +1,13 @@
 @page
 @model ParsonsPuzzleApp.Pages.Instructor.CreateLtiPlatformModel
 @{
-    ViewData["Title"] = "Регистрирайте LTI Платформа";
+    ViewData["Title"] = "Р РµРіРёСЃС‚СЂРёСЂР°Р№С‚Рµ LTI РџР»Р°С‚С„РѕСЂРјР°";
 }
 
-<h1>Регистрирайте LTI Платформа</h1>
+<h1>Р РµРіРёСЃС‚СЂРёСЂР°Р№С‚Рµ LTI РџР»Р°С‚С„РѕСЂРјР°</h1>
 
 <p class="text-muted">
-    Въведете данните за конфигурацията на LTI 1.3, предоставени от вашия LMS администратор.
+    Р’СЉРІРµРґРµС‚Рµ РґР°РЅРЅРёС‚Рµ Р·Р° РєРѕРЅС„РёРіСѓСЂР°С†РёСЏС‚Р° РЅР° LTI 1.3, РїСЂРµРґРѕСЃС‚Р°РІРµРЅРё РѕС‚ РІР°С€РёСЏ LMS Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ.
 </p>
 
 <div class="row">
@@ -20,76 +20,76 @@
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Информация за платформата</h5>
+                    <h5 class="mb-0">РРЅС„РѕСЂРјР°С†РёСЏ Р·Р° РїР»Р°С‚С„РѕСЂРјР°С‚Р°</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <label asp-for="Input.Name" class="form-label"></label>
-                        <input asp-for="Input.Name" class="form-control" placeholder="напр. Moodle, Blackboard" />
+                        <input asp-for="Input.Name" class="form-control" placeholder="РЅР°РїСЂ. Moodle, Blackboard" />
                         <span asp-validation-for="Input.Name" class="text-danger"></span>
-                        <div class="form-text">Име за идентифициране на тази платформа.</div>
+                        <div class="form-text">РРјРµ Р·Р° РёРґРµРЅС‚РёС„РёС†РёСЂР°РЅРµ РЅР° С‚Р°Р·Рё РїР»Р°С‚С„РѕСЂРјР°.</div>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.Issuer" class="form-label"></label>
-                        <input asp-for="Input.Issuer" class="form-control" placeholder="напр. https://moodle.university.edu" />
+                        <input asp-for="Input.Issuer" class="form-control" placeholder="РЅР°РїСЂ. https://moodle.university.edu" />
                         <span asp-validation-for="Input.Issuer" class="text-danger"></span>
-                        <div class="form-text">Идентификаторът на издателя на платформата (обикновено базовият URL адрес).</div>
+                        <div class="form-text">РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂСЉС‚ РЅР° РёР·РґР°С‚РµР»СЏ РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р° (РѕР±РёРєРЅРѕРІРµРЅРѕ Р±Р°Р·РѕРІРёСЏС‚ URL Р°РґСЂРµСЃ).</div>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.ClientId" class="form-label"></label>
-                        <input asp-for="Input.ClientId" class="form-control" placeholder="напр. abc123xyz" />
+                        <input asp-for="Input.ClientId" class="form-control" placeholder="РЅР°РїСЂ. abc123xyz" />
                         <span asp-validation-for="Input.ClientId" class="text-danger"></span>
-                        <div class="form-text">Клиентският идентификатор, зададен от платформата, когато сте регистрирали този инструмент.</div>
+                        <div class="form-text">РљР»РёРµРЅС‚СЃРєРёСЏС‚ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ, Р·Р°РґР°РґРµРЅ РѕС‚ РїР»Р°С‚С„РѕСЂРјР°С‚Р°, РєРѕРіР°С‚Рѕ СЃС‚Рµ СЂРµРіРёСЃС‚СЂРёСЂР°Р»Рё С‚РѕР·Рё РёРЅСЃС‚СЂСѓРјРµРЅС‚.</div>
                     </div>
                 </div>
             </div>
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Крайни точки на платформата</h5>
+                    <h5 class="mb-0">РљСЂР°Р№РЅРё С‚РѕС‡РєРё РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р°</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <label asp-for="Input.AuthorizationEndpoint" class="form-label"></label>
-                        <input asp-for="Input.AuthorizationEndpoint" class="form-control" placeholder="напр. https://moodle.university.edu/mod/lti/auth.php" />
+                        <input asp-for="Input.AuthorizationEndpoint" class="form-control" placeholder="РЅР°РїСЂ. https://moodle.university.edu/mod/lti/auth.php" />
                         <span asp-validation-for="Input.AuthorizationEndpoint" class="text-danger"></span>
-                        <div class="form-text">Крайна точка за оторизация на OIDC за удостоверяване на потребителя.</div>
+                        <div class="form-text">РљСЂР°Р№РЅР° С‚РѕС‡РєР° Р·Р° РѕС‚РѕСЂРёР·Р°С†РёСЏ РЅР° OIDC Р·Р° СѓРґРѕСЃС‚РѕРІРµСЂСЏРІР°РЅРµ РЅР° РїРѕС‚СЂРµР±РёС‚РµР»СЏ.</div>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.TokenEndpoint" class="form-label"></label>
-                        <input asp-for="Input.TokenEndpoint" class="form-control" placeholder="напр. https://moodle.university.edu/mod/lti/token.php" />
+                        <input asp-for="Input.TokenEndpoint" class="form-control" placeholder="РЅР°РїСЂ. https://moodle.university.edu/mod/lti/token.php" />
                         <span asp-validation-for="Input.TokenEndpoint" class="text-danger"></span>
-                        <div class="form-text">Крайната точка на OAuth 2.0 токена (използва се за обратно предаване на оценки и други услуги).</div>
+                        <div class="form-text">РљСЂР°Р№РЅР°С‚Р° С‚РѕС‡РєР° РЅР° OAuth 2.0 С‚РѕРєРµРЅР° (РёР·РїРѕР»Р·РІР° СЃРµ Р·Р° РѕР±СЂР°С‚РЅРѕ РїСЂРµРґР°РІР°РЅРµ РЅР° РѕС†РµРЅРєРё Рё РґСЂСѓРіРё СѓСЃР»СѓРіРё).</div>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.JwksUrl" class="form-label"></label>
-                        <input asp-for="Input.JwksUrl" class="form-control" placeholder="напр. https://moodle.university.edu/mod/lti/certs.php" />
+                        <input asp-for="Input.JwksUrl" class="form-control" placeholder="РЅР°РїСЂ. https://moodle.university.edu/mod/lti/certs.php" />
                         <span asp-validation-for="Input.JwksUrl" class="text-danger"></span>
-                        <div class="form-text">URL адресът на публичния набор от ключове на платформата за проверка на подписи.</div>
+                        <div class="form-text">URL Р°РґСЂРµСЃСЉС‚ РЅР° РїСѓР±Р»РёС‡РЅРёСЏ РЅР°Р±РѕСЂ РѕС‚ РєР»СЋС‡РѕРІРµ РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р° Р·Р° РїСЂРѕРІРµСЂРєР° РЅР° РїРѕРґРїРёСЃРё.</div>
                     </div>
                 </div>
             </div>
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Настройки</h5>
+                    <h5 class="mb-0">РќР°СЃС‚СЂРѕР№РєРё</h5>
                 </div>
                 <div class="card-body">
                     <div class="form-check">
                         <input asp-for="Input.IsActive" class="form-check-input" />
                         <label asp-for="Input.IsActive" class="form-check-label"></label>
-                        <div class="form-text">Неактивните платформи няма да приемат стартирания на LTI.</div>
+                        <div class="form-text">РќРµР°РєС‚РёРІРЅРёС‚Рµ РїР»Р°С‚С„РѕСЂРјРё РЅСЏРјР° РґР° РїСЂРёРµРјР°С‚ СЃС‚Р°СЂС‚РёСЂР°РЅРёСЏ РЅР° LTI.</div>
                     </div>
                 </div>
             </div>
 
             <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Регистрирай</button>
-                <a asp-page="LtiPlatforms" class="btn btn-secondary">Откажи</a>
+                <button type="submit" class="btn btn-primary">Р РµРіРёСЃС‚СЂРёСЂР°Р№</button>
+                <a asp-page="LtiPlatforms" class="btn btn-secondary">РћС‚РєР°Р¶Рё</a>
             </div>
         </form>
     </div>
@@ -97,23 +97,23 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">Получаване на данните за платформата</h6>
+                <h6 class="mb-0">РџРѕР»СѓС‡Р°РІР°РЅРµ РЅР° РґР°РЅРЅРёС‚Рµ Р·Р° РїР»Р°С‚С„РѕСЂРјР°С‚Р°</h6>
             </div>
             <div class="card-body">
                 <h6>Moodle</h6>
                 <ol class="small">
-                    <li>Отидете в Администриране на сайта > Плъгини > Външен инструмент > Управление на инструментите</li>
-                    <li>Кликнете „конфигуриране на инструмент ръчно“</li>
-                    <li>Въведете URL адресите на този инструмент (показани на страницата LTI Платформи)</li>
-                    <li>След запазване Moodle ще покаже детайлите за платформата</li>
+                    <li>РћС‚РёРґРµС‚Рµ РІ РђРґРјРёРЅРёСЃС‚СЂРёСЂР°РЅРµ РЅР° СЃР°Р№С‚Р° > РџР»СЉРіРёРЅРё > Р’СЉРЅС€РµРЅ РёРЅСЃС‚СЂСѓРјРµРЅС‚ > РЈРїСЂР°РІР»РµРЅРёРµ РЅР° РёРЅСЃС‚СЂСѓРјРµРЅС‚РёС‚Рµ</li>
+                    <li>РљР»РёРєРЅРµС‚Рµ вЂћРєРѕРЅС„РёРіСѓСЂРёСЂР°РЅРµ РЅР° РёРЅСЃС‚СЂСѓРјРµРЅС‚ СЂСЉС‡РЅРѕвЂњ</li>
+                    <li>Р’СЉРІРµРґРµС‚Рµ URL Р°РґСЂРµСЃРёС‚Рµ РЅР° С‚РѕР·Рё РёРЅСЃС‚СЂСѓРјРµРЅС‚ (РїРѕРєР°Р·Р°РЅРё РЅР° СЃС‚СЂР°РЅРёС†Р°С‚Р° LTI РџР»Р°С‚С„РѕСЂРјРё)</li>
+                    <li>РЎР»РµРґ Р·Р°РїР°Р·РІР°РЅРµ Moodle С‰Рµ РїРѕРєР°Р¶Рµ РґРµС‚Р°Р№Р»РёС‚Рµ Р·Р° РїР»Р°С‚С„РѕСЂРјР°С‚Р°</li>
                 </ol>
 
                 <h6>Blackboard</h6>
                 <ol class="small">
-                    <li>Регистрирайте се в Developer Portal, за да получите Client ID</li>
-                    <li>Отидете в Administrator Panel > LTI Tool Providers</li>
-                    <li>Регистрирайте LTI 1.3/Advantage инструмент</li>
-                    <li>Копирайте детайлите на платформата от конфигурацията</li>
+                    <li>Р РµРіРёСЃС‚СЂРёСЂР°Р№С‚Рµ СЃРµ РІ Developer Portal, Р·Р° РґР° РїРѕР»СѓС‡РёС‚Рµ Client ID</li>
+                    <li>РћС‚РёРґРµС‚Рµ РІ Administrator Panel > LTI Tool Providers</li>
+                    <li>Р РµРіРёСЃС‚СЂРёСЂР°Р№С‚Рµ LTI 1.3/Advantage РёРЅСЃС‚СЂСѓРјРµРЅС‚</li>
+                    <li>РљРѕРїРёСЂР°Р№С‚Рµ РґРµС‚Р°Р№Р»РёС‚Рµ РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р° РѕС‚ РєРѕРЅС„РёРіСѓСЂР°С†РёСЏС‚Р°</li>
                 </ol>
             </div>
         </div>

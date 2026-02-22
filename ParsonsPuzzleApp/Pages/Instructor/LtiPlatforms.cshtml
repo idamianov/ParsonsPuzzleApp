@@ -1,26 +1,26 @@
 @page
 @model ParsonsPuzzleApp.Pages.Instructor.LtiPlatformsModel
 @{
-    ViewData["Title"] = "LTI платформи";
+    ViewData["Title"] = "LTI РїР»Р°С‚С„РѕСЂРјРё";
 }
 
-<h1>Управление на LTI платформи</h1>
+<h1>РЈРїСЂР°РІР»РµРЅРёРµ РЅР° LTI РїР»Р°С‚С„РѕСЂРјРё</h1>
 
 <p class="text-muted">
-    Конфигурирайте LTI 1.3 платформи (LMS), за да активирате безпроблемна интеграция с Moodle, Blackboard и други системи за управление на обучението.
+    РљРѕРЅС„РёРіСѓСЂРёСЂР°Р№С‚Рµ LTI 1.3 РїР»Р°С‚С„РѕСЂРјРё (LMS), Р·Р° РґР° Р°РєС‚РёРІРёСЂР°С‚Рµ Р±РµР·РїСЂРѕР±Р»РµРјРЅР° РёРЅС‚РµРіСЂР°С†РёСЏ СЃ Moodle, Blackboard Рё РґСЂСѓРіРё СЃРёСЃС‚РµРјРё Р·Р° СѓРїСЂР°РІР»РµРЅРёРµ РЅР° РѕР±СѓС‡РµРЅРёРµС‚Рѕ.
 </p>
 
 @if (!string.IsNullOrEmpty(Model.SetupMessage))
 {
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <strong>Необходима е LTI настройка:</strong> @Model.SetupMessage
+        <strong>РќРµРѕР±С…РѕРґРёРјР° Рµ LTI РЅР°СЃС‚СЂРѕР№РєР°:</strong> @Model.SetupMessage
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
 <p>
     <a asp-page="CreateLtiPlatform" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Регистрирай нова платформа
+        <i class="bi bi-plus-circle"></i> Р РµРіРёСЃС‚СЂРёСЂР°Р№ РЅРѕРІР° РїР»Р°С‚С„РѕСЂРјР°
     </a>
 </p>
 
@@ -30,13 +30,13 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Име на платформата</th>
+                    <th>РРјРµ РЅР° РїР»Р°С‚С„РѕСЂРјР°С‚Р°</th>
                     <th>Issuer</th>
                     <th>Client ID</th>
-                    <th>Деплоймънти</th>
-                    <th>Статус</th>
-                    <th>Създадена</th>
-                    <th>Действия</th>
+                    <th>Р”РµРїР»РѕР№РјСЉРЅС‚Рё</th>
+                    <th>РЎС‚Р°С‚СѓСЃ</th>
+                    <th>РЎСЉР·РґР°РґРµРЅР°</th>
+                    <th>Р”РµР№СЃС‚РІРёСЏ</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,32 +57,32 @@
                                 var activeDeployments = platform.Deployments.Count(d => d.IsActive);
                                 var configuredDeployments = platform.Deployments.Count(d => d.BundleId != null);
                             }
-                            <span class="badge bg-info">@activeDeployments общо</span>
+                            <span class="badge bg-info">@activeDeployments РѕР±С‰Рѕ</span>
                             @if (configuredDeployments > 0)
                             {
-                                <span class="badge bg-success">@configuredDeployments свързани</span>
+                                <span class="badge bg-success">@configuredDeployments СЃРІСЉСЂР·Р°РЅРё</span>
                             }
                         </td>
                         <td>
                             @if (platform.IsActive)
                             {
-                                <span class="badge bg-success">Активна</span>
+                                <span class="badge bg-success">РђРєС‚РёРІРЅР°</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">Неактивна</span>
+                                <span class="badge bg-secondary">РќРµР°РєС‚РёРІРЅР°</span>
                             }
                         </td>
                         <td>@platform.CreatedAt.ToString("yyyy-MM-dd")</td>
                         <td>
                             <div class="btn-group" role="group">
                                 <a asp-page="EditLtiPlatform" asp-route-id="@platform.Id" class="btn btn-sm btn-info">
-                                    Редактирай
+                                    Р РµРґР°РєС‚РёСЂР°Р№
                                 </a>
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@platform.Id" style="display:inline;">
                                     <button type="submit" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Сигурни ли сте, че искате да изтриете тази платформа? Всички деплоймънти също ще бъдат изтрити.')">
-                                        Изтрий
+                                            onclick="return confirm('РЎРёРіСѓСЂРЅРё Р»Рё СЃС‚Рµ, С‡Рµ РёСЃРєР°С‚Рµ РґР° РёР·С‚СЂРёРµС‚Рµ С‚Р°Р·Рё РїР»Р°С‚С„РѕСЂРјР°? Р’СЃРёС‡РєРё РґРµРїР»РѕР№РјСЉРЅС‚Рё СЃСЉС‰Рѕ С‰Рµ Р±СЉРґР°С‚ РёР·С‚СЂРёС‚Рё.')">
+                                        РР·С‚СЂРёР№
                                     </button>
                                 </form>
                             </div>
@@ -96,28 +96,28 @@
 else
 {
     <div class="alert alert-info">
-        <h5>Няма регистрирани LTI платформи</h5>
-        <p>За да интегрирате вашата LMS система, трябва да я регистрирате като LTI платформа.</p>
+        <h5>РќСЏРјР° СЂРµРіРёСЃС‚СЂРёСЂР°РЅРё LTI РїР»Р°С‚С„РѕСЂРјРё</h5>
+        <p>Р—Р° РґР° РёРЅС‚РµРіСЂРёСЂР°С‚Рµ РІР°С€Р°С‚Р° LMS СЃРёСЃС‚РµРјР°, С‚СЂСЏР±РІР° РґР° СЏ СЂРµРіРёСЃС‚СЂРёСЂР°С‚Рµ РєР°С‚Рѕ LTI РїР»Р°С‚С„РѕСЂРјР°.</p>
         <hr>
         <p class="mb-0">
-            <a asp-page="CreateLtiPlatform" class="btn btn-primary">Регистрирай първа платформа</a>
+            <a asp-page="CreateLtiPlatform" class="btn btn-primary">Р РµРіРёСЃС‚СЂРёСЂР°Р№ РїСЉСЂРІР° РїР»Р°С‚С„РѕСЂРјР°</a>
         </p>
     </div>
 }
 
 <div class="card mt-4">
     <div class="card-header">
-        <h5 class="mb-0">Конфигурация на инструмента за LMS</h5>
+        <h5 class="mb-0">РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ РЅР° РёРЅСЃС‚СЂСѓРјРµРЅС‚Р° Р·Р° LMS</h5>
     </div>
     <div class="card-body">
-        <p>Когато конфигурирате този инструмент във вашата LMS, използвайте следните URL адреси:</p>
+        <p>РљРѕРіР°С‚Рѕ РєРѕРЅС„РёРіСѓСЂРёСЂР°С‚Рµ С‚РѕР·Рё РёРЅСЃС‚СЂСѓРјРµРЅС‚ РІСЉРІ РІР°С€Р°С‚Р° LMS, РёР·РїРѕР»Р·РІР°Р№С‚Рµ СЃР»РµРґРЅРёС‚Рµ URL Р°РґСЂРµСЃРё:</p>
         <table class="table table-sm">
             <tr>
-                <th>Login Initiation URL (URL адрес за начало на вход)</th>
+                <th>Login Initiation URL (URL Р°РґСЂРµСЃ Р·Р° РЅР°С‡Р°Р»Рѕ РЅР° РІС…РѕРґ)</th>
                 <td><code>@Url.ActionLink("Login", "Lti", null, Request.Scheme)</code></td>
             </tr>
             <tr>
-                <th>Launch/Redirect URL (URL адрес за стартиране/пренасочване)</th>
+                <th>Launch/Redirect URL (URL Р°РґСЂРµСЃ Р·Р° СЃС‚Р°СЂС‚РёСЂР°РЅРµ/РїСЂРµРЅР°СЃРѕС‡РІР°РЅРµ)</th>
                 <td><code>@Url.ActionLink("Launch", "Lti", null, Request.Scheme)</code></td>
             </tr>
             <tr>
