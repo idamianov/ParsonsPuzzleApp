@@ -49,6 +49,17 @@ In order to get your SQLite DB created execute the following
 dotnet ef database update
 ```
 
+### LTI 1.3 Integration with Moodle
+
+For institutions integrating with Learning Management Systems, a complete LTI 1.3 testing environment is available:
+
+📖 **[Moodle LTI Setup Guide](Docs/lti-setup-with-moodle.md)** – Step-by-step instructions for:
+- Setting up a local Moodle instance using Docker
+- Configuring LTI 1.3 integration between Moodle and ParsonsPuzzleApp
+- Registering external tools and creating LTI activities
+- Testing the integration end-to-end
+- Troubleshooting common issues
+
 ---
 
 ## Sample Parsons Puzzles

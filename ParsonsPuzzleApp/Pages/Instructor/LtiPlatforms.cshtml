@@ -1,0 +1,129 @@
+@page
+@model ParsonsPuzzleApp.Pages.Instructor.LtiPlatformsModel
+@{
+    ViewData["Title"] = "LTI платформи";
+}
+
+<h1>Управление на LTI платформи</h1>
+
+<p class="text-muted">
+    Конфигурирайте LTI 1.3 платформи (LMS), за да активирате безпроблемна интеграция с Moodle, Blackboard и други системи за управление на обучението.
+</p>
+
+@if (!string.IsNullOrEmpty(Model.SetupMessage))
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Необходима е LTI настройка:</strong> @Model.SetupMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<p>
+    <a asp-page="CreateLtiPlatform" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Регистрирай нова платформа
+    </a>
+</p>
+
+@if (Model.Platforms.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Име на платформата</th>
+                    <th>Issuer</th>
+                    <th>Client ID</th>
+                    <th>Деплоймънти</th>
+                    <th>Статус</th>
+                    <th>Създадена</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var platform in Model.Platforms)
+                {
+                    <tr>
+                        <td>
+                            <strong>@platform.Name</strong>
+                        </td>
+                        <td>
+                            <code class="small">@platform.Issuer</code>
+                        </td>
+                        <td>
+                            <code class="small">@platform.ClientId</code>
+                        </td>
+                        <td>
+                            @{
+                                var activeDeployments = platform.Deployments.Count(d => d.IsActive);
+                                var configuredDeployments = platform.Deployments.Count(d => d.BundleId != null);
+                            }
+                            <span class="badge bg-info">@activeDeployments общо</span>
+                            @if (configuredDeployments > 0)
+                            {
+                                <span class="badge bg-success">@configuredDeployments свързани</span>
+                            }
+                        </td>
+                        <td>
+                            @if (platform.IsActive)
+                            {
+                                <span class="badge bg-success">Активна</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Неактивна</span>
+                            }
+                        </td>
+                        <td>@platform.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a asp-page="EditLtiPlatform" asp-route-id="@platform.Id" class="btn btn-sm btn-info">
+                                    Редактирай
+                                </a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@platform.Id" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Сигурни ли сте, че искате да изтриете тази платформа? Всички деплоймънти също ще бъдат изтрити.')">
+                                        Изтрий
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <h5>Няма регистрирани LTI платформи</h5>
+        <p>За да интегрирате вашата LMS система, трябва да я регистрирате като LTI платформа.</p>
+        <hr>
+        <p class="mb-0">
+            <a asp-page="CreateLtiPlatform" class="btn btn-primary">Регистрирай първа платформа</a>
+        </p>
+    </div>
+}
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Конфигурация на инструмента за LMS</h5>
+    </div>
+    <div class="card-body">
+        <p>Когато конфигурирате този инструмент във вашата LMS, използвайте следните URL адреси:</p>
+        <table class="table table-sm">
+            <tr>
+                <th>Login Initiation URL (URL адрес за начало на вход)</th>
+                <td><code>@Url.ActionLink("Login", "Lti", null, Request.Scheme)</code></td>
+            </tr>
+            <tr>
+                <th>Launch/Redirect URL (URL адрес за стартиране/пренасочване)</th>
+                <td><code>@Url.ActionLink("Launch", "Lti", null, Request.Scheme)</code></td>
+            </tr>
+            <tr>
+                <th>Public Keyset URL (JWKS)</th>
+                <td><code>@($"{Request.Scheme}://{Request.Host}/.well-known/jwks.json")</code></td>
+            </tr>
+        </table>
+    </div>
+</div>

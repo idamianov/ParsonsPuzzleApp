@@ -1,0 +1,122 @@
+@page
+@model ParsonsPuzzleApp.Pages.Instructor.CreateLtiPlatformModel
+@{
+    ViewData["Title"] = "Регистрирайте LTI Платформа";
+}
+
+<h1>Регистрирайте LTI Платформа</h1>
+
+<p class="text-muted">
+    Въведете данните за конфигурацията на LTI 1.3, предоставени от вашия LMS администратор.
+</p>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" novalidate>
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+            }
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Информация за платформата</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label"></label>
+                        <input asp-for="Input.Name" class="form-control" placeholder="напр. Moodle, Blackboard" />
+                        <span asp-validation-for="Input.Name" class="text-danger"></span>
+                        <div class="form-text">Име за идентифициране на тази платформа.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Issuer" class="form-label"></label>
+                        <input asp-for="Input.Issuer" class="form-control" placeholder="напр. https://moodle.university.edu" />
+                        <span asp-validation-for="Input.Issuer" class="text-danger"></span>
+                        <div class="form-text">Идентификаторът на издателя на платформата (обикновено базовият URL адрес).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ClientId" class="form-label"></label>
+                        <input asp-for="Input.ClientId" class="form-control" placeholder="напр. abc123xyz" />
+                        <span asp-validation-for="Input.ClientId" class="text-danger"></span>
+                        <div class="form-text">Клиентският идентификатор, зададен от платформата, когато сте регистрирали този инструмент.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Крайни точки на платформата</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Input.AuthorizationEndpoint" class="form-label"></label>
+                        <input asp-for="Input.AuthorizationEndpoint" class="form-control" placeholder="напр. https://moodle.university.edu/mod/lti/auth.php" />
+                        <span asp-validation-for="Input.AuthorizationEndpoint" class="text-danger"></span>
+                        <div class="form-text">Крайна точка за оторизация на OIDC за удостоверяване на потребителя.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.TokenEndpoint" class="form-label"></label>
+                        <input asp-for="Input.TokenEndpoint" class="form-control" placeholder="напр. https://moodle.university.edu/mod/lti/token.php" />
+                        <span asp-validation-for="Input.TokenEndpoint" class="text-danger"></span>
+                        <div class="form-text">Крайната точка на OAuth 2.0 токена (използва се за обратно предаване на оценки и други услуги).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.JwksUrl" class="form-label"></label>
+                        <input asp-for="Input.JwksUrl" class="form-control" placeholder="напр. https://moodle.university.edu/mod/lti/certs.php" />
+                        <span asp-validation-for="Input.JwksUrl" class="text-danger"></span>
+                        <div class="form-text">URL адресът на публичния набор от ключове на платформата за проверка на подписи.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Настройки</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        <input asp-for="Input.IsActive" class="form-check-input" />
+                        <label asp-for="Input.IsActive" class="form-check-label"></label>
+                        <div class="form-text">Неактивните платформи няма да приемат стартирания на LTI.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Регистрирай</button>
+                <a asp-page="LtiPlatforms" class="btn btn-secondary">Откажи</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Получаване на данните за платформата</h6>
+            </div>
+            <div class="card-body">
+                <h6>Moodle</h6>
+                <ol class="small">
+                    <li>Отидете в Администриране на сайта > Плъгини > Външен инструмент > Управление на инструментите</li>
+                    <li>Кликнете „конфигуриране на инструмент ръчно“</li>
+                    <li>Въведете URL адресите на този инструмент (показани на страницата LTI Платформи)</li>
+                    <li>След запазване Moodle ще покаже детайлите за платформата</li>
+                </ol>
+
+                <h6>Blackboard</h6>
+                <ol class="small">
+                    <li>Регистрирайте се в Developer Portal, за да получите Client ID</li>
+                    <li>Отидете в Administrator Panel > LTI Tool Providers</li>
+                    <li>Регистрирайте LTI 1.3/Advantage инструмент</li>
+                    <li>Копирайте детайлите на платформата от конфигурацията</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -24,6 +24,11 @@ namespace ParsonsPuzzleApp.Data
         public DbSet<StudentAttemptBlockLine> StudentAttemptBlockLines { get; set; }
         public DbSet<StudentAttemptMiniBlock> StudentAttemptMiniBlocks { get; set; }
 
+        // LTI 1.3 entities
+        public DbSet<LtiPlatform> LtiPlatforms { get; set; }
+        public DbSet<LtiDeployment> LtiDeployments { get; set; }
+        public DbSet<LtiState> LtiStates { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -111,6 +116,40 @@ namespace ParsonsPuzzleApp.Data
             modelBuilder.Entity<Bundle>()
                 .HasIndex(b => b.ShareableLink)
                 .IsUnique();
+
+            // LTI 1.3 configurations
+            modelBuilder.Entity<LtiPlatform>()
+                .HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(p => p.InstructorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LtiPlatform>()
+                .HasIndex(p => new { p.Issuer, p.ClientId })
+                .IsUnique();
+
+            modelBuilder.Entity<LtiDeployment>()
+                .HasOne(d => d.Platform)
+                .WithMany(p => p.Deployments)
+                .HasForeignKey(d => d.LtiPlatformId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LtiDeployment>()
+                .HasOne(d => d.Bundle)
+                .WithMany()
+                .HasForeignKey(d => d.BundleId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<LtiDeployment>()
+                .HasIndex(d => new { d.LtiPlatformId, d.DeploymentId })
+                .IsUnique();
+
+            modelBuilder.Entity<LtiState>()
+                .HasIndex(s => s.State)
+                .IsUnique();
+
+            modelBuilder.Entity<LtiState>()
+                .HasIndex(s => s.ExpiresAt);
         }
     }
 }
