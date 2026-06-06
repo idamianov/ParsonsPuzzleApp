@@ -373,12 +373,14 @@
                     .replace(/<br\s*\/?>/gi, '\n')
                     .replace(/<[^>]*>/g, ''); // remove any HTML
 
+                const parser = new DOMParser();
+                text = parser.parseFromString(text, 'text/html').documentElement.textContent;
+
                 const lines = text.split('\n').map(l => l.trim()).filter(x => x !== '');
 
                 const preparedLines = lines.map((lineText, i) => {
                     // Get slots belonging to this line based on original positions
                     const slotsForThisLine = slotData.filter(sd => lineText.includes(sd.value));
-
                     return {
                         lineIndex: i,
                         text: lineText,

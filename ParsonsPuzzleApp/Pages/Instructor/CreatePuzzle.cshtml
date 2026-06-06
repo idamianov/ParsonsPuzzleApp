@@ -247,7 +247,7 @@
             });
 
             function validateBlockSyntax(code, language) {
-                var syntax = getCommentSyntax(language);
+                var syntax = window.languageHelper.getCommentSyntax(languageId);
                 if (!syntax) return true;
 
                 var lines = code.split('\n');
