@@ -34,6 +34,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             var userId = _userManager.GetUserId(User);
 
             Puzzle = await _context.Puzzles
+                .Include(p => p.Language)
                 .Include(p => p.BundlePuzzles)
                 .ThenInclude(bp => bp.Bundle)
                 .FirstOrDefaultAsync(m => m.Id == id && m.InstructorId == userId);

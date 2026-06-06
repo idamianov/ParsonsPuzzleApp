@@ -230,15 +230,14 @@
 
                 var sourceCode = $("#sourceCode").val();
                 var distractors = $("#distractors").val();
-                var language = $("#languageSelect").find("option:selected").text();
 
-                if (sourceCode && !validateBlockSyntax(sourceCode, language)) {
+                if (sourceCode && !validateBlockSyntax(sourceCode)) {
                     alert("Грешка: Има незатворени многоредови блокове в изходния код!");
                     e.preventDefault();
                     return false;
                 }
 
-                if (distractors && !validateBlockSyntax(distractors, language)) {
+                if (distractors && !validateBlockSyntax(distractors)) {
                     if (!confirm("Внимание: Има незатворени многоредови блокове в дистракторите. Те ще бъдат третирани като обикновени редове.\n\nЖелаете ли да продължите?")) {
                         e.preventDefault();
                         return false;
@@ -246,8 +245,9 @@
                 }
             });
 
-            function validateBlockSyntax(code, language) {
-                var syntax = getCommentSyntax(language);
+            function validateBlockSyntax(code) {
+                var languageId = $("#languageSelect").val();
+                var syntax = window.languageHelper.getCommentSyntax(languageId);
                 if (!syntax) return true;
 
                 var lines = code.split('\n');

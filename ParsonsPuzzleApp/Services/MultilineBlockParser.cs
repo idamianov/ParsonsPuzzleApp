@@ -228,6 +228,12 @@ namespace ParsonsPuzzleApp.Services
             // Get original indentation
             var indentation = line.Substring(0, line.Length - line.TrimStart().Length);
 
+            if (IsInsideString(trimmedLine, '{') || IsInsideString(trimmedLine, '}'))
+            {
+                result.Add(line);
+                return result;
+            }
+
             // Check if line has opening brace with other content
             if (trimmedLine.Contains('{') && trimmedLine != "{")
             {
@@ -235,6 +241,17 @@ namespace ParsonsPuzzleApp.Services
                 var openBraceIndex = trimmedLine.IndexOf('{');
                 var beforeBrace = trimmedLine.Substring(0, openBraceIndex).Trim();
                 var afterBrace = trimmedLine.Substring(openBraceIndex + 1).Trim();
+
+                bool isArrayInitializer = beforeBrace.EndsWith("=") ||
+                                  beforeBrace.EndsWith("new") ||
+                                  beforeBrace.Contains("[]") ||
+                                  beforeBrace.Contains("new ");
+
+                if (isArrayInitializer)
+                {
+                    result.Add(line);
+                    return result;
+                }
 
                 if (!string.IsNullOrWhiteSpace(beforeBrace))
                 {
@@ -311,6 +328,37 @@ namespace ParsonsPuzzleApp.Services
             }
 
             return cleanedLines;
+        }
+
+        private static bool IsInsideString(string line, char bracketChar)
+        {
+            bool inString = false;
+            char stringChar = '"';
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+
+                if (!inString && (c == '"' || c == '\''))
+                {
+                    inString = true;
+                    stringChar = c;
+                }
+                else if (inString && c == stringChar && (i == 0 || line[i - 1] != '\\'))
+                {
+                    inString = false;
+                }
+                else if (!inString && c == bracketChar)
+                {
+                    return false;
+                }
+                else if (inString && c == bracketChar)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public string GetCommentSyntaxForLanguage(Language language)
