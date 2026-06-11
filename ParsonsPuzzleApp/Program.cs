@@ -92,6 +92,8 @@ namespace ParsonsPuzzleApp
             });
             builder.Services.AddSingleton<ILtiKeyProvider, LtiKeyProvider>();
             builder.Services.AddScoped<ILtiService, LtiService>();
+            builder.Services.AddScoped<ILtiUserService, LtiUserService>();
+            builder.Services.AddScoped<ILtiAgsService, LtiAgsService>();
             builder.Services.AddHostedService<LtiStateCleanupService>();
 
             var app = builder.Build();
