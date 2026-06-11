@@ -24,6 +24,12 @@
                 </svg>
                 <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 12px;">0%</span>
             </div>
+            @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+            {
+                <a href="@Model.ReturnUrl" class="btn btn-outline-secondary btn-sm ms-2">
+                    <i class="bi bi-box-arrow-left"></i> Exit to Course
+                </a>
+            }
         </div>
     </div>
     <div class="middle-section d-flex" style="flex: 0 1 70vh; min-height: 350px; overflow: hidden;">
