@@ -470,7 +470,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LtiPlatformId", "ResourceLinkId")
+                    b.HasIndex("LtiPlatformId", "DeploymentId", "ResourceLinkId")
                         .IsUnique();
 
                     b.ToTable("LtiResourceLinks", (string)null);

@@ -102,9 +102,9 @@ namespace ParsonsPuzzleApp.Migrations
                 column: "LtiPlatformId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LtiResourceLinks_LtiPlatformId_ResourceLinkId",
+                name: "IX_LtiResourceLinks_LtiPlatformId_DeploymentId_ResourceLinkId",
                 table: "LtiResourceLinks",
-                columns: new[] { "LtiPlatformId", "ResourceLinkId" },
+                columns: new[] { "LtiPlatformId", "DeploymentId", "ResourceLinkId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
