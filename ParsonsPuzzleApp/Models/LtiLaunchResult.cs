@@ -95,5 +95,22 @@ namespace ParsonsPuzzleApp.Models
             r.Contains("Instructor", StringComparison.OrdinalIgnoreCase) ||
             r.Contains("Administrator", StringComparison.OrdinalIgnoreCase) ||
             r.Contains("ContentDeveloper", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>
+        /// Return URL from the LTI launch_presentation claim (e.g., Moodle course page)
+        /// </summary>
+        public string? ReturnUrl { get; set; }
+
+        /// <summary>
+        /// AGS endpoint info for grade passback, null if platform didn't include it
+        /// </summary>
+        public LtiAgsClaimSet? AgsEndpoint { get; set; }
+
+        public class LtiAgsClaimSet
+        {
+            public string[]? Scopes { get; set; }
+            public string? LineItemUrl { get; set; }
+            public string? LineItemsUrl { get; set; }
+        }
     }
 }
