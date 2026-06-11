@@ -11,6 +11,7 @@ namespace ParsonsPuzzleApp.Constants
         public const string DeploymentId = "LtiDeploymentId";
         public const string BundleAttemptId = "LtiBundleAttemptId";
         public const string ResourceLinkId = "LtiResourceLinkId";
+        public const string SessionId = "LtiSessionId";
         public const string SetupPlatformId = "LtiSetupPlatformId";
         public const string SetupDeploymentId = "LtiSetupDeploymentId";
         public const string SetupMessage = "LtiSetupMessage";

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Constants;
 using ParsonsPuzzleApp.Data;
 using ParsonsPuzzleApp.Entities;
 using ParsonsPuzzleApp.Interfaces;
@@ -28,6 +29,7 @@ namespace ParsonsPuzzleApp.Pages
         public int TotalPuzzles { get; set; }
         public string StudentIdentifier { get; set; }
         public Guid BundleAttemptId { get; set; }
+        public string? ReturnUrl { get; set; }
 
         // Only keep the new PuzzleBlocks system
         public List<PuzzleBlock> PuzzleBlocks { get; set; }
@@ -54,6 +56,14 @@ namespace ParsonsPuzzleApp.Pages
 
             StudentIdentifier = studentId;
             BundleAttemptId = bundleAttemptId.Value;
+
+            // Resolve return URL for LTI sessions
+            var sessionIdStr = HttpContext.Session.GetString(LtiSessionKeys.SessionId);
+            if (!string.IsNullOrEmpty(sessionIdStr) && int.TryParse(sessionIdStr, out var ltiSessionId))
+            {
+                var ltiSession = await _context.LtiSessions.FindAsync(ltiSessionId);
+                ReturnUrl = ltiSession?.ReturnUrl;
+            }
 
             Bundle = await _context.Bundles
                 .Include(b => b.BundlePuzzles)

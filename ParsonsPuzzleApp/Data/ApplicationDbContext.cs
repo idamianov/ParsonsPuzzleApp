@@ -28,6 +28,9 @@ namespace ParsonsPuzzleApp.Data
         public DbSet<LtiPlatform> LtiPlatforms { get; set; }
         public DbSet<LtiDeployment> LtiDeployments { get; set; }
         public DbSet<LtiState> LtiStates { get; set; }
+        public DbSet<LtiSession> LtiSessions { get; set; }
+        public DbSet<LtiResourceLink> LtiResourceLinks { get; set; }
+        public DbSet<LtiAccessToken> LtiAccessTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -150,6 +153,37 @@ namespace ParsonsPuzzleApp.Data
 
             modelBuilder.Entity<LtiState>()
                 .HasIndex(s => s.ExpiresAt);
+
+            modelBuilder.Entity<LtiSession>()
+                .HasOne(s => s.Platform)
+                .WithMany()
+                .HasForeignKey(s => s.LtiPlatformId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LtiSession>()
+                .HasOne(s => s.Bundle)
+                .WithMany()
+                .HasForeignKey(s => s.BundleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LtiResourceLink>()
+                .HasOne(r => r.Platform)
+                .WithMany()
+                .HasForeignKey(r => r.LtiPlatformId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LtiResourceLink>()
+                .HasIndex(r => new { r.LtiPlatformId, r.DeploymentId, r.ResourceLinkId })
+                .IsUnique();
+
+            modelBuilder.Entity<LtiAccessToken>()
+                .HasOne(t => t.Platform)
+                .WithMany()
+                .HasForeignKey(t => t.LtiPlatformId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LtiAccessToken>()
+                .HasIndex(t => t.ExpiresAt);
         }
     }
 }
