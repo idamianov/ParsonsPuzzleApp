@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using System.Text.Json;
 using LtiAdvantage.Lti;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -161,6 +162,9 @@ namespace ParsonsPuzzleApp.Services
                     ContextTitle = ltiRequest.Context?.Title
                 };
 
+                result.ReturnUrl = ExtractReturnUrl(jwt.Claims);
+                result.AgsEndpoint = ParseAgsEndpoint(jwt.Claims);
+
                 _logger.LogInformation("Successfully validated LTI launch for user {UserId} from {Platform}",
                     result.Subject, platform.Name);
 
@@ -319,6 +323,60 @@ namespace ParsonsPuzzleApp.Services
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(bytes);
             return Convert.ToBase64String(bytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
+        }
+
+        private static string? ExtractReturnUrl(IEnumerable<System.Security.Claims.Claim> claims)
+        {
+            var launchPresentationClaim = claims
+                .FirstOrDefault(c => c.Type == "https://purl.imsglobal.org/spec/lti/claim/launch_presentation")
+                ?.Value;
+
+            if (string.IsNullOrEmpty(launchPresentationClaim))
+                return null;
+
+            try
+            {
+                var doc = JsonDocument.Parse(launchPresentationClaim);
+                if (doc.RootElement.TryGetProperty("return_url", out var returnUrlEl))
+                    return returnUrlEl.GetString();
+            }
+            catch { /* malformed claim — ignore */ }
+
+            return null;
+        }
+
+        private static LtiLaunchResult.LtiAgsClaimSet? ParseAgsEndpoint(IEnumerable<System.Security.Claims.Claim> claims)
+        {
+            var agsClaim = claims
+                .FirstOrDefault(c => c.Type == "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
+                ?.Value;
+
+            if (string.IsNullOrEmpty(agsClaim))
+                return null;
+
+            try
+            {
+                var doc = JsonDocument.Parse(agsClaim);
+                var root = doc.RootElement;
+
+                string[]? scopes = null;
+                if (root.TryGetProperty("scope", out var scopeEl) && scopeEl.ValueKind == JsonValueKind.Array)
+                    scopes = scopeEl.EnumerateArray().Select(s => s.GetString()!).ToArray();
+
+                string? lineItemUrl = root.TryGetProperty("lineitem", out var li) ? li.GetString() : null;
+                string? lineItemsUrl = root.TryGetProperty("lineitems", out var lis) ? lis.GetString() : null;
+
+                if (lineItemUrl == null && lineItemsUrl == null)
+                    return null;
+
+                return new LtiLaunchResult.LtiAgsClaimSet
+                {
+                    Scopes = scopes,
+                    LineItemUrl = lineItemUrl,
+                    LineItemsUrl = lineItemsUrl
+                };
+            }
+            catch { return null; }
         }
     }
 }
