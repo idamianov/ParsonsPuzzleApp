@@ -196,6 +196,7 @@ namespace ParsonsPuzzleApp.Controllers
                     var resourceLink = await _context.LtiResourceLinks
                         .FirstOrDefaultAsync(rl =>
                             rl.LtiPlatformId == platform.Id &&
+                            rl.DeploymentId == launchResult.DeploymentId &&
                             rl.ResourceLinkId == launchResult.ResourceLinkId, cancellationToken);
 
                     if (resourceLink == null)
@@ -225,7 +226,7 @@ namespace ParsonsPuzzleApp.Controllers
                 // 5. Create LtiSession to track this launch for grade passback
                 var ltiSession = new LtiSession
                 {
-                    UserId = user.Id,
+                    UserId = launchResult.Subject,
                     LtiPlatformId = platform.Id,
                     DeploymentId = launchResult.DeploymentId,
                     ResourceLinkId = launchResult.ResourceLinkId,
