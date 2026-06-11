@@ -1,7 +1,10 @@
 using System.Web;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using ParsonsPuzzleApp.Constants;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Entities;
 using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Models;
 
@@ -15,17 +18,23 @@ namespace ParsonsPuzzleApp.Controllers
     {
         private readonly ILtiService _ltiService;
         private readonly IBundleAccessService _bundleAccessService;
+        private readonly ApplicationDbContext _context;
+        private readonly ILtiUserService _ltiUserService;
         private readonly LtiOptions _options;
         private readonly ILogger<LtiController> _logger;
 
         public LtiController(
             ILtiService ltiService,
             IBundleAccessService bundleAccessService,
+            ApplicationDbContext context,
+            ILtiUserService ltiUserService,
             IOptions<LtiOptions> options,
             ILogger<LtiController> logger)
         {
             _ltiService = ltiService;
             _bundleAccessService = bundleAccessService;
+            _context = context;
+            _ltiUserService = ltiUserService;
             _options = options.Value;
             _logger = logger;
         }
@@ -170,26 +179,76 @@ namespace ParsonsPuzzleApp.Controllers
             // Determine where to redirect
             if (deployment?.BundleId != null)
             {
-                // Grant access to the bundle and redirect to solve page
+                // 1. Get or create the IdentityUser for this LTI student
+                var user = await _ltiUserService.GetOrCreateLtiUserAsync(launchResult, cancellationToken);
+                await _ltiUserService.SignInLtiUserAsync(user);
+
+                // 2. Grant session-based bundle access (backward-compatible)
                 var studentIdentifier = $"lti:{platform.Id}:{launchResult.Subject}";
                 _bundleAccessService.GrantAccess(deployment.BundleId.Value, studentIdentifier);
 
-                // Generate a new bundle attempt ID for this LTI session
+                // 3. Generate bundle attempt ID
                 var bundleAttemptId = Guid.NewGuid();
 
-                // Store LTI context in session for potential grade passback later
+                // 4. Upsert LtiResourceLink if the platform sent AGS endpoint info
+                if (launchResult.AgsEndpoint != null && !string.IsNullOrEmpty(launchResult.ResourceLinkId))
+                {
+                    var resourceLink = await _context.LtiResourceLinks
+                        .FirstOrDefaultAsync(rl =>
+                            rl.LtiPlatformId == platform.Id &&
+                            rl.ResourceLinkId == launchResult.ResourceLinkId, cancellationToken);
+
+                    if (resourceLink == null)
+                    {
+                        resourceLink = new LtiResourceLink
+                        {
+                            LtiPlatformId = platform.Id,
+                            DeploymentId = launchResult.DeploymentId,
+                            ResourceLinkId = launchResult.ResourceLinkId,
+                            LineItemUrl = launchResult.AgsEndpoint.LineItemUrl,
+                            LineItemsUrl = launchResult.AgsEndpoint.LineItemsUrl,
+                            Scopes = launchResult.AgsEndpoint.Scopes,
+                            CreatedAt = DateTime.UtcNow,
+                            LastModifiedAt = DateTime.UtcNow
+                        };
+                        _context.LtiResourceLinks.Add(resourceLink);
+                    }
+                    else
+                    {
+                        resourceLink.LineItemUrl = launchResult.AgsEndpoint.LineItemUrl;
+                        resourceLink.LineItemsUrl = launchResult.AgsEndpoint.LineItemsUrl;
+                        resourceLink.Scopes = launchResult.AgsEndpoint.Scopes;
+                        resourceLink.LastModifiedAt = DateTime.UtcNow;
+                    }
+                }
+
+                // 5. Create LtiSession to track this launch for grade passback
+                var ltiSession = new LtiSession
+                {
+                    UserId = user.Id,
+                    LtiPlatformId = platform.Id,
+                    DeploymentId = launchResult.DeploymentId,
+                    ResourceLinkId = launchResult.ResourceLinkId,
+                    BundleAttemptId = bundleAttemptId,
+                    BundleId = deployment.BundleId.Value,
+                    ReturnUrl = launchResult.ReturnUrl,
+                    ContextTitle = launchResult.ContextTitle,
+                    LaunchedAt = DateTime.UtcNow
+                };
+                _context.LtiSessions.Add(ltiSession);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                // 6. Store session keys for downstream pages
                 HttpContext.Session.SetString(LtiSessionKeys.UserId, launchResult.Subject);
                 HttpContext.Session.SetString(LtiSessionKeys.UserName, launchResult.DisplayName);
                 HttpContext.Session.SetString(LtiSessionKeys.PlatformId, platform.Id.ToString());
                 HttpContext.Session.SetString(LtiSessionKeys.DeploymentId, launchResult.DeploymentId);
                 HttpContext.Session.SetString(LtiSessionKeys.BundleAttemptId, bundleAttemptId.ToString());
+                HttpContext.Session.SetString(LtiSessionKeys.SessionId, ltiSession.Id.ToString());
 
                 if (!string.IsNullOrEmpty(launchResult.ResourceLinkId))
-                {
                     HttpContext.Session.SetString(LtiSessionKeys.ResourceLinkId, launchResult.ResourceLinkId);
-                }
 
-                // Redirect to the bundle (puzzleIndex is 1-based)
                 return RedirectToPage("/SolvePuzzle", new
                 {
                     bundleId = deployment.BundleId.Value,
