@@ -4,15 +4,37 @@ The **Parsons Puzzle Toolkit**, recently presented at [FMNS-2025 in Blagoevgrad,
 
 <img width="949" height="557" alt="image" src="https://github.com/user-attachments/assets/9d2c0dbe-94d7-4d74-8789-2d33c99a3912" />
 
-Parsons Puzzles are structured as code-reordering exercises, where students reconstruct correct programs from shuffled code lines. By removing the burden of syntax, these puzzles allow learners to focus on logical sequencing and algorithmic reasoning. However, traditional Parsons Puzzle tools tend to be confined to one or two languages - often with similar imperative structures - and offer limited flexibility in task design. The **Parsons Puzzle Toolkit** overcomes these constraints by introducing multi-language support (C, C++, C#, Java, JavaScript, Python, and SQL), multi-paradigm compatibility, and advanced features that support more complex learning scenarios.
+## Project Team and History
 
-Key innovations include:
+The Parsons Puzzle Toolkit was conceived and initiated by Ivo Damyanov as part of ongoing research into computational thinking, programming education, and code comprehension.
+
+During the early stages of the project, Martin Madzhov joined the initiative and contributed to the initial research and conceptualization efforts that led to the publication of the research paper titled [Enhancing Computational Thinking and Code Comprehension through Advanced Parson Puzzles](https://azbuki.bg/uncategorized/enhancing-computational-thinking-and-code-comprehension-through-advanced-parson-puzzles/). Following this milestone, Martin stepped away from the project.
+
+The project is currently being actively developed with the outstanding contributions of two talented student developers:
+
+👩‍💻 Miljana Vasilev - Core Developer and Research Assistant
+
+Miljana has played a key role in improving the internal architecture and maintainability of the toolkit. Her contributions include substantial refactoring of the codebase, enhancements to its overall organization and extensibility, and the implementation of an automated feedback mechanism based on Levenshtein distance analysis, enabling more meaningful guidance for learners during puzzle-solving activities.
+
+👨‍💻 Asen Plesnev - Core Developer and Research Assistant
+
+Asen has significantly enhanced the toolkit's support for multiple programming languages by improving the underlying language-processing architecture and increasing its flexibility across diverse programming paradigms. He also led the implementation of LTI compatibility, allowing seamless integration of the Parsons Puzzle Toolkit into Learning Management Systems (LMS) such as Moodle, Blackboard, and other LTI-compliant educational platforms.
+
+Their dedication, technical expertise, and innovative ideas have become an essential part of the project's ongoing evolution and future direction.
+
+## Parsons Puzzles
+
+Parsons Puzzles are structured as code-reordering exercises, where students reconstruct correct programs from shuffled code lines. By removing the burden of syntax, these puzzles allow learners to focus on logical sequencing and algorithmic reasoning. However, traditional Parsons Puzzle tools tend to be confined to one or two languages - often with similar imperative structures - and offer limited flexibility in task design. The **Parsons Puzzle Toolkit** overcomes these constraints by introducing multi-language support (C, C++, C#, Java, JavaScript, Python, SQL, pseudo-languages and natural languages), multi-paradigm compatibility, and advanced features that support more complex learning scenarios.
+
+## Key Features
 
 * **Support for multi-line and nested code blocks**, allowing instructors to design more realistic and complex programming exercises that reflect the structure of actual codebases.
 * **Mini-blocks**, which segment tasks into smaller, concept-focused components, making it easier for learners to engage with specific programming constructs or logical subroutines.
 * **Customizable task design**, enabling educators to create puzzles tailored to different skill levels, languages, or conceptual goals.
 
 <img width="925" height="436" alt="image" src="https://github.com/user-attachments/assets/40a200cc-e19a-4d69-a7ee-e96f20b2c12f" />
+
+## Educational Impact
 
 Beyond its technical features, the toolkit is also pedagogically significant. By blending the visual intuitiveness of block-based learning with the rigor of text-based coding, the toolkit functions as a bridge for students transitioning from environments like Scratch to modern general-purpose languages. This hybrid model supports learners at various levels, from absolute beginners to those making the leap into industry-standard development languages.
 
@@ -23,11 +45,6 @@ The toolkit's visual interface and logical segmentation support through structur
 - **algorithmic design**.
 
 This positions the Parsons Puzzle Toolkit not only as an effective classroom tool but also as a foundational component in the broader landscape of computer science education.
-
-Moreover, the toolkit is currently undergoing **active development**, with new features in progress, including **automated evaluation and feedback mechanisms**. These forthcoming additions aim to provide real-time guidance and adaptive learning pathways, thereby enhancing the toolkit's effectiveness as both a formative and summative assessment tool.
-
-> [!Note]
-> A full research article detailing the theoretical foundations, technical implementation, and educational applications of the Parsons Puzzle Toolkit is currently under review for publication in a peer-reviewed computer science education journal.
 
 By expanding the pedagogical reach and technical capacity of traditional Parsons Puzzles, this toolkit offers a future-ready solution for programming education. Whether in introductory computer science courses, specialized programming tracks, or database instruction, it delivers a highly adaptable and impactful learning experience that aligns with modern educational goals.
 
