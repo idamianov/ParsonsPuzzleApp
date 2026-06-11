@@ -104,6 +104,15 @@
                             </button>
                         </div>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+                    {
+                        <div class="mt-4 text-center">
+                            <a href="@Model.ReturnUrl" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-left-circle"></i> Return to Course
+                            </a>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
