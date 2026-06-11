@@ -338,7 +338,12 @@ namespace ParsonsPuzzleApp.Services
             {
                 using var doc = JsonDocument.Parse(launchPresentationClaim);
                 if (doc.RootElement.TryGetProperty("return_url", out var returnUrlEl))
-                    return returnUrlEl.GetString();
+                {
+                    var url = returnUrlEl.GetString();
+                    if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp))
+                        return url;
+                }
             }
             catch { /* malformed claim — ignore */ }
 

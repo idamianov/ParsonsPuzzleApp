@@ -94,11 +94,12 @@ namespace ParsonsPuzzleApp.Services
             var content = new StringContent(json, Encoding.UTF8, "application/vnd.ims.lis.v1.score+json");
 
             var httpClient = _httpClientFactory.CreateClient("LtiPlatform");
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             try
             {
-                var response = await httpClient.PostAsync(scoreUrl, content, ct);
+                var request = new HttpRequestMessage(HttpMethod.Post, scoreUrl) { Content = content };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                var response = await httpClient.SendAsync(request, ct);
 
                 if (response.IsSuccessStatusCode)
                 {

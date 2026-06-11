@@ -38,11 +38,13 @@ namespace ParsonsPuzzleApp.Services
                 return usersWithClaim[0];
             }
 
-            // 2. Try find by email (first launch, claim not yet stored)
+            // 2. Try find by email — only link to accounts that were created via LTI
+            // (username starts with "lti_") to prevent instructor account hijack
             if (!string.IsNullOrEmpty(launchResult.Email))
             {
                 var existingByEmail = await _userManager.FindByEmailAsync(launchResult.Email);
-                if (existingByEmail != null)
+                if (existingByEmail != null && existingByEmail.UserName != null &&
+                    existingByEmail.UserName.StartsWith("lti_", StringComparison.OrdinalIgnoreCase))
                 {
                     var linkResult = await _userManager.AddClaimAsync(existingByEmail, new Claim(LtiSubjectClaimType, ltiSubjectValue));
                     if (!linkResult.Succeeded)
