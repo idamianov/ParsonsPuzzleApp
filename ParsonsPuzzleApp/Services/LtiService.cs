@@ -336,7 +336,7 @@ namespace ParsonsPuzzleApp.Services
 
             try
             {
-                var doc = JsonDocument.Parse(launchPresentationClaim);
+                using var doc = JsonDocument.Parse(launchPresentationClaim);
                 if (doc.RootElement.TryGetProperty("return_url", out var returnUrlEl))
                     return returnUrlEl.GetString();
             }
@@ -356,12 +356,15 @@ namespace ParsonsPuzzleApp.Services
 
             try
             {
-                var doc = JsonDocument.Parse(agsClaim);
+                using var doc = JsonDocument.Parse(agsClaim);
                 var root = doc.RootElement;
 
                 string[]? scopes = null;
                 if (root.TryGetProperty("scope", out var scopeEl) && scopeEl.ValueKind == JsonValueKind.Array)
-                    scopes = scopeEl.EnumerateArray().Select(s => s.GetString()!).ToArray();
+                    scopes = scopeEl.EnumerateArray()
+                        .Where(s => s.ValueKind == JsonValueKind.String)
+                        .Select(s => s.GetString()!)
+                        .ToArray();
 
                 string? lineItemUrl = root.TryGetProperty("lineitem", out var li) ? li.GetString() : null;
                 string? lineItemsUrl = root.TryGetProperty("lineitems", out var lis) ? lis.GetString() : null;
