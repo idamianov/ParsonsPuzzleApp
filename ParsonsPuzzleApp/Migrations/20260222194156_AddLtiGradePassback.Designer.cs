@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ParsonsPuzzleApp.Data;
 
@@ -10,9 +11,11 @@ using ParsonsPuzzleApp.Data;
 namespace ParsonsPuzzleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260222194156_AddLtiGradePassback")]
+    partial class AddLtiGradePassback
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.16");
@@ -254,7 +257,7 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("ShareableLink")
                         .IsUnique();
 
-                    b.ToTable("Bundles", (string)null);
+                    b.ToTable("Bundles");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.BundlePuzzle", b =>
@@ -269,7 +272,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("PuzzleId");
 
-                    b.ToTable("BundlePuzzles", (string)null);
+                    b.ToTable("BundlePuzzles");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.Language", b =>
@@ -312,7 +315,7 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Languages", (string)null);
+                    b.ToTable("Languages");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.LtiAccessToken", b =>
@@ -342,7 +345,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("LtiPlatformId");
 
-                    b.ToTable("LtiAccessTokens", (string)null);
+                    b.ToTable("LtiAccessTokens");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.LtiDeployment", b =>
@@ -380,7 +383,7 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("LtiPlatformId", "DeploymentId")
                         .IsUnique();
 
-                    b.ToTable("LtiDeployments", (string)null);
+                    b.ToTable("LtiDeployments");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.LtiPlatform", b =>
@@ -433,7 +436,7 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("Issuer", "ClientId")
                         .IsUnique();
 
-                    b.ToTable("LtiPlatforms", (string)null);
+                    b.ToTable("LtiPlatforms");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.LtiResourceLink", b =>
@@ -473,7 +476,7 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("LtiPlatformId", "ResourceLinkId")
                         .IsUnique();
 
-                    b.ToTable("LtiResourceLinks", (string)null);
+                    b.ToTable("LtiResourceLinks");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.LtiSession", b =>
@@ -525,7 +528,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("LtiPlatformId");
 
-                    b.ToTable("LtiSessions", (string)null);
+                    b.ToTable("LtiSessions");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.LtiState", b =>
@@ -565,7 +568,7 @@ namespace ParsonsPuzzleApp.Migrations
                     b.HasIndex("State")
                         .IsUnique();
 
-                    b.ToTable("LtiStates", (string)null);
+                    b.ToTable("LtiStates");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.MiniBlock", b =>
@@ -592,7 +595,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("PuzzleBlockLineId");
 
-                    b.ToTable("MiniBlocks", (string)null);
+                    b.ToTable("MiniBlocks");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.Puzzle", b =>
@@ -640,7 +643,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("LanguageId");
 
-                    b.ToTable("Puzzles", (string)null);
+                    b.ToTable("Puzzles");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.PuzzleBlock", b =>
@@ -679,7 +682,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("PuzzleId");
 
-                    b.ToTable("PuzzleBlocks", (string)null);
+                    b.ToTable("PuzzleBlocks");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.PuzzleBlockLine", b =>
@@ -708,7 +711,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("PuzzleBlockId");
 
-                    b.ToTable("PuzzleBlockLines", (string)null);
+                    b.ToTable("PuzzleBlockLines");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttempt", b =>
@@ -749,7 +752,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("PuzzleId");
 
-                    b.ToTable("StudentAttempts", (string)null);
+                    b.ToTable("StudentAttempts");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlock", b =>
@@ -776,7 +779,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("StudentAttemptId");
 
-                    b.ToTable("StudentAttemptBlocks", (string)null);
+                    b.ToTable("StudentAttemptBlocks");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptBlockLine", b =>
@@ -804,7 +807,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("StudentAttemptBlockId");
 
-                    b.ToTable("StudentAttemptBlockLines", (string)null);
+                    b.ToTable("StudentAttemptBlockLines");
                 });
 
             modelBuilder.Entity("ParsonsPuzzleApp.Entities.StudentAttemptMiniBlock", b =>
@@ -828,7 +831,7 @@ namespace ParsonsPuzzleApp.Migrations
 
                     b.HasIndex("StudentAttemptBlockLineId");
 
-                    b.ToTable("StudentAttemptMiniBlocks", (string)null);
+                    b.ToTable("StudentAttemptMiniBlocks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

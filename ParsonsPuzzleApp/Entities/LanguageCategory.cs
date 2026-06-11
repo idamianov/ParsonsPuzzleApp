@@ -15,6 +15,12 @@ namespace ParsonsPuzzleApp.Entities
         /// <summary>
         /// SQL-based languages (T-SQL, MySQL, PostgreSQL, PL/SQL)
         /// </summary>
-        SQL = 3
+        SQL = 3,
+
+        /// <summary>
+        /// Languages with no special syntax rules — each line is a block, no indentation,
+        /// no bracket splitting. Suitable for natural language, pseudocode, or other ordered sequences.
+        /// </summary>
+        Declarative = 4
     }
 }
