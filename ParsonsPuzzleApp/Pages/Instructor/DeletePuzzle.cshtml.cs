@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
+using ParsonsPuzzleApp.Entities;
 using System.Threading.Tasks;
 
 namespace ParsonsPuzzleApp.Pages.Instructor
@@ -34,6 +34,7 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             var userId = _userManager.GetUserId(User);
 
             Puzzle = await _context.Puzzles
+                .Include(p => p.Language)
                 .Include(p => p.BundlePuzzles)
                 .ThenInclude(bp => bp.Bundle)
                 .FirstOrDefaultAsync(m => m.Id == id && m.InstructorId == userId);

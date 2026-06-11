@@ -5,11 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using ParsonsPuzzleApp.Entities;
 
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
@@ -52,11 +48,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
             // Show only puzzles created by this instructor
             PuzzleOptions = await _context.Puzzles
+                .Include(p => p.Language)
                 .Where(p => p.InstructorId == userId)
                 .Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = $"{p.Title} ({p.Language})"
+                    Text = $"{p.Title} ({p.Language.DisplayName})"
                 })
                 .ToListAsync();
 
@@ -75,11 +72,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             if (!ModelState.IsValid)
             {
                 PuzzleOptions = await _context.Puzzles
+                    .Include(p => p.Language)
                     .Where(p => p.InstructorId == userId)
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = $"{p.Title} ({p.Language})"
+                        Text = $"{p.Title} ({p.Language.DisplayName})"
                     })
                     .ToListAsync();
                 return Page();
@@ -90,11 +88,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             {
                 ModelState.AddModelError("", "Моля, изберете поне един пъзел за колекцията.");
                 PuzzleOptions = await _context.Puzzles
+                    .Include(p => p.Language)
                     .Where(p => p.InstructorId == userId)
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = $"{p.Title} ({p.Language})"
+                        Text = $"{p.Title} ({p.Language.DisplayName})"
                     })
                     .ToListAsync();
                 return Page();
@@ -143,11 +142,12 @@ namespace ParsonsPuzzleApp.Pages.Instructor
             {
                 ModelState.AddModelError("", "Грешка при запазване на колекцията. Моля, опитайте отново.");
                 PuzzleOptions = await _context.Puzzles
+                    .Include(p => p.Language)
                     .Where(p => p.InstructorId == userId)
                     .Select(p => new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = $"{p.Title} ({p.Language})"
+                        Text = $"{p.Title} ({p.Language.DisplayName})"
                     })
                     .ToListAsync();
                 return Page();

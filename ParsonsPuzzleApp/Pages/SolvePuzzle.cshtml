@@ -10,12 +10,26 @@
 
 <div class="container-fluid d-flex flex-column" style="height: 100vh; padding: 0; overflow: hidden;">
     <div class="header-section d-flex justify-content-between align-items-center p-3 bg-light" style="flex-shrink: 0;">
-        <h3>Пъзел @Model.PuzzleIndex от @Model.TotalPuzzles - @Model.Puzzle.Language</h3>
+        <h3>Пъзел @Model.PuzzleIndex от @Model.TotalPuzzles - @Model.Puzzle.Language.DisplayName</h3>
         <div>
             <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#taskModal">Условие на заданието</button>
-            <button class="btn btn-primary me-2" onclick="checkSolution()">Провери</button>
             <button class="btn btn-success me-2" onclick="submitSolution()">Подай</button>
             <button class="btn btn-danger" onclick="if(confirm('Сигурни ли сте?')) resetPuzzle()">Рестарт</button>
+            <div class="progress-indicator me-3">
+                <svg width="50" height="50">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="5" />
+                    <circle id="progressCircle" cx="25" cy="25" r="20" fill="none" stroke="#4CAF50" stroke-width="5"
+                            stroke-dasharray="126" stroke-dashoffset="126"
+                            style="transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;" />
+                </svg>
+                <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 12px;">0%</span>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+            {
+                <a href="@Model.ReturnUrl" class="btn btn-outline-secondary btn-sm ms-2">
+                    <i class="bi bi-box-arrow-left"></i> Exit to Course
+                </a>
+            }
         </div>
     </div>
     <div class="middle-section d-flex" style="flex: 0 1 70vh; min-height: 350px; overflow: hidden;">
@@ -86,9 +100,9 @@
             word-break: break-word;
         }
 
-            .code-block:hover {
-                background-color: #e9ecef;
-            }
+        .code-block:hover {
+            background-color: #e9ecef;
+        }
 
         .source-panel .code-block {
             background-color: #e2f0fd;
@@ -126,10 +140,10 @@
             position: relative;
         }
 
-            .slot.filled {
-                min-width: auto;
-                padding: 0;
-            }
+        .slot.filled {
+            min-width: auto;
+            padding: 0;
+        }
 
         .mini-block {
             display: inline-block;
@@ -228,6 +242,13 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+
+        .progress-indicator {
+            margin-left: 20px;
+            position: relative;
+            display: inline-block;
+            align-items: center;
+        }
     </style>
     <script>
         let startTime = Date.now();
@@ -288,125 +309,153 @@
             }
 
             exportSolution(targetPanel) {
-                const blocks = targetPanel.querySelectorAll('.code-block, .brace-block');
-                let solution = [];
+            const blocks = targetPanel.querySelectorAll('.code-block, .brace-block');
 
-                blocks.forEach(block => {
-                    if (block.classList.contains('brace-block')) {
-                        // Include auto-generated brace blocks
-                        const indent = parseInt(block.style.marginLeft || 0) / 20;
-                        solution.push('  '.repeat(indent) + block.textContent.trim());
-                    } else {
-                        // Handle regular and multiline blocks
-                        let content = '';
-                        const codeContentElement = block.querySelector('.code-content');
+            const result = [];
 
-                        if (codeContentElement) {
-                            // Clone the content to avoid modifying the original
-                            const clonedContent = codeContentElement.cloneNode(true);
+            blocks.forEach((block) => {
 
-                            // Remove all remove buttons before processing
-                            clonedContent.querySelectorAll('.remove-mini-block').forEach(btn => btn.remove());
+                // Handle brace blocks separately
+                if (block.classList.contains('brace-block')) {
+                    const indent = parseInt(block.style.marginLeft || "0") / 20;
 
-                            // Handle multiline content properly
-                            if (block.classList.contains('multiline-block')) {
-                                // Process slots in the cloned content
-                                const slots = clonedContent.querySelectorAll('.slot.filled');
-                                slots.forEach(slot => {
-                                    const miniBlock = slot.querySelector('.mini-block');
-                                    if (miniBlock) {
-                                        // Replace the slot with just the mini-block text
-                                        const textNode = document.createTextNode(miniBlock.textContent.trim());
-                                        slot.parentNode.replaceChild(textNode, slot);
-                                    }
-                                });
-
-                                // Convert <br> tags back to \n and clean up HTML
-                                content = clonedContent.innerHTML
-                                    .replace(/<br\s*\/?>/gi, '\n')
-                                    .replace(/<[^>]*>/g, '') // Remove other HTML tags
-                                    .replace(/&lt;/g, '<')
-                                    .replace(/&gt;/g, '>')
-                                    .replace(/&amp;/g, '&')
-                                    .replace(/&quot;/g, '"');
-                            } else {
-                                // For single-line blocks, process slots
-                                const slots = clonedContent.querySelectorAll('.slot.filled');
-                                slots.forEach(slot => {
-                                    const miniBlock = slot.querySelector('.mini-block');
-                                    if (miniBlock) {
-                                        // Replace the slot with just the mini-block text
-                                        const textNode = document.createTextNode(miniBlock.textContent.trim());
-                                        slot.parentNode.replaceChild(textNode, slot);
-                                    }
-                                });
-
-                                // For unfilled slots, keep the slot marker
-                                const unfilledSlots = clonedContent.querySelectorAll('.slot:not(.filled)');
-                                unfilledSlots.forEach(slot => {
-                                    const slotName = slot.dataset.slot;
-                                    const textNode = document.createTextNode(`§${slotName}§`);
-                                    slot.parentNode.replaceChild(textNode, slot);
-                                });
-
-                                // Get the text content
-                                content = clonedContent.textContent || '';
+                    result.push({
+                        blockId: 0,
+                        indent: indent,
+                        lines: [
+                            {
+                                lineIndex: 0,
+                                text: block.textContent.trim(),
+                                slots: []
                             }
-                        } else {
-                            content = block.textContent || '';
-                        }
+                        ]
+                    });
 
-                        const indent = parseInt(block.style.marginLeft || 0) / 20;
+                    return;
+                }
 
-                        // Split content by lines and indent each line
-                        const lines = content.split('\n');
-                        lines.forEach(line => {
-                            const cleanLine = line.trim();
-                            if (cleanLine) { // Only add non-empty lines
-                                solution.push('  '.repeat(indent) + cleanLine);
-                            }
+                // Regular puzzle block
+                const blockId = block.dataset.blockId;
+                const indent = parseInt(block.style.marginLeft || "0") / 20;
+
+                const contentElement = block.querySelector('.code-content');
+
+                if (!contentElement) return;
+
+                const cloned = contentElement.cloneNode(true);
+
+                // Remove buttons
+                cloned.querySelectorAll('.remove-mini-block').forEach(btn => btn.remove());
+
+                // Replace filled slots with their miniblocks
+                const slotElements = cloned.querySelectorAll('.slot');
+                const slotData = [];
+
+                slotElements.forEach(slot => {
+                    const slotName = slot.dataset.slot;
+
+                    const mini = slot.querySelector('.mini-block');
+
+                    if (mini) {
+                        // filled slot
+                        slotData.push({
+                            slotName: slotName,
+                            value: mini.textContent.trim()
                         });
+
+                        // Replace slot with text for line reconstruction
+                        const textNode = document.createTextNode(mini.textContent.trim());
+                        slot.parentNode.replaceChild(textNode, slot);
+
+                    } else {
+                        // unfilled slot → keep placeholder in text
+                        const textNode = document.createTextNode(`§${slotName}§`);
+                        slot.parentNode.replaceChild(textNode, slot);
                     }
                 });
 
-                return solution.join('\n');
-            }
+                // Convert <br> to \n for multiline blocks
+                let text = cloned.innerHTML
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<[^>]*>/g, ''); // remove any HTML
+
+                const parser = new DOMParser();
+                text = parser.parseFromString(text, 'text/html').documentElement.textContent;
+
+                const lines = text.split('\n').map(l => l.trim()).filter(x => x !== '');
+
+                const preparedLines = lines.map((lineText, i) => {
+                    // Get slots belonging to this line based on original positions
+                    const slotsForThisLine = slotData.filter(sd => lineText.includes(sd.value));
+                    return {
+                        lineIndex: i,
+                        text: lineText,
+                        slots: slotsForThisLine.map(s => ({
+                            slotId: s.slotName,
+                            value: s.value
+                        }))
+                    };
+                });
+
+                result.push({
+                    blockId: blockId,
+                    indent: indent,
+                    lines: preparedLines
+                });
+            });
+
+            return result;
+        }
         }
 
         const blockManager = new PuzzleBlockManager();
+        let maxDistance = null;
 
         function initializePuzzle() {
             const sourcePanel = document.getElementById('sourcePanel');
             const targetPanel = document.getElementById('targetPanel');
             const miniBlocksPanel = document.getElementById('miniBlocksPanel');
 
-            // Load puzzle blocks (indentation already removed by backend)
             const puzzleBlocks = @Html.Raw(Json.Serialize(Model.PuzzleBlocksJson));
             puzzleBlocks.forEach(block => {
                 let blockElement;
+
+                const blockId = block.id;
 
                 if (block.isMultiline && block.lines && block.lines.length > 0) {
                     // Create multiline block
                     blockElement = blockManager.createMultilineBlock({
                         groupId: block.groupId,
                         lines: block.lines.map(line => ({
-                            content: line.content // Backend already removed indentation
+                            content: line.content,
+                            slots: line.slots || []  // Ensure slots are passed from backend
                         }))
                     });
-                } else {
+                    blockElement.dataset.blockId = blockId;
+                }
+                else
+                {
                     // Create single-line block
                     blockElement = document.createElement('div');
                     blockElement.className = 'code-block'; // Removed distractor class hint
 
-                    if (block.slotName) {
-                        // Handle slots - escape HTML properly
-                        const contentWithSlot = escapeHtml(block.content).replace(
-                            `§${escapeHtml(block.slotName)}§`,
-                            `<span class="slot" data-slot="${escapeHtml(block.slotName)}"></span>`
-                        );
-                        blockElement.innerHTML = `<span class="code-content">${contentWithSlot}</span>`;
-                    } else {
-                        blockElement.innerHTML = `<span class="code-content">${escapeHtml(block.content)}</span>`;
+                    blockElement.dataset.blockId = blockId;
+
+                    // Loop through lines (each block may have multiple lines and slots)
+                    if (block.lines) {
+                        block.lines.forEach(line => {
+                            let lineContent = escapeHtml(line.content);
+                            // Loop through all slots in this line and add them
+                            line.slots.forEach(slot => 
+                            {
+                                const slotHtml = `<span class="slot" data-slot="${escapeHtml(slot)}"></span>`;
+                                lineContent = lineContent.replace(`§${escapeHtml(slot)}§`, slotHtml);
+                            });
+
+                            const lineElement = document.createElement('div');
+                            lineElement.innerHTML = `<span class="code-content">${lineContent}</span>`;
+                            blockElement.appendChild(lineElement);
+                        });
                     }
 
                     // Add indentation buttons (will be hidden in source panel by CSS)
@@ -426,7 +475,6 @@
                 onAdd: function(evt) {
                     const block = evt.item;
                     block.style.marginLeft = '0px'; // Reset any indentation when returning to source
-                    // Removed distractor class removal - no longer needed
                 }
             });
 
@@ -437,9 +485,17 @@
                 onAdd: function(evt) {
                     addIndentButtons(evt.item);
                     updateBraces();
+                    checkSolution();
                 },
-                onSort: function() {
+                onSort: function(evt) {
                     updateBraces();
+                    if (!evt.from || evt.from === evt.to) 
+                    {
+                        checkSolution();
+                    }
+                },
+                onRemove: function() {
+                    checkSolution();
                 }
             });
 
@@ -463,14 +519,15 @@
                             removeBtn.className = 'remove-mini-block';
                             removeBtn.textContent = 'X';
                             removeBtn.onclick = () => {
-                                // Only try to append to miniBlocksPanel if it's visible
                                 if (miniBlocksPanel && miniBlocksPanel.style.display !== 'none') {
                                     miniBlocksPanel.appendChild(miniBlock);
                                 }
                                 removeBtn.remove();
                                 slot.classList.remove('filled');
+                                checkSolution();
                             };
                             slot.appendChild(removeBtn);
+                            checkSolution();
                         }
                     });
                 });
@@ -500,6 +557,7 @@
                 block.style.marginLeft = `${indent - 20}px`;
                 updateBraces();
             }
+            checkSolution();
         }
 
         function shiftRight(btn) {
@@ -507,12 +565,13 @@
             let indent = parseInt(block.style.marginLeft || 0);
             block.style.marginLeft = `${indent + 20}px`;
             updateBraces();
+            checkSolution();
         }
 
         function updateBraces() {
             // Only add braces for bracket-based languages
-            const bracketLanguages = ['C', 'Cpp', 'CSharp', 'Java', 'JavaScript'];
-            if (!bracketLanguages.includes('@Model.Puzzle.Language.ToString()')) return;
+            const languageId = @Model.Puzzle.LanguageId;
+            if (!window.languageHelper.isBracketBased(languageId)) return;
 
             // Remove existing brace blocks
             document.querySelectorAll('.brace-block').forEach(b => b.remove());
@@ -560,6 +619,8 @@
                 }
             });
 
+            checkSolution();
+
             // Close remaining open braces at the end
             while (braceStack.length) {
                 const closed = braceStack.pop();
@@ -601,7 +662,12 @@
                 }
 
                 const result = await response.json();
-                alert(result.isCorrect ? 'Решението е вярно!' : 'Решението е грешно.');
+
+                if (maxDistance === null) {
+                    maxDistance = result;
+                }
+
+                updateProgressIndicator(result);
             } catch (error) {
                 console.error('Error checking solution:', error);
                 alert('Грешка при проверка на решението. Моля, опитайте отново.');
@@ -615,6 +681,8 @@
                     alert('Моля, добавете кодови блокове в целевия панел.');
                     return;
                 }
+
+                console.log('Checking arrangement:', arrangement);
 
                 const timeTaken = Math.floor((Date.now() - startTime) / 1000);
 
@@ -638,7 +706,7 @@
                 }
 
                 const result = await response.json();
-                if (result.isLast) {
+                if (result.isLastPuzzle) {
                     const stats = result.statistics;
                     alert(`Поздравления! Завършихте колекцията!\n\nВашите резултати ще бъдат показани на следващата страница.`);
                     window.location.href = result.nextUrl;
@@ -697,8 +765,10 @@
                                             }
                                             removeBtn.remove();
                                             slot.classList.remove('filled');
+                                            checkSolution();
                                         };
                                         slot.appendChild(removeBtn);
+                                        checkSolution();
                                     }
                                 });
                             });
@@ -712,6 +782,38 @@
             }, 50);
         } else {
             console.log('📝 Multi-block puzzle - no fix needed');
+        }
+
+        checkSolution();
+
+        function updateProgressIndicator(currentDistance) 
+        {
+            const percentage = maxDistance > 0
+                ? Math.max(0, Math.round(((maxDistance - currentDistance) / maxDistance) * 100))
+                : 0;
+
+            const progressCircle = document.getElementById('progressCircle');
+            const progressText = document.getElementById('progressText');
+
+            progressText.textContent = percentage + '%';
+
+            // Update circle (126 is circumference of circle with r=20: 2 * π * 20)
+            const circumference = 126;
+            const offset = circumference - (percentage / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+
+            // Change color based on percentage
+            if (percentage === 100) {
+                progressCircle.style.stroke = '#4CAF50'; // Green
+            } else if (percentage >= 75) {
+                progressCircle.style.stroke = '#8BC34A'; // Light green
+            } else if (percentage >= 50) {
+                progressCircle.style.stroke = '#FFC107'; // Yellow
+            } else if (percentage >= 25) {
+                progressCircle.style.stroke = '#FF9800'; // Orange
+            } else {
+                progressCircle.style.stroke = '#F44336'; // Red
+            }
         }
     </script>
 }

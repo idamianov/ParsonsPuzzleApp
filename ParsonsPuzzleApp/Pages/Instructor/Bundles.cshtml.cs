@@ -4,10 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ParsonsPuzzleApp.Data;
-using ParsonsPuzzleApp.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using ParsonsPuzzleApp.Entities;
 
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
@@ -25,9 +22,13 @@ namespace ParsonsPuzzleApp.Pages.Instructor
 
         public List<Bundle> Bundles { get; set; }
 
+        public string InstructorId { get; set; }
+
         public async Task OnGetAsync()
         {
             var userId = _userManager.GetUserId(User);
+
+            InstructorId = userId;
 
             Bundles = await _context.Bundles
                 .Include(b => b.BundlePuzzles)

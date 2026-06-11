@@ -1,15 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Models;
+
 namespace ParsonsPuzzleApp.Pages.Instructor
 {
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.Mvc.RazorPages;
-    using Microsoft.EntityFrameworkCore;
-    using ParsonsPuzzleApp.Data;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-
     [Authorize]
     public class BundleResultsModel : PageModel
     {
@@ -67,18 +64,4 @@ namespace ParsonsPuzzleApp.Pages.Instructor
         }
 
     }
-
-    public class StudentResults
-    {
-        public string StudentIdentifier { get; set; }
-        public List<AttemptSummary> Attempts { get; set; }
-    }
-
-    public class AttemptSummary
-    {
-        public DateTime AttemptDate { get; set; }
-        public int TotalPuzzles { get; set; }
-        public int CorrectPuzzles { get; set; }
-    }
-
 }

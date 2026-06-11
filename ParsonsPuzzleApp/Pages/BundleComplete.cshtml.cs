@@ -1,22 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Constants;
 using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Entities;
+using ParsonsPuzzleApp.Interfaces;
 using ParsonsPuzzleApp.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ParsonsPuzzleApp.Pages
 {
     public class BundleCompleteModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILtiAgsService _agsService;
+        private readonly ILogger<BundleCompleteModel> _logger;
 
-        public BundleCompleteModel(ApplicationDbContext context)
+        public BundleCompleteModel(
+            ApplicationDbContext context,
+            ILtiAgsService agsService,
+            ILogger<BundleCompleteModel> logger)
         {
             _context = context;
+            _agsService = agsService;
+            _logger = logger;
         }
 
         public Bundle Bundle { get; set; }
@@ -24,6 +30,7 @@ namespace ParsonsPuzzleApp.Pages
         public DateTime CompletedAt { get; set; }
         public BundleStatistics Statistics { get; set; }
         public List<PuzzleResultViewModel> PuzzleResults { get; set; }
+        public string? ReturnUrl { get; set; }
 
         public async Task<IActionResult> OnGetAsync(Guid bundleAttemptId)
         {
@@ -77,25 +84,25 @@ namespace ParsonsPuzzleApp.Pages
                 });
             }
 
+            // Grade passback for LTI sessions
+            var sessionIdStr = HttpContext.Session.GetString(LtiSessionKeys.SessionId);
+            if (!string.IsNullOrEmpty(sessionIdStr) && int.TryParse(sessionIdStr, out var ltiSessionId))
+            {
+                var ltiSession = await _context.LtiSessions.FindAsync(ltiSessionId);
+                ReturnUrl = ltiSession?.ReturnUrl;
+
+                try
+                {
+                    await _agsService.SendGradeAsync(ltiSessionId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Grade passback failed for LTI session {SessionId}", ltiSessionId);
+                    // Non-fatal: page still loads even if grade passback fails
+                }
+            }
+
             return Page();
-        }
-
-        public class BundleStatistics
-        {
-            public int TotalPuzzles { get; set; }
-            public int CorrectPuzzles { get; set; }
-            public int CorrectOnFirstTry { get; set; }
-            public int TotalAttempts { get; set; }
-            public int SuccessRate { get; set; }
-        }
-
-        public class PuzzleResultViewModel
-        {
-            public int PuzzleId { get; set; }
-            public string PuzzleTitle { get; set; }
-            public bool IsCorrect { get; set; }
-            public int Attempts { get; set; }
-            public int TimeTaken { get; set; }
         }
     }
 }

@@ -1,27 +1,20 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Microsoft.EntityFrameworkCore;
+using ParsonsPuzzleApp.Data;
+using ParsonsPuzzleApp.Interfaces;
 using System.Text.Json;
 
 namespace ParsonsPuzzleApp.Services
 {
-    public interface IBundleAccessService
-    {
-        void GrantAccess(int bundleId, string studentIdentifier);
-        bool HasAccess(int bundleId, string studentIdentifier);
-        void RevokeAccess(int bundleId);
-        void RevokeAllAccess();
-    }
-
     public class BundleAccessService : IBundleAccessService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDbContext _context;
         private const string SessionKey = "BundleAccess";
 
-        public BundleAccessService(IHttpContextAccessor httpContextAccessor)
+        public BundleAccessService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
         public void GrantAccess(int bundleId, string studentIdentifier)
@@ -44,6 +37,12 @@ namespace ParsonsPuzzleApp.Services
 
         public bool HasAccess(int bundleId, string studentIdentifier)
         {
+            var bundle = _context.Bundles.FirstOrDefault(b => b.Id == bundleId);
+            if (bundle != null && bundle.InstructorId == studentIdentifier)
+            {
+                return true;
+            }
+
             var session = _httpContextAccessor.HttpContext?.Session;
             if (session == null) return false;
 

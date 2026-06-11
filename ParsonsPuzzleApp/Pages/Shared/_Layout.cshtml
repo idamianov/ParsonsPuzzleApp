@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/lib/codemirror.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/theme/monokai.css" />
 
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ParsonsPuzzleApp.styles.css" asp-append-version="true" />
 
@@ -40,6 +40,9 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-page="/Instructor/Puzzles">Пъзели</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Instructor/LtiPlatforms">LTI</a>
+                            </li>
                         }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/SelectBundle">Как да започна</a>
@@ -61,7 +64,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - Програмни пъзели на Парсънс -- Иво Дамянов, Мартин Маджов, ЮЗУ, България
+            &copy; 2025 - Миляна Василев, Асен Плеснев, Иво Дамянов
         </div>
     </footer>
 
@@ -81,6 +84,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/language-helper.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

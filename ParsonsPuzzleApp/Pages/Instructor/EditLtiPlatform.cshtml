@@ -1,0 +1,278 @@
+@page "{id:int}"
+@model ParsonsPuzzleApp.Pages.Instructor.EditLtiPlatformModel
+@{
+    ViewData["Title"] = "Редакция на LTI платформа";
+}
+
+<h1>Редакция на LTI платформа</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.SetupDeploymentId))
+{
+    <div class="alert alert-warning">
+        <strong>Открито е ново внедряване!</strong> Открит е нов deployment ID <code>@Model.SetupDeploymentId</code> от LTI старт.
+        Добавете го по-долу и го свържете с bundle.
+    </div>
+}
+
+<ul class="nav nav-tabs mb-4" id="platformTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+            Настройки на платформата
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="deployments-tab" data-bs-toggle="tab" data-bs-target="#deployments" type="button" role="tab">
+            Внедрявания (Deployments) (@Model.Platform.Deployments.Count)
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="platformTabsContent">
+    <div class="tab-pane fade show active" id="settings" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8">
+                <form method="post" novalidate>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                    }
+                    <input type="hidden" asp-for="Input.Id" />
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Информация за платформата</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label asp-for="Input.Name" class="form-label"></label>
+                                <input asp-for="Input.Name" class="form-control" />
+                                <span asp-validation-for="Input.Name" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.Issuer" class="form-label"></label>
+                                <input asp-for="Input.Issuer" class="form-control" />
+                                <span asp-validation-for="Input.Issuer" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.ClientId" class="form-label"></label>
+                                <input asp-for="Input.ClientId" class="form-control" />
+                                <span asp-validation-for="Input.ClientId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Крайни точки на платформата</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label asp-for="Input.AuthorizationEndpoint" class="form-label"></label>
+                                <input asp-for="Input.AuthorizationEndpoint" class="form-control" />
+                                <span asp-validation-for="Input.AuthorizationEndpoint" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.TokenEndpoint" class="form-label"></label>
+                                <input asp-for="Input.TokenEndpoint" class="form-control" />
+                                <span asp-validation-for="Input.TokenEndpoint" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.JwksUrl" class="form-label"></label>
+                                <input asp-for="Input.JwksUrl" class="form-control" />
+                                <span asp-validation-for="Input.JwksUrl" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Настройки</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input asp-for="Input.IsActive" class="form-check-input" />
+                                <label asp-for="Input.IsActive" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Запази</button>
+                        <a asp-page="LtiPlatforms" class="btn btn-secondary">Отказ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deployments Tab -->
+    <div class="tab-pane fade" id="deployments" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Добавяне на ново внедряване</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="AddDeployment" asp-route-id="@Model.Platform.Id">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label asp-for="DeploymentInput.DeploymentId" class="form-label"></label>
+                                    <input asp-for="DeploymentInput.DeploymentId" class="form-control" placeholder="Deployment ID от LMS" />
+                                    <span asp-validation-for="DeploymentInput.DeploymentId" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="DeploymentInput.Name" class="form-label"></label>
+                                    <input asp-for="DeploymentInput.Name" class="form-control" placeholder="напр. CS101 Fall 2024" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="DeploymentInput.BundleId" class="form-label"></label>
+                                    <select asp-for="DeploymentInput.BundleId" asp-items="Model.AvailableBundles" class="form-select"></select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">Добави</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (Model.Platform.Deployments.Any())
+                {
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Съществуващи внедрявания</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID на внедряване</th>
+                                        <th>Име</th>
+                                        <th>Свързан bundle</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var deployment in Model.Platform.Deployments.OrderBy(d => d.CreatedAt))
+                                    {
+                                        <tr>
+                                            <td><code>@deployment.DeploymentId</code></td>
+                                            <td>@(deployment.Name ?? "-")</td>
+                                            <td>
+                                                <form method="post" asp-page-handler="UpdateDeployment"
+                                                      asp-route-id="@Model.Platform.Id"
+                                                      asp-route-deploymentId="@deployment.Id"
+                                                      class="d-flex align-items-center gap-2">
+                                                    <select name="bundleId" class="form-select form-select-sm" style="max-width: 200px;"
+                                                            onchange="this.form.submit()">
+                                                        <option value="">(Не е свързан)</option>
+                                                        @foreach (var bundle in Model.AvailableBundles.Skip(1))
+                                                        {
+                                                            <option value="@bundle.Value" selected="@(bundle.Value == deployment.BundleId?.ToString())">
+                                                                @bundle.Text
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </form>
+                                            </td>
+                                            <td>
+                                                @if (deployment.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Активно</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Неактивно</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <form method="post" asp-page-handler="ToggleDeployment"
+                                                          asp-route-id="@Model.Platform.Id"
+                                                          asp-route-deploymentId="@deployment.Id"
+                                                          style="display:inline;">
+                                                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                            @(deployment.IsActive ? "Деактивирай" : "Активирай")
+                                                        </button>
+                                                    </form>
+                                                    <form method="post" asp-page-handler="DeleteDeployment"
+                                                          asp-route-id="@Model.Platform.Id"
+                                                          asp-route-deploymentId="@deployment.Id"
+                                                          style="display:inline;">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                                onclick="return confirm('Изтриване на това внедряване?')">
+                                                            Изтрий
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <h6>Все още няма внедрявания</h6>
+                        <p class="mb-0">Когато потребителите стартират инструмента от LMS, внедряванията ще бъдат открити автоматично, или можете да ги добавите ръчно.</p>
+                    </div>
+                }
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Относно внедряванията</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">
+                            <strong>Внедряване</strong> представлява конкретно разполагане на инструмента в LMS
+                            (например курс или активност).
+                        </p>
+                        <p class="small">
+                            Всяко внедряване има уникален ID, зададен от LMS. Можете да го свържете с определен puzzle bundle,
+                            за да има всеки курс различни пъзели.
+                        </p>
+                        <p class="small mb-0">
+                            <strong>Съвет:</strong> Ако стартирате инструмента от LMS преди да добавите внедряването тук,
+                            системата автоматично ще засече новия deployment ID и ще ви подкани да го конфигурирате.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* Removed _ValidationScriptsPartial to disable client-side validation *@
+    <script>
+        // Auto-switch to deployments tab if there's a setup message
+        @if (!string.IsNullOrEmpty(Model.SetupDeploymentId))
+        {
+                <text>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var deploymentsTab = new bootstrap.Tab(document.getElementById('deployments-tab'));
+                    deploymentsTab.show();
+                });
+                </text>
+        }
+    </script>
+}
