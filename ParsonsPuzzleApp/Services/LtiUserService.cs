@@ -44,7 +44,10 @@ namespace ParsonsPuzzleApp.Services
                 var existingByEmail = await _userManager.FindByEmailAsync(launchResult.Email);
                 if (existingByEmail != null)
                 {
-                    await _userManager.AddClaimAsync(existingByEmail, new Claim(LtiSubjectClaimType, ltiSubjectValue));
+                    var linkResult = await _userManager.AddClaimAsync(existingByEmail, new Claim(LtiSubjectClaimType, ltiSubjectValue));
+                    if (!linkResult.Succeeded)
+                        _logger.LogWarning("Failed to add lti_subject claim for {Email}: {Errors}",
+                            launchResult.Email, string.Join(", ", linkResult.Errors.Select(e => e.Description)));
                     _logger.LogInformation("Linked existing account {Email} to LTI subject {Subject}",
                         launchResult.Email, ltiSubjectValue);
                     return existingByEmail;
@@ -69,7 +72,12 @@ namespace ParsonsPuzzleApp.Services
                 throw new InvalidOperationException($"Failed to create LTI user: {errors}");
             }
 
-            await _userManager.AddClaimAsync(newUser, new Claim(LtiSubjectClaimType, ltiSubjectValue));
+            var claimResult = await _userManager.AddClaimAsync(newUser, new Claim(LtiSubjectClaimType, ltiSubjectValue));
+            if (!claimResult.Succeeded)
+            {
+                var errors = string.Join(", ", claimResult.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to store LTI subject claim for new user: {errors}");
+            }
 
             _logger.LogInformation("Created new LTI user {UserName} for subject {Subject}",
                 userName, ltiSubjectValue);
