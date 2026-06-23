@@ -293,8 +293,8 @@ namespace ParsonsPuzzleApp.Services
                         sb.Append(lineLetter);
                     }
 
-                    // For SQL-based languages indentation doesn't affect correctness at all
-                    if (puzzle.Language.IsSqlBased)
+                    // For SQL-based and Declarative languages indentation doesn't affect correctness at all
+                    if (puzzle.Language.IsSqlBased || puzzle.Language.IsDeclarative)
                     {
                         block.Indent = puzzleBlock.Indent;
                     }

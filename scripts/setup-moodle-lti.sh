@@ -46,9 +46,9 @@ INTERVAL=10
 while true; do
     # Check if Moodle's config.php exists (installation complete)
     if docker exec "$CONTAINER" test -f /bitnami/moodle/config.php 2>/dev/null; then
-        # Also check if the web server responds
-        HTTP_CODE=$(docker exec "$CONTAINER" curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ 2>/dev/null || echo "000")
-        if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "303" ] || [ "$HTTP_CODE" = "302" ]; then
+        # Also check if the web server responds (curl/wget are not in Bitnami image, use php)
+        HTTP_STATUS=$(docker exec "$CONTAINER" php -r "echo get_headers('http://localhost:8080/')[0];" 2>/dev/null || echo "")
+        if echo "$HTTP_STATUS" | grep -qE "HTTP/[0-9.]+ (200|302|303)"; then
             echo "Moodle is ready!"
             break
         fi

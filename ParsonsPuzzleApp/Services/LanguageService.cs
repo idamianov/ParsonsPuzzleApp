@@ -29,7 +29,8 @@ namespace ParsonsPuzzleApp.Services
                     CodeMirrorMode = l.CodeMirrorMode,
                     IsBracketBased = l.IsBracketBased,
                     IsIndentationSensitive = l.IsIndentationSensitive,
-                    IsSqlBased = l.IsSqlBased
+                    IsSqlBased = l.IsSqlBased,
+                    IsDeclarative = l.IsDeclarative
                 })
                 .ToListAsync();
         }
@@ -48,7 +49,8 @@ namespace ParsonsPuzzleApp.Services
                     CodeMirrorMode = l.CodeMirrorMode,
                     IsBracketBased = l.IsBracketBased,
                     IsIndentationSensitive = l.IsIndentationSensitive,
-                    IsSqlBased = l.IsSqlBased
+                    IsSqlBased = l.IsSqlBased,
+                    IsDeclarative = l.IsDeclarative
                 })
                 .FirstOrDefaultAsync();
         }

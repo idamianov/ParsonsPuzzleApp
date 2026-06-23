@@ -196,6 +196,12 @@
             display: none !important;
         }
 
+        @if (Model.Puzzle.Language.IsDeclarative)
+        {
+            /* Declarative languages (e.g. English) have no indentation concept */
+            <text>.indent-btns { display: none !important; }</text>
+        }
+
         .sortable-ghost {
             background-color: #cce5ff;
             border: 2px dashed #007bff;

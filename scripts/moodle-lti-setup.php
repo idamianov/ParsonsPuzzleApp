@@ -51,7 +51,7 @@ if ($existingTool) {
     $type->tooldomain = "host.docker.internal";
     $type->state = LTI_TOOL_STATE_CONFIGURED;
     $type->course = 1; // site-level
-    $type->ltiversion = 'LTI-1p3';
+    $type->ltiversion = '1.3.0';
     $type->clientid = null; // Moodle generates this
     $type->timecreated = time();
     $type->timemodified = time();
@@ -68,7 +68,7 @@ if ($existingTool) {
         'sendname'                          => '1',
         'sendemailaddr'                     => '1',
         'acceptgrades'                      => '2',   // always
-        'ltiversion'                        => 'LTI-1p3',
+        'ltiversion'                        => '1.3.0',
         'keytype'                           => 'JWK_KEYSET',
         'publickeyset'                      => "$appHost/.well-known/jwks.json",
         'initiatelogin'                     => "$appHost/lti/login",
@@ -76,7 +76,6 @@ if ($existingTool) {
         'customparameters'                  => '',
         'coursevisible'                      => '1',
         'contentitem'                       => '0',
-        'toolurl'                           => "$appHost/lti/launch",
         'toolurl_ContentItemSelectionRequest' => '',
         'ltiservice_gradesynchronization'   => '2',  // use for grade sync
         'ltiservice_memberships'            => '0',

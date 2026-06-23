@@ -11,5 +11,6 @@ namespace ParsonsPuzzleApp.Models
         public bool IsBracketBased { get; set; }
         public bool IsIndentationSensitive { get; set; }
         public bool IsSqlBased { get; set; }
+        public bool IsDeclarative { get; set; }
     }
 }
