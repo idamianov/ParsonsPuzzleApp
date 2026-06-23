@@ -45,10 +45,24 @@ namespace ParsonsPuzzleApp
                 options.IdleTimeout = TimeSpan.FromHours(24);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
-                // Use None for LTI 1.3 support - cross-site POSTs need cookies
-                // This requires Secure=true (HTTPS)
-                options.Cookie.SameSite = SameSiteMode.None;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                if (builder.Environment.IsDevelopment())
+                {
+                    // The local Moodle test harness runs the tool over plain HTTP on
+                    // host.docker.internal, which browsers do not treat as a secure
+                    // context - so a Secure cookie would be dropped and the session
+                    // (bundle access + LTI grade passback) would be lost. Lax +
+                    // SameAsRequest keeps the cookie when the LTI activity opens in a
+                    // new window (first-party, same-site navigation after launch).
+                    options.Cookie.SameSite = SameSiteMode.Lax;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                }
+                else
+                {
+                    // Production LTI is embedded cross-site (iframe) over HTTPS, where
+                    // cookies must be SameSite=None and Secure to be sent at all.
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                }
             });
 
             builder.Services.AddHttpContextAccessor();

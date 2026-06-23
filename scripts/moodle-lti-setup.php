@@ -5,11 +5,21 @@
  * Registers the Parsons Puzzle app as an LTI 1.3 tool in Moodle,
  * creates a test student, course, enrollment, and External Tool activity.
  *
- * Run inside the Moodle container:
- *   php /path/to/moodle-lti-setup.php
+ * This script must run INSIDE the Moodle Docker container. Start the stack
+ * first (`docker compose -f docker-compose.moodle.yml up -d`) and wait until
+ * Moodle has finished installing, then run ONE command from the repo root:
+ *
+ *   PowerShell (Windows):
+ *     Get-Content scripts/moodle-lti-setup.php | docker compose -f docker-compose.moodle.yml exec -T moodle php
+ *
+ *   Bash / Git Bash / macOS / Linux:
+ *     docker compose -f docker-compose.moodle.yml exec -T moodle php < scripts/moodle-lti-setup.php
+ *
+ * No copying or cleanup needed — the script is piped straight into PHP.
  *
  * Environment variables:
- *   APP_PORT - Port the Parsons Puzzle app runs on (default: 5055)
+ *   APP_PORT - Port the Parsons Puzzle app runs on (default: 5055).
+ *              Override with: ... exec -T -e APP_PORT=5055 moodle php
  */
 
 define('CLI_SCRIPT', true);
@@ -25,10 +35,20 @@ require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->libdir . '/enrollib.php');
 
 $appPort = getenv('APP_PORT') ?: '5055';
-$appHost = "http://host.docker.internal:$appPort";
+
+// The tool is reached from two different places, which need different hostnames:
+//   - $browserHost: where the student's BROWSER is redirected (login/launch). The
+//     browser runs on the host, so it must use localhost (which it can reach and
+//     which counts as a secure context for cookies).
+//   - $serverHost: where MOODLE'S SERVER (inside the container) fetches the tool's
+//     public keyset during grade passback. The container reaches the host via
+//     host.docker.internal, not localhost.
+$browserHost = "http://localhost:$appPort";
+$serverHost  = "http://host.docker.internal:$appPort";
 
 echo "=== Moodle LTI Auto-Setup ===\n";
-echo "App URL: $appHost\n\n";
+echo "Browser-facing URL: $browserHost\n";
+echo "Server keyset URL:  $serverHost\n\n";
 
 // ─── 1. Register LTI Tool Type ───────────────────────────────────────────────
 
@@ -36,19 +56,50 @@ echo "--- Registering LTI tool ---\n";
 
 $toolName = 'Parsons Puzzle';
 
+// The tool's URLs/config are (re)applied below whether the tool is new or
+// already exists, so re-running this script always heals stale configuration
+// (e.g. a tool left pointing at an old port or with grade sync disabled).
+$configs = [
+    'sendname'                          => '1',
+    'sendemailaddr'                     => '1',
+    'acceptgrades'                      => '2',   // always
+    'ltiversion'                        => '1.3.0',
+    'keytype'                           => 'JWK_KEYSET',
+    'publickeyset'                      => "$serverHost/.well-known/jwks.json",  // fetched by Moodle's server
+    'initiatelogin'                     => "$browserHost/lti/login",             // browser redirect
+    'redirectionuris'                   => "$browserHost/lti/launch",            // browser redirect
+    'customparameters'                  => '',
+    'coursevisible'                      => '1',
+    'contentitem'                       => '0',
+    'toolurl_ContentItemSelectionRequest' => '',
+    'ltiservice_gradesynchronization'   => '2',  // 2 = use this service (grade sync ON)
+    'ltiservice_memberships'            => '0',
+];
+
 // Check if tool already exists
 $existingTool = $DB->get_record('lti_types', ['name' => $toolName]);
 
 if ($existingTool) {
-    echo "Tool '$toolName' already exists (id={$existingTool->id}).\n";
     $toolId = $existingTool->id;
     $clientId = $existingTool->clientid;
+
+    // Heal core tool fields in case they were created with different URLs.
+    $DB->update_record('lti_types', (object)[
+        'id'          => $toolId,
+        'baseurl'     => "$browserHost/lti/launch",
+        'tooldomain'  => 'localhost',
+        'state'       => LTI_TOOL_STATE_CONFIGURED,
+        'ltiversion'  => '1.3.0',
+        'timemodified' => time(),
+    ]);
+
+    echo "Tool '$toolName' already exists (id=$toolId) - updating its configuration.\n";
 } else {
     // Build tool type record
     $type = new stdClass();
     $type->name = $toolName;
-    $type->baseurl = "$appHost/lti/launch";
-    $type->tooldomain = "host.docker.internal";
+    $type->baseurl = "$browserHost/lti/launch";
+    $type->tooldomain = "localhost";
     $type->state = LTI_TOOL_STATE_CONFIGURED;
     $type->course = 1; // site-level
     $type->ltiversion = '1.3.0';
@@ -63,33 +114,21 @@ if ($existingTool) {
     $clientId = random_string(15);
     $DB->set_field('lti_types', 'clientid', $clientId, ['id' => $toolId]);
 
-    // Insert tool configuration
-    $configs = [
-        'sendname'                          => '1',
-        'sendemailaddr'                     => '1',
-        'acceptgrades'                      => '2',   // always
-        'ltiversion'                        => '1.3.0',
-        'keytype'                           => 'JWK_KEYSET',
-        'publickeyset'                      => "$appHost/.well-known/jwks.json",
-        'initiatelogin'                     => "$appHost/lti/login",
-        'redirectionuris'                   => "$appHost/lti/launch",
-        'customparameters'                  => '',
-        'coursevisible'                      => '1',
-        'contentitem'                       => '0',
-        'toolurl_ContentItemSelectionRequest' => '',
-        'ltiservice_gradesynchronization'   => '2',  // use for grade sync
-        'ltiservice_memberships'            => '0',
-    ];
-
-    foreach ($configs as $name => $value) {
-        $config = new stdClass();
-        $config->typeid = $toolId;
-        $config->name = $name;
-        $config->value = $value;
-        $DB->insert_record('lti_types_config', $config);
-    }
-
     echo "Created tool '$toolName' (id=$toolId).\n";
+}
+
+// Upsert every config key so an existing tool is brought to the correct state.
+foreach ($configs as $name => $value) {
+    $existingConfig = $DB->get_record('lti_types_config', ['typeid' => $toolId, 'name' => $name]);
+    if ($existingConfig) {
+        $DB->set_field('lti_types_config', 'value', $value, ['id' => $existingConfig->id]);
+    } else {
+        $DB->insert_record('lti_types_config', (object)[
+            'typeid' => $toolId,
+            'name'   => $name,
+            'value'  => $value,
+        ]);
+    }
 }
 
 echo "Client ID: $clientId\n\n";
@@ -111,15 +150,38 @@ if (!in_array($appPort, $portList)) {
     echo "Port $appPort already in allowed cURL ports.\n";
 }
 
-// Also allow host.docker.internal in cURL blocked hosts (remove it if blocked)
+// Moodle's anti-SSRF cURL security blocks private IP ranges by default. During
+// grade passback Moodle's server fetches the tool's JWKS via download_file_content(),
+// which enforces this list - and host.docker.internal resolves to a private address
+// (e.g. 192.168.65.254), so the fetch is blocked and the token request fails with
+// "fix_jwks_alg(): ... null given". For this local harness we remove the private /
+// loopback ranges so the keyset URL is reachable.
+require_once($CFG->libdir . '/filelib.php');
+$resolvedIp = gethostbyname('host.docker.internal');
+echo "host.docker.internal resolves to $resolvedIp\n";
+
 $blockedHosts = get_config('moodle', 'curlsecurityblockedhosts');
-if ($blockedHosts && strpos($blockedHosts, 'host.docker.internal') !== false) {
+if ($blockedHosts !== false && $blockedHosts !== '') {
+    $remove = [
+        '127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16',
+        '0.0.0.0', '::1', '0000::1', 'localhost', 'host.docker.internal',
+    ];
     $lines = array_filter(array_map('trim', explode("\n", $blockedHosts)));
-    $lines = array_filter($lines, function($line) {
-        return $line !== 'host.docker.internal';
-    });
-    set_config('curlsecurityblockedhosts', implode("\n", $lines));
-    echo "Removed host.docker.internal from blocked hosts.\n";
+    $kept  = array_values(array_filter($lines, fn($l) => !in_array($l, $remove, true)));
+    if (count($kept) !== count($lines)) {
+        set_config('curlsecurityblockedhosts', implode("\n", $kept));
+        echo "Relaxed cURL blocked hosts for local dev (removed private/loopback ranges).\n";
+    } else {
+        echo "cURL blocked hosts already relaxed.\n";
+    }
+}
+
+// Confirm the tool's keyset URL is now reachable by Moodle's security layer.
+$sec = new \core\files\curl_security_helper();
+if ($sec->url_is_blocked("$serverHost/.well-known/jwks.json")) {
+    echo "WARNING: $serverHost is still blocked by Moodle's cURL security - grade passback will fail.\n";
+} else {
+    echo "Keyset URL is reachable by Moodle (grade passback unblocked).\n";
 }
 
 echo "\n";
@@ -250,7 +312,10 @@ $existingModule = $DB->get_record_sql(
 );
 
 if ($existingModule) {
-    echo "Activity '$activityName' already exists.\n";
+    // Heal the launch container in case it was created as an embedded iframe.
+    // A new window keeps the tool first-party so its session cookie survives.
+    $DB->set_field('lti', 'launchcontainer', LTI_LAUNCH_CONTAINER_WINDOW, ['id' => $existingModule->ltiid]);
+    echo "Activity '$activityName' already exists - set to open in a new window.\n";
 } else {
     $moduleId = $DB->get_field('modules', 'id', ['name' => 'lti']);
 
@@ -262,7 +327,9 @@ if ($existingModule) {
     $lti->introformat = FORMAT_HTML;
     $lti->typeid = $toolId;
     $lti->toolurl = '';  // uses tool type URL
-    $lti->launchcontainer = LTI_LAUNCH_CONTAINER_DEFAULT;
+    // Open in a new window so the tool is top-level (first-party); its session
+    // cookie then survives the launch on a plain-HTTP dev origin.
+    $lti->launchcontainer = LTI_LAUNCH_CONTAINER_WINDOW;
     $lti->instructorchoicesendname = 1;
     $lti->instructorchoicesendemailaddr = 1;
     $lti->instructorchoiceacceptgrades = 1;
@@ -294,7 +361,34 @@ if ($existingModule) {
         $DB->set_field('course_sections', 'sequence', $sequence, ['id' => $section->id]);
     }
 
+    // Invalidate the course modinfo cache so the new activity actually shows up.
+    rebuild_course_cache($course->id, true);
+
     echo "Created activity '$activityName' (cmid=$cmId).\n";
+}
+
+// ─── 6b. Create the gradebook item (required for LTI AGS grade passback) ──────
+// Because the activity is created with raw DB inserts (not Moodle's module API),
+// the gradebook grade item is never created. Without it Moodle exposes no AGS
+// line item, the launch carries no line-item endpoint, and the tool has nowhere
+// to POST the score. Create it explicitly via Moodle's own helper.
+$ltiInstance = $DB->get_record('lti', ['name' => $activityName, 'course' => $course->id]);
+$ltiInstance->cmidnumber = '';   // lti_grade_item_update() reads this field
+lti_grade_item_update($ltiInstance);
+
+// Create the *coupled* line item (ltiservice_gradebookservices row) for this
+// activity. Without it the LTI 1.3 launch only advertises the line-items
+// container, not the specific "lineitem" endpoint the tool posts the score to.
+\ltiservice_gradebookservices\local\service\gradebookservices::update_coupled_gradebookservices(
+    $ltiInstance, null, null, null, null);
+
+$hasGradeItem = $DB->record_exists('grade_items', ['itemmodule' => 'lti', 'iteminstance' => $ltiInstance->id]);
+$hasLineItem  = $DB->record_exists('ltiservice_gradebookservices', ['ltilinkid' => $ltiInstance->id]);
+if ($hasGradeItem && $hasLineItem) {
+    echo "Gradebook item + AGS line item ready (score endpoint will be sent on launch).\n";
+} else {
+    echo "WARNING: grade passback plumbing incomplete (grade_item=" .
+         ($hasGradeItem ? 'yes' : 'no') . ", line_item=" . ($hasLineItem ? 'yes' : 'no') . ").\n";
 }
 
 echo "\n";
