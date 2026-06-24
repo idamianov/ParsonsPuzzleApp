@@ -393,7 +393,20 @@ if ($hasGradeItem && $hasLineItem) {
 
 echo "\n";
 
-// ─── 7. Get platform info for app configuration ─────────────────────────────
+// ─── 7. Purge caches ─────────────────────────────────────────────────────────
+// The course module was created via raw DB inserts, so Moodle's modinfo cache
+// may hold stale data that triggers "Unable to acquire a lock for caching" on
+// the first page load. Purge everything so the next request rebuilds cleanly.
+
+echo "--- Purging Moodle caches ---\n";
+purge_all_caches();
+// purge_all_caches() runs as root (CLI), leaving cache files owned by root.
+// The web server runs as daemon and cannot write into those files, which triggers
+// "Invalid permissions detected when trying to create a directory". Fix ownership.
+shell_exec('chown -R daemon:daemon /bitnami/moodledata/cache /bitnami/moodledata/localcache 2>/dev/null');
+echo "Caches purged and ownership fixed.\n\n";
+
+// ─── 8. Get platform info for app configuration ─────────────────────────────
 
 $moodleUrl = 'http://localhost:8085';
 
