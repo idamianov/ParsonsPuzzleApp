@@ -3,6 +3,120 @@
 @{
     ViewData["Title"] = "За нас";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>TBD</p>
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold" style="color: #484d96;">@ViewData["Title"]</h1>
+        <p class="lead text-muted mx-auto" style="max-width: 800px;">
+            Добре дошли в Parsons Puzzle App – иновативна екосистема за развиване на алгоритмично мислене и улесняване на обучението по програмиране.
+        </p>
+        <div class="mt-4">
+            <a href="https://github.com/idamianov/ParsonsPuzzleApp" target="_blank" class="btn btn-outline-dark btn-lg shadow-sm">
+                <i class="bi bi-github"></i> Разгледайте в GitHub
+            </a>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-5 g-4">
+        <div class="col-md-7">
+            <h2 class="h3 mb-3 fw-semibold text-secondary">Какво представляват Parsons Puzzles?</h2>
+            <p class="text-justify text-muted lh-lg">
+                Пъзелите на Парсънс (Parsons Puzzles) са структурирани упражнения за пренареждане на код, при които студентите реконструират правилни програми от разбъркани кодови редове. Като премахват тежестта на синтаксиса, тези пъзели позволяват на обучаемите да се фокусират изцяло върху <strong>логическата последователност и алгоритмичното мислене</strong>.
+            </p>
+            <p class="text-justify text-muted lh-lg">
+                Докато традиционните инструменти често са ограничени до един или два езика, <strong>Parsons Puzzle Toolkit</strong> преодолява тези ограничения. Нашето приложение въвежда поддръжка за множество езици (C, C++, C#, Java, JavaScript, Python, SQL, псевдоезици и естествени езици), съвместимост с различни парадигми и разширени функции за по-сложни учебни сценарии.
+            </p>
+        </div>
+        <div class="col-md-5">
+            <div class="card bg-light border-0 p-4 shadow-sm">
+                <h4 class="fw-bold mb-3">Технологичен стек и детайли</h4>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">🚀 <strong>Framework:</strong> ASP.NET Core (Razor Pages)</li>
+                    <li class="mb-2">🌐 <strong>Езици:</strong> C, C++, C#, Java, JS, Python, SQL и др.</li>
+                    <li class="mb-2">📦 <strong>Лиценз:</strong> MIT License (Open Source)</li>
+                    <li class="mb-2">🎓 <strong>Интеграция:</strong> LMS (Moodle, Blackboard чрез LTI)</li>
+                    <li>🔄 <strong>Статус:</strong> В активно развитие</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-5" />
+
+    <div class="mb-5">
+        <h2 class="h3 fw-semibold text-secondary mb-3">История на проекта</h2>
+        <p class="text-muted lh-lg">
+            Проектът <strong>Parsons Puzzle Toolkit</strong> е замислен и стартиран от <strong>Иво Дамянов</strong> като част от неговите текущи изследвания в областта на изчислителното мислене, обучението по програмиране и разбирането на код. Платформата е създадена с визията да модернизира образователния процес, предоставяйки на преподавателите гъвкав инструмент за оценка, а на студентите – интерактивна среда за практическо учене без синтактични бариери.
+        </p>
+    </div>
+
+    <div class="mb-5">
+        <h2 class="h3 text-center mb-5 fw-semibold text-secondary">Текущ екип разработчици</h2>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4 text-center justify-content-center">
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 pt-4 px-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 80px; height: 80px; background-color: #4ade80; color: white;">
+                        <span class="fs-3 fw-bold">АП</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold mb-1">Асен Плеснев</h5>
+                        <p class="small mb-2 'fw-semibold'" style="color: #4ade80;">Основен разработчик</p>
+                        <p class="card-text text-muted small mt-2">
+                            Отговаря за мултиезиковата архитектура за обработка на различни езици и парадигми на програмиране. Ръководи проектирането и интеграцията на LTI (Learning Tools Interoperability) съвместимостта, позволяваща безпроблемно внедряване на инструмента в платформи като Moodle и Blackboard.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 pt-4 px-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 80px; height: 80px; background-color: #818cf8; color: white;">
+                        <span class="fs-3 fw-bold">МВ</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold mb-1">Миляна Василев</h5>
+                        <p class="small mb-2 fw-semibold" style="color: #818cf8;">Основен разработчик</p>
+                        <p class="card-text text-muted small mt-2">
+                            Ръководи оптимизацията на вътрешната архитектура и организацията на кодовата база с цел по-добра разширяемост. Проектира и внедри интелигентния механизъм за автоматична обратна връзка, базиран на алгоритъма за разстояние на Левенщайн (Levenshtein distance), осигуряващ персонални насоки за обучаемите.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 pt-4 px-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 80px; height: 80px; background-color: #38bdf8; color: white;">
+                        <span class="fs-3 fw-bold">ИД</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold mb-1">Иво Дамянов</h5>
+                        <p class="text-primary small mb-2 fw-semibold">Основател и главен изследовател</p>
+                        <p class="card-text text-muted small mt-2">
+                            Инициатор на проекта и идеолог на изследванията в областта на компютърното мислене и когнитивното натоварване. Насочва стратегическото развитие на екосистемата Parsons Puzzle Toolkit в академичната и практическата среда.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="text-center position-relative p-5 rounded-3 shadow mt-5 overflow-hidden"
+         style="background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85));
+            background-size: cover;
+            background-position: center;
+            border: 1px solid #e2e8f0;">
+
+        <h3 class="mb-3 fw-bold" style="color: #484d96;">Имате въпроси или предложения?</h3>
+        <p class="text-muted mb-4 mx-auto" style="max-width: 600px; font-size: 1.1rem; line-height: 1.6;">
+            Ние ценим обратната връзка! Ако искате да докладвате проблем, да предложите нова функционалност или просто да се свържете с нас, пишете.
+        </p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="mailto:damianov@@swu.bg" class="btn btn-lg px-4 shadow-sm text-white" style="background-color: #484d96; border-radius: 50px;">
+                📧 damianov@@swu.bg
+            </a>
+        </div>
+    </div>
+</div>
