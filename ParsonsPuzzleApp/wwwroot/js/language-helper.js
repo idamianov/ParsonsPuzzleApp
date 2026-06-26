@@ -78,6 +78,18 @@ class LanguageHelper {
     }
 
     /**
+     * Check if language is declarative (no indentation, no brackets — natural language, pseudocode, etc.)
+     */
+    isDeclarative(languageId) {
+        if (!this.initialized) {
+            return false;
+        }
+
+        const language = this.getLanguage(languageId);
+        return language ? language.isDeclarative : false;
+    }
+
+    /**
      * Get language display name
      */
     getDisplayName(languageId) {

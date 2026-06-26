@@ -34,10 +34,12 @@ namespace ParsonsPuzzleApp.Entities
 
         // Business logic helpers
         public bool IsBracketBased => Category == LanguageCategory.Bracket;
-        
+
         public bool IsIndentationSensitive => Category == LanguageCategory.Indentation;
-        
+
         public bool IsSqlBased => Category == LanguageCategory.SQL;
+
+        public bool IsDeclarative => Category == LanguageCategory.Declarative;
 
         public string GetMultilineStartMarker() => $"{CommentSyntax}-->";
         

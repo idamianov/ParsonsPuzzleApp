@@ -31,19 +31,18 @@ Before starting, ensure you have the following installed:
 
 Read these before starting. Each point corresponds to a real failure mode.
 
-### Use Kestrel (dotnet run), not IIS or IIS Express
+### Run over plain HTTP on port 5055 with Kestrel (`dotnet run`)
 
-**IIS Express** only binds to `localhost` (the loopback adapter). Moodle runs inside Docker and connects to your machine via `host.docker.internal`, which resolves to a real network address — not loopback. This means IIS Express is completely unreachable from Docker, even if the port is correct.
+The local dev harness runs the tool over **plain HTTP on port 5055** — not HTTPS, and not IIS Express. There are two reasons, both proven by testing:
 
-**Full IIS** has the same SSL problem: its development certificate is issued for `localhost`, so when Moodle connects via `host.docker.internal` the SSL handshake fails with a hostname mismatch.
-
-**Always use Kestrel** by running the app with `dotnet run` (the `https` launch profile):
+- **HTTPS breaks grade passback.** During grade passback Moodle's *server* fetches the tool's `jwks.json`. The .NET dev certificate is issued for `localhost`, so a fetch to `host.docker.internal` fails hostname + self-signed validation. Plain HTTP avoids it.
+- **The tool is reached by two different hostnames** (see the gotcha in [Automated Setup](#automated-setup-quick-start)): the **browser** uses `http://localhost:5055`, while **Moodle's server** uses `http://host.docker.internal:5055` only for the keyset. IIS Express binds loopback only and can't serve the `host.docker.internal` keyset fetch, so use **Kestrel**.
 
 ```bash
-dotnet run --launch-profile https
+dotnet run            # default "http" profile → http://localhost:5055
 ```
 
-Kestrel binds to all interfaces and `host.docker.internal` can reach it. The HTTPS port will be `7096` as configured in `launchSettings.json`.
+> This HTTP setup is **local-dev only**. In production the tool runs over HTTPS with a real certificate, where the session cookie is `SameSite=None; Secure` and the keyset fetch works normally.
 
 ---
 
@@ -103,38 +102,105 @@ Once Moodle is ready, you can access it at:
 
 ---
 
+## Automated Setup (Quick Start)
+
+Instead of registering the tool, creating a course/student, and adding an activity by hand (the manual sections below), you can run a single command that does all of it for you. The repo ships `scripts/moodle-lti-setup.php`, which runs **inside** the Moodle container.
+
+Once the containers are up and Moodle has finished installing, run **one** command from the repository root:
+
+**PowerShell (Windows):**
+```powershell
+Get-Content scripts/moodle-lti-setup.php | docker compose -f docker-compose.moodle.yml exec -T moodle php
+```
+
+**Bash / Git Bash / macOS / Linux:**
+```bash
+docker compose -f docker-compose.moodle.yml exec -T moodle php < scripts/moodle-lti-setup.php
+```
+
+The script pipes straight into the container's PHP — no copying or cleanup needed. It is **idempotent**: re-running it heals any stale configuration. It will:
+
+- Register **Parsons Puzzle** as an LTI 1.3 tool, with **grade sync (AGS) enabled** (browser URLs on `localhost:5055`, keyset on `host.docker.internal:5055` — see the gotcha below)
+- Allow the app port in Moodle's cURL security settings
+- Create a test student (`student1` / `Student123!`)
+- Create the **LTI Test Course** and enroll the student + admin
+- Add a **Parsons Puzzle Activity** External Tool, set to **open in a new window** (see the gotcha below)
+
+When it finishes it prints the **Issuer, Client ID, and endpoint URLs**. The script assumes the app runs on **`http://localhost:5055`**; to use a different port, add `-e APP_PORT=<port>` before `moodle` in the command above.
+
+> The remaining manual sections document the same steps in detail if you prefer to do them by hand or need to troubleshoot.
+
+### End-to-end test (launch a puzzle + return a grade)
+
+This is the full flow, matching how the code actually works (`LtiController.Launch` → `/SolvePuzzle` → `BundleComplete` → `LtiAgsService.SendGradeAsync`):
+
+1. **Start Moodle:** `docker compose -f docker-compose.moodle.yml up -d` and wait for "Moodle setup finished!" (first boot ~5–10 min).
+2. **Run the auto-setup command above** and copy the printed Client ID + endpoints.
+3. **Make sure a Puzzle Bundle exists.** Bundles are *not* seeded — log into the app as an instructor and create one under **Instructor → Bundles** if you haven't.
+4. **Run the app on HTTP port 5055:** from `ParsonsPuzzleApp/`, run `dotnet run` (the default **http** profile). The `Development` config (`appsettings.Development.json`) already sets `Lti:ToolBaseUrl` to `http://localhost:5055` — **use HTTP, not the https profile** (see the gotcha below).
+5. **Register the platform in the app:** **LTI Platforms → Create New Platform** → Issuer `http://localhost:8085`, plus the Client ID / Auth / Token / JWKS values the script printed.
+6. **Bind the deployment:** in Moodle, logged in as **admin / admin123**, open `LTI Test Course` and click **Parsons Puzzle Activity once**. The app redirects you to Bundles with a "deployment not configured" notice. Back in the app, **LTI Platforms → Edit → Deployments** (the Deployment ID is pre-filled) → pick your bundle → **Add**.
+7. **Test as the student:** log into Moodle as **student1 / Student123!**, open the course, launch the activity → the puzzle loads in a new window.
+8. **Solve the whole bundle.** On completion the app posts the score (percent of puzzles solved correctly) back to Moodle.
+9. **Verify the grade:** in Moodle as admin, open the course → **Grades** → confirm `student1` has a score for the activity. Check the app logs for `Grade {n}% sent for session …` (or any AGS error).
+
+### Critical gotcha: two hostnames, HTTP, cookies, and the new window
+
+The tool is reached from **two different places that need different hostnames**, and the setup script registers them separately (`Manage tools` → the tool config shows them):
+
+| URL | Used by | Must be |
+|-----|---------|---------|
+| Initiate login + Redirection URI | the student's **browser** (on the host) | `http://localhost:5055/...` |
+| Public keyset URL | **Moodle's server** (inside the container) | `http://host.docker.internal:5055/.well-known/jwks.json` |
+
+Why the split:
+
+- The **browser** runs on the host. `host.docker.internal` does *not* resolve to the app from the host (the app's Kestrel listens on loopback), so a browser redirect there just **times out** (`ERR_CONNECTION_TIMED_OUT`). It must use `localhost`. The app's `Lti:ToolBaseUrl` is therefore `http://localhost:5055`, so the `redirect_uri` it sends matches the registered `localhost` launch URL.
+- **Moodle's server** runs inside the container, where `localhost` is the container itself. To fetch the tool's keyset during grade passback it must use `host.docker.internal`.
+
+Everything stays on **plain HTTP** on purpose: Moodle's server-side keyset fetch over HTTPS **fails**, because the .NET dev certificate is issued for `localhost`, not `host.docker.internal` (hostname mismatch + self-signed). HTTP sidesteps that.
+
+Plain HTTP also means the session cookie can't be `Secure`, and the app's bundle-access check + grade passback both rely on the session. Two things make it survive:
+
+- The session cookie is **`SameSite=Lax` + non-`Secure` in `Development`** (and stays `None` + `Secure` in production) — see `Program.cs`.
+- The activity **opens in a new window**, so the tool is top-level (first-party). The setup script sets this automatically; if you configure the activity by hand, set **Launch container = New window**.
+
+If the launch times out, check the browser URLs are `localhost`. If grade passback silently does nothing, check the keyset URL is `host.docker.internal` and the two cookie settings above.
+
+---
+
 ## Configuring LTI 1.3 in ParsonsPuzzleApp
 
 Before registering Moodle as a platform, you need to get your tool's configuration URLs.
 
 ### Step 1: Configure the app's base URL
 
-Before starting the app, open `ParsonsPuzzleApp/appsettings.json` and verify the `Lti:ToolBaseUrl` matches the port the app will run on:
+Both `appsettings.json` and `appsettings.Development.json` ship with `Lti:ToolBaseUrl` set to the local dev value:
 
 ```json
 "Lti": {
-  "ToolBaseUrl": "https://localhost:7096"
+  "ToolBaseUrl": "http://localhost:5055"
 }
 ```
 
-The default Kestrel HTTPS port (from `launchSettings.json`) is `7096`. All LTI endpoint URLs shown to Moodle are derived from this value, so it must be correct. See [Critical Setup Notes](#critical-setup-notes) for why IIS Express and full IIS do not work with this Docker setup.
+This is the **browser-facing** base URL, so the `redirect_uri` the app sends matches the `localhost` launch URL registered in Moodle. (In production, override `Lti:ToolBaseUrl` with your real HTTPS public URL via environment config.)
 
 ### Step 2: Start ParsonsPuzzleApp
 
 ```bash
 cd ParsonsPuzzleApp
-dotnet run
+dotnet run            # default "http" profile → http://localhost:5055
 ```
 
-The app runs at: `https://localhost:7096` (or `http://localhost:5055`)
+The app runs at: `http://localhost:5055`
 
 ### Step 3: Note the following URLs
 
-These URLs are needed for Moodle configuration:
+These URLs are needed for Moodle configuration. Note the **split hostnames** (see the gotcha in [Automated Setup](#automated-setup-quick-start)):
 
-- **Redirection URL (Launch URL)**: `https://localhost:7096/lti/launch`
-- **Initiate login URL**: `https://localhost:7096/lti/login`
-- **Public keyset URL**: `https://localhost:7096/.well-known/jwks.json`
+- **Redirection URL (Launch URL)**: `http://localhost:5055/lti/launch`
+- **Initiate login URL**: `http://localhost:5055/lti/login`
+- **Public keyset URL**: `http://host.docker.internal:5055/.well-known/jwks.json` *(this one only — fetched by Moodle's server)*
 
 > **Important**: If your app runs on a different port, update `Lti:ToolBaseUrl` in `appsettings.json` and use the correct port in all URLs below.
 
@@ -163,14 +229,14 @@ Fill in the following details:
 
 **General:**
 - **Tool name**: `Parsons Puzzle Toolkit`
-- **Tool URL**: https://localhost:7096/lti/launch
+- **Tool URL**: http://localhost:5055/lti/launch
 - **LTI version**: `LTI 1.3`
 
 **Tool configuration:**
 - **Public key type**: `Keyset URL`
-- **Public keyset URL**: `https://localhost:7096/.well-known/jwks.json`
-- **Initiate login URL**: `https://localhost:7096/lti/login`
-- **Redirection URI(s)**: `https://localhost:7096/lti/launch`
+- **Public keyset URL**: `http://host.docker.internal:5055/.well-known/jwks.json` *(host.docker.internal — fetched by Moodle's server)*
+- **Initiate login URL**: `http://localhost:5055/lti/login`
+- **Redirection URI(s)**: `http://localhost:5055/lti/launch`
 
 **Services:**
 Enable the following services (scroll down):
@@ -185,7 +251,7 @@ Enable the following services (scroll down):
 
 Click **Save changes**.
 
-> **Important SSL Note**: Since ParsonsPuzzleApp uses HTTPS with a self-signed certificate in development, you may need to trust the certificate in your browser before Moodle can connect. Visit https://localhost:7096 in your browser and accept the certificate warning.
+> **Important (local dev runs over HTTP)**: The dev harness uses plain HTTP, so there is no certificate to trust. But Moodle's anti-SSRF cURL security blocks private IP ranges by default, and `host.docker.internal` resolves to one — so Moodle can't fetch the keyset until those ranges are removed from **Site administration → Server → HTTP → cURL blocked hosts**. The setup script does this automatically; if configuring by hand, clear the private/loopback ranges (`192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`, `127.0.0.0/8`, `localhost`).
 
 ### Step 3: Get the Platform Configuration Details
 
@@ -206,7 +272,7 @@ Now register Moodle as an LTI platform in ParsonsPuzzleApp.
 
 ### Step 1: Log in to ParsonsPuzzleApp
 
-1. Navigate to https://localhost:7096
+1. Navigate to http://localhost:5055
 2. Register/login as an instructor
 
 ### Step 2: Navigate to LTI Platforms
@@ -316,19 +382,24 @@ You can view this in the browser's developer console or check ParsonsPuzzleApp l
 **Cause**: JWKS public key mismatch, app restart, or SSL certificate issues.
 
 **Solution**:
-- Ensure the JWKS URL is accessible from both sides
-- Visit `https://localhost:7096/.well-known/jwks.json` to verify it returns JSON
+- Visit `http://localhost:5055/.well-known/jwks.json` to verify the tool returns JSON
+- Verify Moodle's *server* can fetch it: `docker compose -f docker-compose.moodle.yml exec moodle php -r 'echo file_get_contents("http://host.docker.internal:5055/.well-known/jwks.json");'`
 - Visit `http://localhost:8085/mod/lti/certs.php` to verify Moodle's keys
-- Trust the ParsonsPuzzleApp SSL certificate in your browser
-- **If signatures started failing after a restart**: the app regenerated its RSA key. Configure `Lti:PrivateKeyPath` in `appsettings.json` to persist the key, then re-register the tool in Moodle to pick up the new public key
+- **If signatures started failing after a restart**: the app regenerated its RSA key. Configure `Lti:PrivateKeyPath` in `appsettings.json` to persist the key, then re-launch (Moodle re-fetches the keyset automatically)
 
-### Issue: Moodle can't reach `localhost:7096`
+### Issue: token request fails / `fix_jwks_alg(): ... null given` (no grade)
 
-**Cause**: Moodle is running inside Docker and can't access `localhost` on the host machine.
+**Cause**: Moodle's cURL security is blocking the keyset fetch to `host.docker.internal` (a private IP).
 
 **Solution**:
-- Use `host.docker.internal` instead of `localhost` in Moodle's tool configuration
-- On Linux, you may need to add `--add-host=host.docker.internal:host-gateway` to docker-compose or use the host's IP address
+- Re-run the setup script (it relaxes the blocked ranges), or manually clear the private/loopback ranges in **Site administration → Server → HTTP → cURL blocked hosts**
+
+### Issue: launch times out at `host.docker.internal:5055`
+
+**Cause**: The browser can't reach `host.docker.internal` (only Moodle's container can).
+
+**Solution**:
+- The browser-facing URLs (Initiate login, Redirection URI) must be `http://localhost:5055/...`; only the keyset URL uses `host.docker.internal`. Re-run the setup script to fix the registration.
 
 ### Issue: "Deployment not configured" message
 
@@ -441,7 +512,7 @@ If you want to access Moodle via a custom domain (e.g., `moodle.local`):
 After successfully setting up the testing environment:
 
 1. **Create diverse puzzle bundles** to test different scenarios
-2. **Test grade passback** (future feature - not yet implemented)
+2. **Test grade passback** — implemented via LTI AGS (`LtiAgsService`); the score is sent to the LMS gradebook when a student completes a bundle. See [End-to-end test](#end-to-end-test-launch-a-puzzle--return-a-grade)
 3. **Test with multiple students** and deployments
 4. **Explore Moodle's LTI Advantage features** (Deep Linking, Assignment and Grades Service, Names and Role Provisioning Service)
 
