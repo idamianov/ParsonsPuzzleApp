@@ -158,7 +158,8 @@ namespace ParsonsPuzzleApp.Pages
             {
                 Content = mb.Content,
                 SlotName = mb.SlotName,
-                IsCorrect = mb.IsCorrect
+                IsCorrect = mb.IsCorrect,
+                Id = mb.Id
             }).ToList();
 
             return Page();

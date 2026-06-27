@@ -58,7 +58,7 @@
         <div class="mini-blocks-panel p-3 bg-light" style="flex: 1; min-height: 100px; max-height: 25vh; overflow-y: auto; border-top: 2px solid #007bff;" id="miniBlocksPanel">
             @foreach (var mb in Model.MiniBlocks)
             {
-                <div class="mini-block" id="mini-@Model.MiniBlocks.IndexOf(mb)">@mb.Content</div>
+                <div class="mini-block" id="mini-@Model.MiniBlocks.IndexOf(mb)" data-mini-id="@mb.Id">@mb.Content</div>
             }
         </div>
     }
@@ -348,59 +348,47 @@
 
                 if (!contentElement) return;
 
-                const cloned = contentElement.cloneNode(true);
+                const lineNodes = contentElement.innerHTML.split(/<br\s*\/?>/gi);
+                const preparedLines = [];
+                const tempDiv = document.createElement('div');
 
-                // Remove buttons
-                cloned.querySelectorAll('.remove-mini-block').forEach(btn => btn.remove());
+                lineNodes.forEach((lineHtml, i) => {
+                    if (!lineHtml.trim()) return;
 
-                // Replace filled slots with their miniblocks
-                const slotElements = cloned.querySelectorAll('.slot');
-                const slotData = [];
+                    tempDiv.innerHTML = lineHtml;
 
-                slotElements.forEach(slot => {
-                    const slotName = slot.dataset.slot;
+                    const htmlSlotsOnThisLine = tempDiv.querySelectorAll('.slot');
+                    const slotsForThisLine = [];
 
-                    const mini = slot.querySelector('.mini-block');
+                    htmlSlotsOnThisLine.forEach(slot => {
+                        const slotName = slot.dataset.slot;
+                        const mini = slot.querySelector('.mini-block');
 
-                    if (mini) {
-                        // filled slot
-                        slotData.push({
-                            slotName: slotName,
-                            value: mini.textContent.trim()
-                        });
+                        if (mini) {
+                            const miniBlockId = mini.dataset.miniId ? parseInt(mini.dataset.miniId) : null;
+                            slotsForThisLine.push({
+                                slotId: slotName,
+                                value: mini.textContent.trim(),
+                                miniBlockId: miniBlockId
+                            });
 
-                        // Replace slot with text for line reconstruction
-                        const textNode = document.createTextNode(mini.textContent.trim());
-                        slot.parentNode.replaceChild(textNode, slot);
+                            const textNode = document.createTextNode(mini.textContent.trim());
+                            slot.parentNode.replaceChild(textNode, slot);
+                        } else {
+                            const textNode = document.createTextNode(`§${slotName}§`);
+                            slot.parentNode.replaceChild(textNode, slot);
+                        }
+                    });
 
-                    } else {
-                        // unfilled slot → keep placeholder in text
-                        const textNode = document.createTextNode(`§${slotName}§`);
-                        slot.parentNode.replaceChild(textNode, slot);
-                    }
-                });
+                    let cleanedLineText = tempDiv.innerHTML.replace(/<[^>]*>/g, '');
+                    const parser = new DOMParser();
+                    cleanedLineText = parser.parseFromString(cleanedLineText, 'text/html').documentElement.textContent.trim();
 
-                // Convert <br> to \n for multiline blocks
-                let text = cloned.innerHTML
-                    .replace(/<br\s*\/?>/gi, '\n')
-                    .replace(/<[^>]*>/g, ''); // remove any HTML
-
-                const parser = new DOMParser();
-                text = parser.parseFromString(text, 'text/html').documentElement.textContent;
-
-                const lines = text.split('\n').map(l => l.trim()).filter(x => x !== '');
-
-                const preparedLines = lines.map((lineText, i) => {
-                    // Get slots belonging to this line based on original positions
-                    const slotsForThisLine = slotData.filter(sd => lineText.includes(sd.value));
-                    return {
+                    preparedLines.push({
                         lineIndex: i,
-                        text: lineText,
-                        slots: slotsForThisLine.map(s => ({
-                            slotId: s.slotName,
-                            value: s.value
-                        }))
-                    };
+                        text: cleanedLineText,
+                        slots: slotsForThisLine
+                    });
                 });
 
                 result.push({
@@ -640,7 +628,24 @@
 
         function getArrangement() {
             const targetPanel = document.getElementById('targetPanel');
-            return blockManager.exportSolution(targetPanel);
+            const rawArrangement = blockManager.exportSolution(targetPanel);
+    
+            if (!rawArrangement) return null;
+
+            /*Map result for C# DTO*/
+            return rawArrangement.map(b => ({
+                blockId: parseInt(b.blockId) || 0,
+                indent: b.indent,
+                lines: b.lines.map(l => ({
+                    lineIndex: l.lineIndex,
+                    text: l.text,
+                    slots: l.slots.map(s => ({
+                        slotId: s.slotId,
+                        value: s.value,
+                        miniBlockId: s.miniBlockId
+                    }))
+                }))
+            }));
         }
 
         async function checkSolution() {
