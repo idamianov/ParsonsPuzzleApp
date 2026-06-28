@@ -9,5 +9,8 @@ namespace ParsonsPuzzleApp.Models
 
         [JsonPropertyName("value")]
         public string Value { get; set; } = string.Empty;
+
+        [JsonPropertyName("miniBlockId")]
+        public int? MiniBlockId { get; set; }
     }
 }

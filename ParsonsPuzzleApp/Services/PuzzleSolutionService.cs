@@ -160,6 +160,11 @@ namespace ParsonsPuzzleApp.Services
 
             var studentBlocks = arrangement.Where(b => b.Id != 0).ToList();
 
+            var allPuzzleMiniBlocks = puzzle.PuzzleBlocks
+            .SelectMany(b => b.Lines)
+            .SelectMany(l => l.MiniBlocks)
+            .ToList();
+
             foreach (var studentBlock in studentBlocks)
             {
                 blockPosition++;
@@ -218,8 +223,18 @@ namespace ParsonsPuzzleApp.Services
                     {
                         miniPosition++;
 
-                        var puzzleMiniBlock = puzzleMiniBlocks
-                            .FirstOrDefault(s => s.SlotName == studentSlot.SlotName && s.Content == studentSlot.Value);
+                        if (!studentSlot.MiniBlockId.HasValue)
+                        {
+                            continue;
+                        }
+
+                        var puzzleMiniBlock = allPuzzleMiniBlocks
+                            .FirstOrDefault(s => s.Id == studentSlot.MiniBlockId.Value);
+
+                        if (puzzleMiniBlock == null)
+                        {
+                            continue;
+                        }
 
                         var miniAttempt = new StudentAttemptMiniBlock
                         {
@@ -242,6 +257,11 @@ namespace ParsonsPuzzleApp.Services
         {
             var puzzleBlocksById = puzzle.PuzzleBlocks
                 .ToDictionary(b => b.Id, b => b);
+
+            var allPuzzleMiniBlocks = puzzle.PuzzleBlocks
+            .SelectMany(b => b.Lines)
+            .SelectMany(l => l.MiniBlocks)
+            .ToList();
 
             NormalizeIndentation(student);
 
@@ -275,8 +295,16 @@ namespace ParsonsPuzzleApp.Services
 
                         foreach (var slot in line.Slots)
                         {
+                            var currentMiniBlock = allPuzzleMiniBlocks.FirstOrDefault(m => m.Id == slot.MiniBlockId);
+
+                            if(currentMiniBlock == null)
+                            {
+                                continue;
+                            }
+
                             var key = slot.SlotName + "|" + slot.Value;
-                            if (!maps.slotMap.ContainsKey(key))
+
+                            if (!maps.slotMap.ContainsKey(key) || !slot.MiniBlockId.HasValue)
                             {
                                 sb.Append('?');
                             }
